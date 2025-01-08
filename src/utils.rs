@@ -16,7 +16,6 @@
 
 use crate::U256;
 use crate::{Fq, Fr};
-// use ark_bn254_ext::CurveHooks;
 use ark_ff::PrimeField;
 
 pub(crate) trait IntoFq {
