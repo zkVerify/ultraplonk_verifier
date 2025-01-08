@@ -21,9 +21,6 @@ hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "0.4.1", default-features = false }
 sha3 = { version = "0.10.8", default-features = false }
 
-[dev-dependencies]
-pretty_assertions = "1.4.0"
-
 [features]
 default = ["std"]
 std = []

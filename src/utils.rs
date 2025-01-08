@@ -14,8 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::U256;
-use crate::{Fq, Fr};
+use crate::{Fq, Fr, U256};
 use ark_ff::PrimeField;
 
 pub(crate) trait IntoFq {
