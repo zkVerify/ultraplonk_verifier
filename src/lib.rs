@@ -111,7 +111,7 @@ pub struct Proof<H: CurveHooks> {
 }
 
 impl<H: CurveHooks> Proof<H> {
-    fn new(proof: &[u8]) -> Result<Self, String> {
+    fn try_from(proof: &[u8]) -> Result<Self, String> {
         if proof.len() != PROOF_SIZE {
             return Err(format!("Proof length much be exactly {} bytes", PROOF_SIZE).to_string());
         }
@@ -442,14 +442,19 @@ impl NuChallenges {
 pub fn verify<H: CurveHooks>(
     proof_raw: &[u8],
     public_inputs: &[U256],
-    vk: &VerificationKey<H>,
+    vk_bytes: &[u8],
 ) -> Result<(), String> {
     /*
-     *LOAD PROOF
+     * PARSE VERIFICATION KEY
      */
-    let proof = Proof::<H>::new(proof_raw).unwrap(); // Maybe "parse" would be a more appropriate name?
+    let vk = VerificationKey::<H>::try_from(vk_bytes).unwrap();
 
-    // TODO: LOAD RECURSIVE PROOF
+    /*
+     * PARSE PROOF
+     */
+    let proof = Proof::<H>::try_from(proof_raw).unwrap();
+
+    // TODO: PARSE RECURSIVE PROOF
 
     /*
      * GENERATE CHALLENGES
@@ -576,7 +581,7 @@ pub fn verify<H: CurveHooks>(
     let [public_input_delta, _zero_poly, zero_poly_inverse, plookup_delta, l_start, l_end] =
         compute_lagrange_and_vanishing_poly::<H>(
             &challenges,
-            vk,
+            &vk,
             &delta_numerator, // Q: Maybe combine numerator and denominator into one struct?
             &delta_denominator,
             &plookup_delta_numerator, // Same as above
@@ -767,7 +772,7 @@ pub fn verify<H: CurveHooks>(
      * PERFORM FINAL CHECKS
      */
 
-    if perform_final_checks::<H>(&proof, vk, &challenges, &nu_challenges, &quotient_eval) {
+    if perform_final_checks::<H>(&proof, &vk, &challenges, &nu_challenges, &quotient_eval) {
         Ok(())
     } else {
         Err(String::from("Verification Failed!"))
@@ -2892,7 +2897,6 @@ mod tests {
     use super::*;
     use crate::macros::u256;
     use crate::resources::VALID_VK;
-    use key::VerificationKey;
 
     #[test]
     fn test_parse_proof() {
@@ -2937,10 +2941,13 @@ mod tests {
     fn test_verify() {
         use testhooks::TestHooks;
         let proof = resources::VALID_PROOF;
-        let vk = VerificationKey::<TestHooks>::try_from(VALID_VK.as_ref()).unwrap();
+        let vk = VALID_VK.as_ref();
 
         // x = "5"  (witness)
         // y = "10" (public input)
-        assert_eq!(verify(&proof, &[10_u32.into_u256()], &vk).unwrap(), ());
+        assert_eq!(
+            verify::<TestHooks>(&proof, &[10_u32.into_u256()], &vk).unwrap(),
+            ()
+        );
     }
 }
