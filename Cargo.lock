@@ -170,17 +170,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ark-test-curves"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83c22c2469f93dfcace9a98baabb7af1bc0c40de82c07cffbc0deba4acf41a90"
-dependencies = [
- "ark-ec",
- "ark-ff",
- "ark-std",
-]
-
-[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -621,9 +610,6 @@ dependencies = [
  "ark-ec",
  "ark-ff",
  "ark-models-ext",
- "ark-serialize",
- "ark-std",
- "ark-test-curves",
  "hex",
  "hex-literal",
  "pretty_assertions",
