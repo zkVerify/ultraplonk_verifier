@@ -14,8 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::errors::VerifyError;
 use crate::utils::{IntoFq, IntoFr};
-use crate::{Fq, Fq2};
+use crate::{Fq, Fq2, VK_SIZE};
 use crate::{Fr, G1, G2, U256};
 use ark_bn254_ext::CurveHooks;
 use core::convert::TryInto;
@@ -59,47 +60,72 @@ pub struct VerificationKey<H: CurveHooks> {
 }
 
 impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
-    type Error = &'static str;
+    type Error = VerifyError; // &'static str;
 
     fn try_from(vk_bytes: &[u8]) -> Result<Self, Self::Error> {
-        if vk_bytes.len() != 1577 {
-            // = 2 * 4 + 49 * 32 + 1
-            // TODO: Define a constant
-            return Err("Incorrect vk size");
+        if vk_bytes.len() != VK_SIZE {
+            // return Err("Incorrect vk size");
+            return Err(VerifyError::InvalidVerificationKey);
         }
 
         // TODO: DOUBLE CHECK AGAIN REGARDING THE DESIRED STRUCTURE OF VerificationKeys!!!
         let circuit_size = u32::from_be_bytes(vk_bytes[..4].try_into().unwrap()); // Needs to be a power of 2
         let num_public_inputs = u32::from_be_bytes(vk_bytes[4..8].try_into().unwrap());
 
-        let work_root = read_fr(&vk_bytes[8..40]).unwrap();
-        let domain_inverse = read_fr(&vk_bytes[40..72]).unwrap();
+        let work_root =
+            read_fr(&vk_bytes[8..40]).map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let domain_inverse =
+            read_fr(&vk_bytes[40..72]).map_err(|_| VerifyError::InvalidVerificationKey)?;
 
-        let q_1 = read_g1::<H>(&vk_bytes[72..136], false).unwrap();
-        let q_2 = read_g1::<H>(&vk_bytes[136..200], false).unwrap();
-        let q_3 = read_g1::<H>(&vk_bytes[200..264], false).unwrap();
-        let q_4 = read_g1::<H>(&vk_bytes[264..328], false).unwrap();
-        let q_m = read_g1::<H>(&vk_bytes[328..392], false).unwrap();
-        let q_c = read_g1::<H>(&vk_bytes[392..456], false).unwrap();
-        let q_arith = read_g1::<H>(&vk_bytes[456..520], false).unwrap();
-        let q_aux = read_g1::<H>(&vk_bytes[520..584], false).unwrap();
-        let q_elliptic = read_g1::<H>(&vk_bytes[584..648], false).unwrap();
-        let q_sort = read_g1::<H>(&vk_bytes[648..712], false).unwrap();
-        let sigma_1 = read_g1::<H>(&vk_bytes[712..776], false).unwrap();
-        let sigma_2 = read_g1::<H>(&vk_bytes[776..840], false).unwrap();
-        let sigma_3 = read_g1::<H>(&vk_bytes[840..904], false).unwrap();
-        let sigma_4 = read_g1::<H>(&vk_bytes[904..968], false).unwrap();
-        let table_1 = read_g1::<H>(&vk_bytes[968..1032], false).unwrap();
-        let table_2 = read_g1::<H>(&vk_bytes[1032..1096], false).unwrap();
-        let table_3 = read_g1::<H>(&vk_bytes[1096..1160], false).unwrap();
-        let table_4 = read_g1::<H>(&vk_bytes[1160..1224], false).unwrap();
-        let table_type = read_g1::<H>(&vk_bytes[1224..1288], false).unwrap();
-        let id_1 = read_g1::<H>(&vk_bytes[1288..1352], false).unwrap();
-        let id_2 = read_g1::<H>(&vk_bytes[1352..1416], false).unwrap();
-        let id_3 = read_g1::<H>(&vk_bytes[1416..1480], false).unwrap();
-        let id_4 = read_g1::<H>(&vk_bytes[1480..1544], false).unwrap();
+        let q_1 = read_g1::<H>(&vk_bytes[72..136], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let q_2 = read_g1::<H>(&vk_bytes[136..200], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let q_3 = read_g1::<H>(&vk_bytes[200..264], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let q_4 = read_g1::<H>(&vk_bytes[264..328], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let q_m = read_g1::<H>(&vk_bytes[328..392], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let q_c = read_g1::<H>(&vk_bytes[392..456], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let q_arith = read_g1::<H>(&vk_bytes[456..520], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let q_aux = read_g1::<H>(&vk_bytes[520..584], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let q_elliptic = read_g1::<H>(&vk_bytes[584..648], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let q_sort = read_g1::<H>(&vk_bytes[648..712], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let sigma_1 = read_g1::<H>(&vk_bytes[712..776], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let sigma_2 = read_g1::<H>(&vk_bytes[776..840], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let sigma_3 = read_g1::<H>(&vk_bytes[840..904], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let sigma_4 = read_g1::<H>(&vk_bytes[904..968], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let table_1 = read_g1::<H>(&vk_bytes[968..1032], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let table_2 = read_g1::<H>(&vk_bytes[1032..1096], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let table_3 = read_g1::<H>(&vk_bytes[1096..1160], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let table_4 = read_g1::<H>(&vk_bytes[1160..1224], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let table_type = read_g1::<H>(&vk_bytes[1224..1288], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let id_1 = read_g1::<H>(&vk_bytes[1288..1352], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let id_2 = read_g1::<H>(&vk_bytes[1352..1416], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let id_3 = read_g1::<H>(&vk_bytes[1416..1480], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
+        let id_4 = read_g1::<H>(&vk_bytes[1480..1544], false)
+            .map_err(|_| VerifyError::InvalidVerificationKey)?;
 
-        let work_root_inverse = read_fr(&vk_bytes[1544..1576]).unwrap();
+        let work_root_inverse =
+            read_fr(&vk_bytes[1544..1576]).map_err(|_| VerifyError::InvalidVerificationKey)?;
 
         // TODO: Check if work_root and work_root inverse are indeed inverses.
 

@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod errors;
 mod key;
 mod macros;
 mod resources;
@@ -32,6 +33,7 @@ use ark_bn254_ext::{Config, CurveHooks};
 use ark_ec::{pairing::Pairing, short_weierstrass::SWCurveConfig, AffineRepr, CurveGroup};
 use ark_ff::{BigInteger, Field, MontConfig, One};
 use ark_models_ext::bn::{BnConfig, G1Prepared, G2Prepared};
+use errors::VerifyError;
 use macros::u256;
 use sha3::{Digest, Keccak256};
 use utils::{IntoBytes, IntoFr, IntoU256};
@@ -41,8 +43,9 @@ pub use types::*;
 extern crate alloc;
 use alloc::vec::Vec;
 
-const PROOF_SIZE: usize = 2144;
+const PROOF_SIZE: usize = 2144; // = 67 * 32
 const PUBS_SIZE: usize = 32;
+const VK_SIZE: usize = 1577; // = 2 * 4 + 49 * 32 + 1 // TODO: Revise once recursive proofs are supported
 
 // TODO: Since most of the evaluations are being used as elements of Fr
 // rather than Fq, maybe it is worthwhile to store them as such directly
@@ -106,77 +109,94 @@ pub struct Proof<H: CurveHooks> {
 }
 
 impl<H: CurveHooks> Proof<H> {
-    fn try_from(proof: &[u8]) -> Result<Self, String> {
+    fn try_from(proof: &[u8]) -> Result<Self, VerifyError> {
         if proof.len() != PROOF_SIZE {
-            return Err(format!("Proof length much be exactly {} bytes", PROOF_SIZE).to_string());
+            return Err(VerifyError::InvalidProofData);
         }
 
-        let w1 = read_g1::<H>(&proof[0..64], true)?;
-        let w2 = read_g1::<H>(&proof[64..128], true)?;
-        let w3 = read_g1::<H>(&proof[128..192], true)?;
-        let w4 = read_g1::<H>(&proof[192..256], true)?;
+        let w1 = read_g1::<H>(&proof[0..64], true).map_err(|_| VerifyError::InvalidProofData)?;
+        let w2 = read_g1::<H>(&proof[64..128], true).map_err(|_| VerifyError::InvalidProofData)?;
+        let w3 = read_g1::<H>(&proof[128..192], true).map_err(|_| VerifyError::InvalidProofData)?;
+        let w4 = read_g1::<H>(&proof[192..256], true).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let s = read_g1::<H>(&proof[256..320], true)?;
-        let z = read_g1::<H>(&proof[320..384], true)?;
-        let z_lookup = read_g1::<H>(&proof[384..448], true)?;
+        let s = read_g1::<H>(&proof[256..320], true).map_err(|_| VerifyError::InvalidProofData)?;
+        let z = read_g1::<H>(&proof[320..384], true).map_err(|_| VerifyError::InvalidProofData)?;
+        let z_lookup =
+            read_g1::<H>(&proof[384..448], true).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let t1 = read_g1::<H>(&proof[448..512], true)?;
-        let t2 = read_g1::<H>(&proof[512..576], true)?;
-        let t3 = read_g1::<H>(&proof[576..640], true)?;
-        let t4 = read_g1::<H>(&proof[640..704], true)?;
+        let t1 = read_g1::<H>(&proof[448..512], true).map_err(|_| VerifyError::InvalidProofData)?;
+        let t2 = read_g1::<H>(&proof[512..576], true).map_err(|_| VerifyError::InvalidProofData)?;
+        let t3 = read_g1::<H>(&proof[576..640], true).map_err(|_| VerifyError::InvalidProofData)?;
+        let t4 = read_g1::<H>(&proof[640..704], true).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let w1_eval = read_fq(&proof[704..736])?;
-        let w2_eval = read_fq(&proof[736..768])?;
-        let w3_eval = read_fq(&proof[768..800])?;
-        let w4_eval = read_fq(&proof[800..832])?;
+        let w1_eval = read_fq(&proof[704..736]).map_err(|_| VerifyError::InvalidProofData)?;
+        let w2_eval = read_fq(&proof[736..768]).map_err(|_| VerifyError::InvalidProofData)?;
+        let w3_eval = read_fq(&proof[768..800]).map_err(|_| VerifyError::InvalidProofData)?;
+        let w4_eval = read_fq(&proof[800..832]).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let s_eval = read_fq(&proof[832..864])?;
-        let z_eval = read_fq(&proof[864..896])?;
-        let z_lookup_eval = read_fq(&proof[896..928])?;
+        let s_eval = read_fq(&proof[832..864]).map_err(|_| VerifyError::InvalidProofData)?;
+        let z_eval = read_fq(&proof[864..896]).map_err(|_| VerifyError::InvalidProofData)?;
+        let z_lookup_eval = read_fq(&proof[896..928]).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let q1_eval = read_fq(&proof[928..960])?;
-        let q2_eval = read_fq(&proof[960..992])?;
-        let q3_eval = read_fq(&proof[992..1024])?;
-        let q4_eval = read_fq(&proof[1024..1056])?;
-        let qm_eval = read_fq(&proof[1056..1088])?;
-        let qc_eval = read_fq(&proof[1088..1120])?;
-        let q_arith_eval = read_fq(&proof[1120..1152])?;
-        let q_sort_eval = read_fq(&proof[1152..1184])?;
-        let q_elliptic_eval = read_fq(&proof[1184..1216])?;
-        let q_aux_eval = read_fq(&proof[1216..1248])?;
+        let q1_eval = read_fq(&proof[928..960]).map_err(|_| VerifyError::InvalidProofData)?;
+        let q2_eval = read_fq(&proof[960..992]).map_err(|_| VerifyError::InvalidProofData)?;
+        let q3_eval = read_fq(&proof[992..1024]).map_err(|_| VerifyError::InvalidProofData)?;
+        let q4_eval = read_fq(&proof[1024..1056]).map_err(|_| VerifyError::InvalidProofData)?;
+        let qm_eval = read_fq(&proof[1056..1088]).map_err(|_| VerifyError::InvalidProofData)?;
+        let qc_eval = read_fq(&proof[1088..1120]).map_err(|_| VerifyError::InvalidProofData)?;
+        let q_arith_eval =
+            read_fq(&proof[1120..1152]).map_err(|_| VerifyError::InvalidProofData)?;
+        let q_sort_eval = read_fq(&proof[1152..1184]).map_err(|_| VerifyError::InvalidProofData)?;
+        let q_elliptic_eval =
+            read_fq(&proof[1184..1216]).map_err(|_| VerifyError::InvalidProofData)?;
+        let q_aux_eval = read_fq(&proof[1216..1248]).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let sigma1_eval = read_fq(&proof[1248..1280])?;
-        let sigma2_eval = read_fq(&proof[1280..1312])?;
-        let sigma3_eval = read_fq(&proof[1312..1344])?;
-        let sigma4_eval = read_fq(&proof[1344..1376])?;
+        let sigma1_eval = read_fq(&proof[1248..1280]).map_err(|_| VerifyError::InvalidProofData)?;
+        let sigma2_eval = read_fq(&proof[1280..1312]).map_err(|_| VerifyError::InvalidProofData)?;
+        let sigma3_eval = read_fq(&proof[1312..1344]).map_err(|_| VerifyError::InvalidProofData)?;
+        let sigma4_eval = read_fq(&proof[1344..1376]).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let table1_eval = read_fq(&proof[1376..1408])?;
-        let table2_eval = read_fq(&proof[1408..1440])?;
-        let table3_eval = read_fq(&proof[1440..1472])?;
-        let table4_eval = read_fq(&proof[1472..1504])?;
-        let table_type_eval = read_fq(&proof[1504..1536])?;
+        let table1_eval = read_fq(&proof[1376..1408]).map_err(|_| VerifyError::InvalidProofData)?;
+        let table2_eval = read_fq(&proof[1408..1440]).map_err(|_| VerifyError::InvalidProofData)?;
+        let table3_eval = read_fq(&proof[1440..1472]).map_err(|_| VerifyError::InvalidProofData)?;
+        let table4_eval = read_fq(&proof[1472..1504]).map_err(|_| VerifyError::InvalidProofData)?;
+        let table_type_eval =
+            read_fq(&proof[1504..1536]).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let id1_eval = read_fq(&proof[1536..1568])?;
-        let id2_eval = read_fq(&proof[1568..1600])?;
-        let id3_eval = read_fq(&proof[1600..1632])?;
-        let id4_eval = read_fq(&proof[1632..1664])?;
+        let id1_eval = read_fq(&proof[1536..1568]).map_err(|_| VerifyError::InvalidProofData)?;
+        let id2_eval = read_fq(&proof[1568..1600]).map_err(|_| VerifyError::InvalidProofData)?;
+        let id3_eval = read_fq(&proof[1600..1632]).map_err(|_| VerifyError::InvalidProofData)?;
+        let id4_eval = read_fq(&proof[1632..1664]).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let w1_omega_eval = read_fq(&proof[1664..1696])?;
-        let w2_omega_eval = read_fq(&proof[1696..1728])?;
-        let w3_omega_eval = read_fq(&proof[1728..1760])?;
-        let w4_omega_eval = read_fq(&proof[1760..1792])?;
+        let w1_omega_eval =
+            read_fq(&proof[1664..1696]).map_err(|_| VerifyError::InvalidProofData)?;
+        let w2_omega_eval =
+            read_fq(&proof[1696..1728]).map_err(|_| VerifyError::InvalidProofData)?;
+        let w3_omega_eval =
+            read_fq(&proof[1728..1760]).map_err(|_| VerifyError::InvalidProofData)?;
+        let w4_omega_eval =
+            read_fq(&proof[1760..1792]).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let s_omega_eval = read_fq(&proof[1792..1824])?;
-        let z_omega_eval = read_fq(&proof[1824..1856])?;
-        let z_lookup_omega_eval = read_fq(&proof[1856..1888])?;
+        let s_omega_eval =
+            read_fq(&proof[1792..1824]).map_err(|_| VerifyError::InvalidProofData)?;
+        let z_omega_eval =
+            read_fq(&proof[1824..1856]).map_err(|_| VerifyError::InvalidProofData)?;
+        let z_lookup_omega_eval =
+            read_fq(&proof[1856..1888]).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let table1_omega_eval = read_fq(&proof[1888..1920])?;
-        let table2_omega_eval = read_fq(&proof[1920..1952])?;
-        let table3_omega_eval = read_fq(&proof[1952..1984])?;
-        let table4_omega_eval = read_fq(&proof[1984..2016])?;
+        let table1_omega_eval =
+            read_fq(&proof[1888..1920]).map_err(|_| VerifyError::InvalidProofData)?;
+        let table2_omega_eval =
+            read_fq(&proof[1920..1952]).map_err(|_| VerifyError::InvalidProofData)?;
+        let table3_omega_eval =
+            read_fq(&proof[1952..1984]).map_err(|_| VerifyError::InvalidProofData)?;
+        let table4_omega_eval =
+            read_fq(&proof[1984..2016]).map_err(|_| VerifyError::InvalidProofData)?;
 
-        let pi_z = read_g1::<H>(&proof[2016..2080], true)?;
-        let pi_z_omega = read_g1::<H>(&proof[2080..2144], true)?;
+        let pi_z =
+            read_g1::<H>(&proof[2016..2080], true).map_err(|_| VerifyError::InvalidProofData)?;
+        let pi_z_omega =
+            read_g1::<H>(&proof[2080..2144], true).map_err(|_| VerifyError::InvalidProofData)?;
 
         Ok(Proof::<H> {
             w1,
@@ -445,7 +465,7 @@ pub fn verify<H: CurveHooks>(
     raw_vk: &[u8],
     raw_proof: &[u8],
     pubs: &[[u8; PUBS_SIZE]],
-) -> Result<(), String> {
+) -> Result<(), VerifyError> {
     /*
      * PARSE VERIFICATION KEY
      */
@@ -733,7 +753,7 @@ pub fn verify<H: CurveHooks>(
     /*
      * GENERATE NU AND SEPARATOR CHALLENGES
      */
-    let nu_challenges = NuChallenges::new(&proof, &c_current, &quotient_eval)?;
+    let nu_challenges = NuChallenges::new(&proof, &c_current, &quotient_eval).unwrap();
 
     // let expected_c_v = [
     //     crate::macros::fr!("15d4ae03ea4b1ecaa1575edbf413ce764c8518497e33e1d5feddc4ce3048cd2c"),
@@ -785,7 +805,7 @@ pub fn verify<H: CurveHooks>(
     if perform_final_checks::<H>(&proof, &vk, &challenges, &nu_challenges, &quotient_eval) {
         Ok(())
     } else {
-        Err(String::from("Verification Failed!"))
+        Err(VerifyError::VerifyError)
     }
 }
 
@@ -2665,112 +2685,15 @@ fn perform_final_checks<H: CurveHooks>(
     //     .unwrap()
     // );
 
-    /*
-     * COMPUTE BATCH EVALUATION SCALAR MULTIPLIER
-     */
-    {
-        /*
-         * batch_evaluation = v0 * (w_1_omega * u + w_1_eval)
-         * batch_evaluation += v1 * (w_2_omega * u + w_2_eval)
-         * batch_evaluation += v2 * (w_3_omega * u + w_3_eval)
-         * batch_evaluation += v3 * (w_4_omega * u + w_4_eval)
-         * batch_evaluation += v4 * (s_omega_eval * u + s_eval)
-         * batch_evaluation += v5 * (z_omega_eval * u + z_eval)
-         * batch_evaluation += v6 * (z_lookup_omega_eval * u + z_lookup_eval)
-         */
-        let mut batch_evaluation = nu_challenges.c_v[0]
-            * (proof.w1_omega_eval.into_fr() * nu_challenges.c_u + proof.w1_eval.into_fr());
+    // COMPUTE BATCH EVALUATION SCALAR MULTIPLIER
+    let batch_evaluation =
+        compute_batch_evaluation_scalar_multiplier::<H>(proof, nu_challenges, quotient_eval);
+    let point = <<Config<H> as BnConfig>::G1Config as SWCurveConfig>::GENERATOR.into_group(); // G = (1, 2)
 
-        batch_evaluation += nu_challenges.c_v[1]
-            * (proof.w2_omega_eval.into_fr() * nu_challenges.c_u + proof.w2_eval.into_fr());
-
-        batch_evaluation += nu_challenges.c_v[2]
-            * (proof.w3_omega_eval.into_fr() * nu_challenges.c_u + proof.w3_eval.into_fr());
-
-        batch_evaluation += nu_challenges.c_v[3]
-            * (proof.w4_omega_eval.into_fr() * nu_challenges.c_u + proof.w4_eval.into_fr());
-
-        batch_evaluation += nu_challenges.c_v[4]
-            * (proof.s_omega_eval.into_fr() * nu_challenges.c_u + proof.s_eval.into_fr());
-
-        batch_evaluation += nu_challenges.c_v[5]
-            * (proof.z_omega_eval.into_fr() * nu_challenges.c_u + proof.z_eval.into_fr());
-
-        batch_evaluation += nu_challenges.c_v[6]
-            * (proof.z_lookup_omega_eval.into_fr() * nu_challenges.c_u
-                + proof.z_lookup_eval.into_fr());
-
-        /*
-         * batch_evaluation += v7 * Q1_EVAL
-         * batch_evaluation += v8 * Q2_EVAL
-         * batch_evaluation += v9 * Q3_EVAL
-         * batch_evaluation += v10 * Q4_EVAL
-         * batch_evaluation += v11 * QM_EVAL
-         * batch_evaluation += v12 * QC_EVAL
-         * batch_evaluation += v13 * QARITH_EVAL
-         * batch_evaluation += v14 * QSORT_EVAL_LOC
-         * batch_evaluation += v15 * QELLIPTIC_EVAL_LOC
-         * batch_evaluation += v16 * QAUX_EVAL_LOC
-         * batch_evaluation += v17 * SIGMA1_EVAL_LOC
-         * batch_evaluation += v18 * SIGMA2_EVAL_LOC
-         * batch_evaluation += v19 * SIGMA3_EVAL_LOC
-         * batch_evaluation += v20 * SIGMA4_EVAL_LOC
-         */
-
-        batch_evaluation += nu_challenges.c_v[7] * proof.q1_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[8] * proof.q2_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[9] * proof.q3_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[10] * proof.q4_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[11] * proof.qm_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[12] * proof.qc_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[13] * proof.q_arith_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[14] * proof.q_sort_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[15] * proof.q_elliptic_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[16] * proof.q_aux_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[17] * proof.sigma1_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[18] * proof.sigma2_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[19] * proof.sigma3_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[20] * proof.sigma4_eval.into_fr();
-
-        /*
-         * batch_evaluation += v21 * (table1(zw) * u + table1(z))
-         * batch_evaluation += v22 * (table2(zw) * u + table2(z))
-         * batch_evaluation += v23 * (table3(zw) * u + table3(z))
-         * batch_evaluation += v24 * (table4(zw) * u + table4(z))
-         * batch_evaluation += v25 * table_type_eval
-         * batch_evaluation += v26 * id1_eval
-         * batch_evaluation += v27 * id2_eval
-         * batch_evaluation += v28 * id3_eval
-         * batch_evaluation += v29 * id4_eval
-         * batch_evaluation += quotient_eval
-         */
-
-        batch_evaluation += nu_challenges.c_v[21]
-            * (proof.table1_omega_eval.into_fr() * nu_challenges.c_u + proof.table1_eval.into_fr());
-
-        batch_evaluation += nu_challenges.c_v[22]
-            * (proof.table2_omega_eval.into_fr() * nu_challenges.c_u + proof.table2_eval.into_fr());
-
-        batch_evaluation += nu_challenges.c_v[23]
-            * (proof.table3_omega_eval.into_fr() * nu_challenges.c_u + proof.table3_eval.into_fr());
-
-        batch_evaluation += nu_challenges.c_v[24]
-            * (proof.table4_omega_eval.into_fr() * nu_challenges.c_u + proof.table4_eval.into_fr());
-
-        batch_evaluation += nu_challenges.c_v[25] * proof.table_type_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[26] * proof.id1_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[27] * proof.id2_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[28] * proof.id3_eval.into_fr();
-        batch_evaluation += nu_challenges.c_v[29] * proof.id4_eval.into_fr();
-        batch_evaluation += quotient_eval;
-
-        let point = <<Config<H> as BnConfig>::G1Config as SWCurveConfig>::GENERATOR.into_group(); // G = (1, 2)
-
-        // accumulator_2 = -[1].(batch_evaluation)
-        accumulator2 = point * (-batch_evaluation);
-        // accumulator = accumulator + accumulator_2
-        accumulator += accumulator2;
-    }
+    // accumulator_2 = -[1].(batch_evaluation)
+    accumulator2 = point * (-batch_evaluation);
+    // accumulator = accumulator + accumulator_2
+    accumulator += accumulator2;
 
     // assert_eq!(
     //     *accumulator.into_affine().x().unwrap(),
@@ -2791,112 +2714,213 @@ fn perform_final_checks<H: CurveHooks>(
      * PERFORM PAIRING PREAMBLE
      */
     let mut pairing_lhs;
-    let pairing_rhs;
 
-    {
-        // u = nu_challenges.c_u
-        // zeta = challenges.zeta
+    // u = nu_challenges.c_u
+    // zeta = challenges.zeta
 
-        // VALIDATE PI_Z
+    // VALIDATE PI_Z
 
-        scalar = challenges.zeta;
-        // compute zeta.[PI_Z] and add into accumulator
-        accumulator2 = proof.pi_z.into_group() * scalar;
-        // accumulator = accumulator + accumulator_2
-        accumulator += accumulator2;
+    scalar = challenges.zeta;
+    // compute zeta.[PI_Z] and add into accumulator
+    accumulator2 = proof.pi_z.into_group() * scalar;
+    // accumulator = accumulator + accumulator_2
+    accumulator += accumulator2;
 
-        // assert_eq!(
-        //     *accumulator.into_affine().x().unwrap(),
-        //     read_fq(&hex_literal::hex!(
-        //         "23e62155a196ef1e8e02d2ddc09c914fb9c9c9371ab6a8e503cda05abfebd082"
-        //     ))
-        //     .unwrap()
-        // );
-        // assert_eq!(
-        //     *accumulator.into_affine().y().unwrap(),
-        //     read_fq(&hex_literal::hex!(
-        //         "0028ac25bd05abf0b6f2eb1b8bfedc658bdb06e5328a78e7efdb13f9304b7c7a"
-        //     ))
-        //     .unwrap()
-        // );
+    // assert_eq!(
+    //     *accumulator.into_affine().x().unwrap(),
+    //     read_fq(&hex_literal::hex!(
+    //         "23e62155a196ef1e8e02d2ddc09c914fb9c9c9371ab6a8e503cda05abfebd082"
+    //     ))
+    //     .unwrap()
+    // );
+    // assert_eq!(
+    //     *accumulator.into_affine().y().unwrap(),
+    //     read_fq(&hex_literal::hex!(
+    //         "0028ac25bd05abf0b6f2eb1b8bfedc658bdb06e5328a78e7efdb13f9304b7c7a"
+    //     ))
+    //     .unwrap()
+    // );
 
-        // VALIDATE PI_Z_OMEGA
+    // VALIDATE PI_Z_OMEGA
 
-        scalar = nu_challenges.c_u * challenges.zeta * vk.work_root;
-        // accumulator_2 = u.zeta.omega.[PI_Z_OMEGA]
-        accumulator2 = proof.pi_z_omega.into_group() * scalar;
-        // PAIRING_RHS = accumulator + accumulator_2
-        pairing_rhs = accumulator + accumulator2;
+    scalar = nu_challenges.c_u * challenges.zeta * vk.work_root;
+    // accumulator_2 = u.zeta.omega.[PI_Z_OMEGA]
+    accumulator2 = proof.pi_z_omega.into_group() * scalar;
+    // PAIRING_RHS = accumulator + accumulator_2
+    let pairing_rhs = accumulator + accumulator2;
 
-        // assert_eq!(
-        //     *pairing_rhs.into_affine().x().unwrap(),
-        //     read_fq(&hex_literal::hex!(
-        //         "0f49ea18353cee38d7045f8d8fce93de9d43657a7443a238c732f5eddbddb93c"
-        //     ))
-        //     .unwrap()
-        // );
-        // assert_eq!(
-        //     *pairing_rhs.into_affine().y().unwrap(),
-        //     read_fq(&hex_literal::hex!(
-        //         "04ff64f4841dbd83d35b33298c797a563e100e731f0678c0f6f1e2c6eb7b74bf"
-        //     ))
-        //     .unwrap()
-        // );
+    // assert_eq!(
+    //     *pairing_rhs.into_affine().x().unwrap(),
+    //     read_fq(&hex_literal::hex!(
+    //         "0f49ea18353cee38d7045f8d8fce93de9d43657a7443a238c732f5eddbddb93c"
+    //     ))
+    //     .unwrap()
+    // );
+    // assert_eq!(
+    //     *pairing_rhs.into_affine().y().unwrap(),
+    //     read_fq(&hex_literal::hex!(
+    //         "04ff64f4841dbd83d35b33298c797a563e100e731f0678c0f6f1e2c6eb7b74bf"
+    //     ))
+    //     .unwrap()
+    // );
 
-        scalar = nu_challenges.c_u;
-        // accumulator_2 = u.[PI_Z_OMEGA]
-        accumulator2 = proof.pi_z_omega.into_group() * scalar;
-        // PAIRING_LHS = [PI_Z] + [PI_Z_OMEGA] * u
-        pairing_lhs = proof.pi_z.into_group() + accumulator2;
-        // negate lhs y-coordinate
-        pairing_lhs.y = -pairing_lhs.y;
+    scalar = nu_challenges.c_u;
+    // accumulator_2 = u.[PI_Z_OMEGA]
+    accumulator2 = proof.pi_z_omega.into_group() * scalar;
+    // PAIRING_LHS = [PI_Z] + [PI_Z_OMEGA] * u
+    pairing_lhs = proof.pi_z.into_group() + accumulator2;
+    // negate lhs y-coordinate
+    pairing_lhs.y = -pairing_lhs.y;
 
-        // assert_eq!(
-        //     *pairing_lhs.into_affine().x().unwrap(),
-        //     read_fq(&hex_literal::hex!(
-        //         "0938778e7f7309ca99231045c99ddc9f8fc94a841f66e18b9a3a9a66f7dfe9c1"
-        //     ))
-        //     .unwrap()
-        // );
-        // assert_eq!(
-        //     *pairing_lhs.into_affine().y().unwrap(),
-        //     read_fq(&hex_literal::hex!(
-        //         "0c09427d83a79ca0faef46564c0788056d2f05adb76248f9cf87dd864f5c3865"
-        //     ))
-        //     .unwrap()
-        // );
+    // assert_eq!(
+    //     *pairing_lhs.into_affine().x().unwrap(),
+    //     read_fq(&hex_literal::hex!(
+    //         "0938778e7f7309ca99231045c99ddc9f8fc94a841f66e18b9a3a9a66f7dfe9c1"
+    //     ))
+    //     .unwrap()
+    // );
+    // assert_eq!(
+    //     *pairing_lhs.into_affine().y().unwrap(),
+    //     read_fq(&hex_literal::hex!(
+    //         "0c09427d83a79ca0faef46564c0788056d2f05adb76248f9cf87dd864f5c3865"
+    //     ))
+    //     .unwrap()
+    // );
 
-        if vk.contains_recursive_proof {
-            // TODO: ADD CODE (LINES: 2682-2725)
-        }
+    if vk.contains_recursive_proof {
+        // TODO: ADD CODE (LINES: 2682-2725)
     }
 
     /*
      * PERFORM PAIRING
      */
-    {
-        // rhs paired with [1]_2
-        // lhs paired with [x]_2
 
-        // NOTE: Here, we need to convert to Affine. Hence, it probably
-        // makes sense to keep the points in Affine in the first place
-        // and only switch to Projective when computations are required.
+    // rhs paired with [1]_2
+    // lhs paired with [x]_2
 
-        let g1_points = [
-            G1Prepared::from(pairing_rhs.into_affine()),
-            G1Prepared::from(pairing_lhs.into_affine()),
-        ];
+    // NOTE: Here, we need to convert to Affine. Hence, it probably
+    // makes sense to keep the points in Affine in the first place
+    // and only switch to Projective when computations are required.
 
-        let g2_points = [
-            G2Prepared::from(G2::<H>::generator()),
-            G2Prepared::from(read_g2::<H>(&SRS_G2).unwrap()),
-        ];
+    let g1_points = [
+        G1Prepared::from(pairing_rhs.into_affine()),
+        G1Prepared::from(pairing_lhs.into_affine()),
+    ];
 
-        let product = Bn254::<H>::multi_pairing(g1_points, g2_points);
+    let g2_points = [
+        G2Prepared::from(G2::<H>::generator()),
+        G2Prepared::from(read_g2::<H>(&SRS_G2).unwrap()),
+    ];
 
-        // Product of pairings must equal 1
-        product.0.is_one()
-    }
+    let product = Bn254::<H>::multi_pairing(g1_points, g2_points);
+
+    // Product of pairings must equal 1
+    product.0.is_one()
+}
+
+/*
+ * COMPUTE BATCH EVALUATION SCALAR MULTIPLIER
+ */
+fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
+    proof: &Proof<H>,
+    nu_challenges: &NuChallenges,
+    quotient_eval: &Fr,
+) -> Fr {
+    /*
+     * batch_evaluation = v0 * (w_1_omega * u + w_1_eval)
+     * batch_evaluation += v1 * (w_2_omega * u + w_2_eval)
+     * batch_evaluation += v2 * (w_3_omega * u + w_3_eval)
+     * batch_evaluation += v3 * (w_4_omega * u + w_4_eval)
+     * batch_evaluation += v4 * (s_omega_eval * u + s_eval)
+     * batch_evaluation += v5 * (z_omega_eval * u + z_eval)
+     * batch_evaluation += v6 * (z_lookup_omega_eval * u + z_lookup_eval)
+     */
+    let mut batch_evaluation = nu_challenges.c_v[0]
+        * (proof.w1_omega_eval.into_fr() * nu_challenges.c_u + proof.w1_eval.into_fr());
+
+    batch_evaluation += nu_challenges.c_v[1]
+        * (proof.w2_omega_eval.into_fr() * nu_challenges.c_u + proof.w2_eval.into_fr());
+
+    batch_evaluation += nu_challenges.c_v[2]
+        * (proof.w3_omega_eval.into_fr() * nu_challenges.c_u + proof.w3_eval.into_fr());
+
+    batch_evaluation += nu_challenges.c_v[3]
+        * (proof.w4_omega_eval.into_fr() * nu_challenges.c_u + proof.w4_eval.into_fr());
+
+    batch_evaluation += nu_challenges.c_v[4]
+        * (proof.s_omega_eval.into_fr() * nu_challenges.c_u + proof.s_eval.into_fr());
+
+    batch_evaluation += nu_challenges.c_v[5]
+        * (proof.z_omega_eval.into_fr() * nu_challenges.c_u + proof.z_eval.into_fr());
+
+    batch_evaluation += nu_challenges.c_v[6]
+        * (proof.z_lookup_omega_eval.into_fr() * nu_challenges.c_u + proof.z_lookup_eval.into_fr());
+
+    /*
+     * batch_evaluation += v7 * Q1_EVAL
+     * batch_evaluation += v8 * Q2_EVAL
+     * batch_evaluation += v9 * Q3_EVAL
+     * batch_evaluation += v10 * Q4_EVAL
+     * batch_evaluation += v11 * QM_EVAL
+     * batch_evaluation += v12 * QC_EVAL
+     * batch_evaluation += v13 * QARITH_EVAL
+     * batch_evaluation += v14 * QSORT_EVAL_LOC
+     * batch_evaluation += v15 * QELLIPTIC_EVAL_LOC
+     * batch_evaluation += v16 * QAUX_EVAL_LOC
+     * batch_evaluation += v17 * SIGMA1_EVAL_LOC
+     * batch_evaluation += v18 * SIGMA2_EVAL_LOC
+     * batch_evaluation += v19 * SIGMA3_EVAL_LOC
+     * batch_evaluation += v20 * SIGMA4_EVAL_LOC
+     */
+
+    batch_evaluation += nu_challenges.c_v[7] * proof.q1_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[8] * proof.q2_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[9] * proof.q3_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[10] * proof.q4_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[11] * proof.qm_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[12] * proof.qc_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[13] * proof.q_arith_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[14] * proof.q_sort_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[15] * proof.q_elliptic_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[16] * proof.q_aux_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[17] * proof.sigma1_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[18] * proof.sigma2_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[19] * proof.sigma3_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[20] * proof.sigma4_eval.into_fr();
+
+    /*
+     * batch_evaluation += v21 * (table1(zw) * u + table1(z))
+     * batch_evaluation += v22 * (table2(zw) * u + table2(z))
+     * batch_evaluation += v23 * (table3(zw) * u + table3(z))
+     * batch_evaluation += v24 * (table4(zw) * u + table4(z))
+     * batch_evaluation += v25 * table_type_eval
+     * batch_evaluation += v26 * id1_eval
+     * batch_evaluation += v27 * id2_eval
+     * batch_evaluation += v28 * id3_eval
+     * batch_evaluation += v29 * id4_eval
+     * batch_evaluation += quotient_eval
+     */
+
+    batch_evaluation += nu_challenges.c_v[21]
+        * (proof.table1_omega_eval.into_fr() * nu_challenges.c_u + proof.table1_eval.into_fr());
+
+    batch_evaluation += nu_challenges.c_v[22]
+        * (proof.table2_omega_eval.into_fr() * nu_challenges.c_u + proof.table2_eval.into_fr());
+
+    batch_evaluation += nu_challenges.c_v[23]
+        * (proof.table3_omega_eval.into_fr() * nu_challenges.c_u + proof.table3_eval.into_fr());
+
+    batch_evaluation += nu_challenges.c_v[24]
+        * (proof.table4_omega_eval.into_fr() * nu_challenges.c_u + proof.table4_eval.into_fr());
+
+    batch_evaluation += nu_challenges.c_v[25] * proof.table_type_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[26] * proof.id1_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[27] * proof.id2_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[28] * proof.id3_eval.into_fr();
+    batch_evaluation += nu_challenges.c_v[29] * proof.id4_eval.into_fr();
+    batch_evaluation += quotient_eval;
+
+    batch_evaluation
 }
 
 #[cfg(test)]
