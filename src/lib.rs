@@ -42,6 +42,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 const PROOF_SIZE: usize = 2144;
+const PUBS_SIZE: usize = 32;
 
 // TODO: Since most of the evaluations are being used as elements of Fr
 // rather than Fq, maybe it is worthwhile to store them as such directly
@@ -441,21 +442,29 @@ struct AuxiliaryEvaluations {
 // been parsed elsewhere. This should be changed to allow for
 // parsing to take place inside 'verify'.
 pub fn verify<H: CurveHooks>(
-    proof_raw: &[u8],
-    public_inputs: &[U256],
-    vk_bytes: &[u8],
+    raw_vk: &[u8],
+    raw_proof: &[u8],
+    pubs: &[[u8; PUBS_SIZE]],
 ) -> Result<(), String> {
     /*
      * PARSE VERIFICATION KEY
      */
-    let vk = VerificationKey::<H>::try_from(vk_bytes).unwrap();
+    let vk = VerificationKey::<H>::try_from(raw_vk).unwrap();
 
     /*
      * PARSE PROOF
      */
-    let proof = Proof::<H>::try_from(proof_raw).unwrap();
+    let proof = Proof::<H>::try_from(raw_proof).unwrap();
 
     // TODO: PARSE RECURSIVE PROOF
+
+    /*
+     * PARSE PUBLIC INPUTS
+     */
+    let public_inputs = &pubs
+        .iter()
+        .map(|pi_bytes| pi_bytes.into_u256())
+        .collect::<Vec<U256>>();
 
     /*
      * GENERATE CHALLENGES
@@ -2938,14 +2947,13 @@ mod tests {
     #[test]
     fn test_verify() {
         use testhooks::TestHooks;
-        let proof = resources::VALID_PROOF;
-        let vk = VALID_VK.as_ref();
+        let raw_proof = resources::VALID_PROOF;
+        let raw_vk = VALID_VK.as_ref();
+        let pi_1 = 10_u32.into_u256().into_bytes();
+        let pubs: &[[u8; 32]] = &[pi_1];
 
         // x = "5"  (witness)
         // y = "10" (public input)
-        assert_eq!(
-            verify::<TestHooks>(&proof, &[10_u32.into_u256()], &vk).unwrap(),
-            ()
-        );
+        assert_eq!(verify::<TestHooks>(&raw_vk, &raw_proof, pubs).unwrap(), ());
     }
 }
