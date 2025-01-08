@@ -541,7 +541,7 @@ pub fn verify<H: CurveHooks>(
      *   ΔPI = ∏ᵢ∈ℓ(wᵢ + β σ(i) + γ) / ∏ᵢ∈ℓ(wᵢ + β σ'(i) + γ)
      */
     let (delta_numerator, delta_denominator) =
-        compute_public_input_delta::<H>(public_inputs, &vk.work_root, &mut challenges);
+        compute_public_input_delta(public_inputs, &vk.work_root, &mut challenges);
 
     // assert_eq!(
     //     delta_numerator,
@@ -558,7 +558,7 @@ pub fn verify<H: CurveHooks>(
      *  k = num roots cut out of Z_H = 4
      */
     let (plookup_delta_numerator, plookup_delta_denominator) =
-        compute_plookup_delta_factor::<H>(vk.circuit_size, &challenges);
+        compute_plookup_delta_factor(vk.circuit_size, &challenges);
 
     // assert_eq!(
     //     plookup_delta_numerator,
@@ -700,7 +700,7 @@ pub fn verify<H: CurveHooks>(
     /*
      * QUOTIENT EVALUATION
      */
-    let quotient_eval = quotient_evaluation::<H>(
+    let quotient_eval = quotient_evaluation(
         &permutation_identity,
         &plookup_identity,
         &arithmetic_identity,
@@ -904,7 +904,7 @@ fn generate_zeta_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]
     hash
 }
 
-fn compute_public_input_delta<H: CurveHooks>(
+fn compute_public_input_delta(
     public_inputs: &[U256],
     work_root: &Fr,
     challenges: &mut Challenges,
@@ -958,10 +958,7 @@ fn compute_public_input_delta<H: CurveHooks>(
     (numerator_value, denominator_value)
 }
 
-fn compute_plookup_delta_factor<H: CurveHooks>(
-    circuit_size: u32,
-    challenges: &Challenges,
-) -> (Fr, Fr) {
+fn compute_plookup_delta_factor(circuit_size: u32, challenges: &Challenges) -> (Fr, Fr) {
     let delta_base = challenges.gamma * (challenges.beta + Fr::one());
     let mut delta_numerator = delta_base;
     {
@@ -1814,7 +1811,7 @@ fn compute_auxiliary_widget_evaluation<H: CurveHooks>(
     )
 }
 
-fn quotient_evaluation<H: CurveHooks>(
+fn quotient_evaluation(
     permutation_identity: &Fr,
     plookup_identity: &Fr,
     arithmetic_identity: &Fr,
