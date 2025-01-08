@@ -29,13 +29,7 @@ mod testhooks;
 use crate::key::{read_fq, read_g1, read_g2, VerificationKey};
 use crate::srs::SRS_G2;
 use ark_bn254_ext::{Config, CurveHooks};
-use ark_ec::{
-    // bn::{G1Prepared, G2Prepared}, // BnConfig
-    pairing::Pairing,
-    short_weierstrass::SWCurveConfig,
-    AffineRepr,
-    CurveGroup,
-};
+use ark_ec::{pairing::Pairing, short_weierstrass::SWCurveConfig, AffineRepr, CurveGroup};
 use ark_ff::{BigInteger, Field, MontConfig, One};
 use ark_models_ext::bn::{BnConfig, G1Prepared, G2Prepared};
 use macros::u256;
@@ -242,7 +236,6 @@ impl<H: CurveHooks> Proof<H> {
     }
 }
 
-// TODO: Refactor all functions to reduce number of arguments.
 #[derive(Debug)]
 pub struct Challenges {
     alpha: Fr,
@@ -413,7 +406,7 @@ impl NuChallenges {
         }
 
         // @follow-up - Why are both v29 and v30 using appending 0x1d to the prior challenge and hashing, should it not change?
-        buffer[32] = 0x1d_u8; // mstore8(0x20, 0x1d)
+        buffer[32] = 0x1d_u8;
         hasher.update(buffer);
         hash.copy_from_slice(&hasher.finalize_reset());
         challenge = hash;
@@ -434,6 +427,14 @@ impl NuChallenges {
 
         Ok(Self { c_v, c_u })
     }
+}
+
+struct AuxiliaryEvaluations {
+    aux_memory_evaluation: Fr,
+    aux_rom_consistency_evaluation: Fr,
+    aux_ram_consistency_evaluation: Fr,
+    aux_non_native_field_evaluation: Fr,
+    aux_limb_accumulator_evaluation: Fr,
 }
 
 // TODO: Current signature assumes that the VerificationKey has
@@ -1686,11 +1687,7 @@ fn compute_auxiliary_identity<H: CurveHooks>(
     proof: &Proof<H>,
     challenges: &mut Challenges,
     index_delta: &Fr,
-    aux_memory_evaluation: &Fr,
-    aux_rom_consistency_evaluation: &Fr,
-    aux_ram_consistency_evaluation: &Fr,
-    aux_non_native_field_evaluation: &Fr,
-    aux_limb_accumulator_evaluation: &Fr,
+    aux_evaluations: &AuxiliaryEvaluations,
 ) -> Fr {
     // timestamp_delta = w_2_omega - w_2
     let timestamp_delta = proof.w2_omega_eval.into_fr() - proof.w2_eval.into_fr();
@@ -1711,15 +1708,17 @@ fn compute_auxiliary_identity<H: CurveHooks>(
      * auxiliary_identity *= alpha_base;
      */
 
-    let mut memory_identity = *aux_rom_consistency_evaluation * proof.q2_eval.into_fr();
+    let mut memory_identity =
+        aux_evaluations.aux_rom_consistency_evaluation * proof.q2_eval.into_fr();
     memory_identity += ram_timestamp_check_identity * proof.q4_eval.into_fr();
-    memory_identity += *aux_memory_evaluation * proof.qm_eval.into_fr();
+    memory_identity += aux_evaluations.aux_memory_evaluation * proof.qm_eval.into_fr();
     memory_identity *= proof.q1_eval.into_fr();
-    memory_identity += *aux_ram_consistency_evaluation * proof.q_arith_eval.into_fr();
+    memory_identity +=
+        aux_evaluations.aux_ram_consistency_evaluation * proof.q_arith_eval.into_fr();
 
-    let mut auxiliary_identity = memory_identity + aux_non_native_field_evaluation;
+    let mut auxiliary_identity = memory_identity + aux_evaluations.aux_non_native_field_evaluation;
 
-    auxiliary_identity += aux_limb_accumulator_evaluation;
+    auxiliary_identity += aux_evaluations.aux_limb_accumulator_evaluation;
 
     auxiliary_identity *= proof.q_aux_eval.into_fr();
 
@@ -1804,16 +1803,15 @@ fn compute_auxiliary_widget_evaluation<H: CurveHooks>(
     //     crate::macros::fr!("0bd9ace98d894621c4a5c719f2cbe4fea6b8522638d43cdd3868587a84cf433d")
     // );
 
-    compute_auxiliary_identity::<H>(
-        proof,
-        challenges,
-        &index_delta,
-        &aux_memory_evaluation,
-        &aux_rom_consistency_evaluation,
-        &aux_ram_consistency_evaluation,
-        &aux_non_native_field_evaluation,
-        &aux_limb_accumulator_evaluation,
-    )
+    let aux_evaluations = AuxiliaryEvaluations {
+        aux_memory_evaluation,
+        aux_rom_consistency_evaluation,
+        aux_ram_consistency_evaluation,
+        aux_non_native_field_evaluation,
+        aux_limb_accumulator_evaluation,
+    };
+
+    compute_auxiliary_identity::<H>(proof, challenges, &index_delta, &aux_evaluations)
 }
 
 fn quotient_evaluation(
