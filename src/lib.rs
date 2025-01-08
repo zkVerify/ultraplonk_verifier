@@ -38,6 +38,11 @@ use macros::u256;
 use sha3::{Digest, Keccak256};
 use utils::{IntoBytes, IntoFr, IntoU256};
 
+use core::iter::Iterator;
+use core::result::Result;
+use core::result::Result::Err;
+use core::result::Result::Ok;
+
 pub use types::*;
 
 extern crate alloc;
@@ -323,9 +328,9 @@ impl NuChallenges {
         proof: &Proof<H>,
         c_current: &[u8],
         quotient_eval: &Fr,
-    ) -> Result<Self, String> {
+    ) -> Result<Self, ()> {
         if c_current.len() != 32 {
-            return Err("Current challenge length much be exactly 32 bytes".to_string());
+            return Err(());
         }
         let current_challenge = c_current;
 

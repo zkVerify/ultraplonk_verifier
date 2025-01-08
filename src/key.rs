@@ -19,7 +19,12 @@ use crate::utils::{IntoFq, IntoFr};
 use crate::{Fq, Fq2, VK_SIZE};
 use crate::{Fr, G1, G2, U256};
 use ark_bn254_ext::CurveHooks;
+use core::convert::TryFrom;
 use core::convert::TryInto;
+
+use core::result::Result;
+use core::result::Result::Err;
+use core::result::Result::Ok;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct VerificationKey<H: CurveHooks> {
@@ -166,10 +171,10 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
 }
 
 // Parse point on G1
-pub(crate) fn read_g1<H: CurveHooks>(data: &[u8], reverse: bool) -> Result<G1<H>, String> {
+pub(crate) fn read_g1<H: CurveHooks>(data: &[u8], reverse: bool) -> Result<G1<H>, ()> {
     // VerificationKeyError
     if data.len() != 64 {
-        return Err("Input slice must be exactly 64 bytes.".to_string());
+        return Err(());
     }
 
     let x: Fq;
@@ -187,10 +192,10 @@ pub(crate) fn read_g1<H: CurveHooks>(data: &[u8], reverse: bool) -> Result<G1<H>
 }
 
 // Parse point on G2
-pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, String> {
+pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, ()> {
     // VerificationKeyError
     if data.len() != 128 {
-        return Err("Input slice must be exactly 128 bytes.".to_string());
+        return Err(());
     }
 
     let x_c0 = read_fq(&data[0..32]).unwrap();
@@ -204,10 +209,10 @@ pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, String> {
     Ok(G2::<H>::new(x, y))
 }
 
-pub(crate) fn read_fq(data: &[u8]) -> Result<Fq, String> {
+pub(crate) fn read_fq(data: &[u8]) -> Result<Fq, ()> {
     // VerificationKeyError
     if data.len() != 32 {
-        return Err("Input slice must be exactly 32 bytes.".to_string());
+        return Err(());
     }
 
     // Convert bytes to limbs manually
@@ -223,10 +228,10 @@ pub(crate) fn read_fq(data: &[u8]) -> Result<Fq, String> {
     Ok(bigint.into_fq())
 }
 
-pub(crate) fn read_fr(data: &[u8]) -> Result<Fr, String> {
+pub(crate) fn read_fr(data: &[u8]) -> Result<Fr, ()> {
     // VerificationKeyError
     if data.len() != 32 {
-        return Err("Input slice must be exactly 32 bytes.".to_string());
+        return Err(());
     }
 
     // Convert bytes to limbs manually
