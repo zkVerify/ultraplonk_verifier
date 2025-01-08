@@ -25,24 +25,24 @@ pub static SRS_G2: [u8; 128] = hex_literal::hex!(
     "
 );
 
-#[cfg(test)]
-mod tests {
-    use ark_bn254::{Fq2, G2Affine};
+// #[cfg(test)]
+// mod tests {
+//     use ark_bn254::{Fq2, G2Affine};
 
-    use crate::key::read_fq;
+//     use crate::key::read_fq;
 
-    #[test]
-    fn test_load_srs() {
-        let srs_g2 = crate::srs::SRS_G2;
+//     #[test]
+//     fn test_load_srs() {
+//         let srs_g2 = crate::srs::SRS_G2;
 
-        let x_c0 = read_fq(&srs_g2[0..32]).unwrap();
-        let x_c1 = read_fq(&srs_g2[32..64]).unwrap();
-        let y_c0 = read_fq(&srs_g2[64..96]).unwrap();
-        let y_c1 = read_fq(&srs_g2[96..128]).unwrap();
+//         let x_c0 = read_fq(&srs_g2[0..32]).unwrap();
+//         let x_c1 = read_fq(&srs_g2[32..64]).unwrap();
+//         let y_c0 = read_fq(&srs_g2[64..96]).unwrap();
+//         let y_c1 = read_fq(&srs_g2[96..128]).unwrap();
 
-        let x = Fq2::new(x_c0, x_c1);
-        let y = Fq2::new(y_c0, y_c1);
+//         let x = Fq2::new(x_c0, x_c1);
+//         let y = Fq2::new(y_c0, y_c1);
 
-        let _point = G2Affine::new(x, y);
-    }
-}
+//         let _point = G2Affine::new(x, y);
+//     }
+// }

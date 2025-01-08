@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+ark-bn254-ext = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false }
+ark-models-ext = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false }
+test-utils = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false }
 ark-bn254 = "0.4.0"
 ark-serialize = "0.4.0"
 ark-test-curves = "0.4.0"

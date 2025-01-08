@@ -14,10 +14,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use ark_bn254_ext::{CurveHooks, G1Affine, G2Affine};
+pub use ark_bn254_ext::{Fq, Fq2, Fr, FrConfig};
+
 pub type U256 = ark_ff::BigInteger256;
-pub type G1 = ark_bn254::G1Affine;
-pub type G2 = ark_bn254::G2Affine;
-pub type Fr = ark_bn254::Fr;
-pub type Fq = ark_bn254::Fq;
-pub type FrConfig = ark_bn254::FrConfig;
-pub type Bn254 = ark_bn254::Bn254;
+pub type G1<H: CurveHooks> = G1Affine<H>;
+pub type G1Projective<H: CurveHooks> = ark_bn254_ext::G1Projective<H>;
+pub type G2<H: CurveHooks> = G2Affine<H>;
+pub type G2Projective<H: CurveHooks> = ark_bn254_ext::G2Projective<H>;
+pub type Bn254<H: CurveHooks> = ark_bn254_ext::Bn254<H>;
