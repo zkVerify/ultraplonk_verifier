@@ -15,9 +15,6 @@
 // limitations under the License.
 
 use crate::U256;
-use core::option::Option;
-use core::option::Option::None;
-use core::option::Option::Some;
 
 macro_rules! u256 {
     ($s:literal) => {{

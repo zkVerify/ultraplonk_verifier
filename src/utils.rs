@@ -149,7 +149,7 @@ impl IntoBytes for Fq {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use super::*;
     use crate::macros::decode;

@@ -38,14 +38,10 @@ use macros::u256;
 use sha3::{Digest, Keccak256};
 use utils::{IntoBytes, IntoFr, IntoU256};
 
-use core::iter::Iterator;
-use core::result::Result;
-use core::result::Result::Err;
-use core::result::Result::Ok;
-
 pub use types::*;
 
 extern crate alloc;
+extern crate core;
 use alloc::vec::Vec;
 
 const PROOF_SIZE: usize = 2144; // = 67 * 32
@@ -474,12 +470,13 @@ pub fn verify<H: CurveHooks>(
     /*
      * PARSE VERIFICATION KEY
      */
-    let vk = VerificationKey::<H>::try_from(raw_vk).unwrap();
+    let vk =
+        VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::InvalidVerificationKey)?;
 
     /*
      * PARSE PROOF
      */
-    let proof = Proof::<H>::try_from(raw_proof).unwrap();
+    let proof = Proof::<H>::try_from(raw_proof).map_err(|_| VerifyError::InvalidProofData)?;
 
     // TODO: PARSE RECURSIVE PROOF
 
@@ -2931,47 +2928,47 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::macros::u256;
+    // use crate::macros::u256;
     use crate::resources::VALID_VK;
 
-    #[test]
-    fn test_parse_proof() {
-        let proof = resources::VALID_PROOF;
-        println!("{:?}", proof);
-    }
+    // #[test]
+    // fn test_parse_proof() {
+    //     let proof = resources::VALID_PROOF;
+    //     println!("{:?}", proof);
+    // }
 
-    #[test]
-    fn test_foo() {
-        println!(
-            "{:?}",
-            u256!("0000001000000000000000000000000000000000000000000000000000000000") //.into_bytes()
-        );
-        println!(
-            "{:?}",
-            u256!("0000000100000000000000000000000000000000000000000000000000000000")
-        );
+    // #[test]
+    // fn test_foo() {
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000001000000000000000000000000000000000000000000000000000000000") //.into_bytes()
+    //     );
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000000100000000000000000000000000000000000000000000000000000000")
+    //     );
 
-        println!(
-            "{:?}",
-            u256!("0000001000000001000000000000000000000000000000000000000000000000") // value that gets hashed
-        );
-        //         00000010 00000001 00000000 00000000 00000000 00000000 00000000 00000000
-        //         <------4th------> <------3rd------> <------2nd------> <------1st------>
-        //         0 0 0 16  0 0 0 1  0 0 0 0  0 0 0 0 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000001000000001000000000000000000000000000000000000000000000000") // value that gets hashed
+    //     );
+    //     //         00000010 00000001 00000000 00000000 00000000 00000000 00000000 00000000
+    //     //         <------4th------> <------3rd------> <------2nd------> <------1st------>
+    //     //         0 0 0 16  0 0 0 1  0 0 0 0  0 0 0 0 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0
 
-        println!(
-            "{:?}",
-            u256!("0000001000000000000000000000000000000000000000000000000000000000").into_bytes()
-        );
-        println!(
-            "{:?}",
-            u256!("0000000100000000000000000000000000000000000000000000000000000000").into_bytes()
-        );
-        println!(
-            "{:?}",
-            u256!("0000001000000001000000000000000000000000000000000000000000000000").into_bytes()
-        );
-    }
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000001000000000000000000000000000000000000000000000000000000000").into_bytes()
+    //     );
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000000100000000000000000000000000000000000000000000000000000000").into_bytes()
+    //     );
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000001000000001000000000000000000000000000000000000000000000000").into_bytes()
+    //     );
+    // }
 
     #[test]
     fn test_verify() {

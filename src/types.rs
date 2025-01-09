@@ -19,7 +19,7 @@ use ark_bn254_ext::{G1Affine, G2Affine};
 
 pub type U256 = ark_ff::BigInteger256;
 pub type G1<H> = G1Affine<H>;
-pub type G1Projective<H> = ark_bn254_ext::G1Projective<H>;
+// pub type G1Prepared<H> = <ark_models_ext::bn::Bn<ark_bn254_ext::Config<H>> as Pairing>::G1Prepared;
 pub type G2<H> = G2Affine<H>;
-pub type G2Projective<H> = ark_bn254_ext::G2Projective<H>;
+// pub type G2Prepared<H> = <ark_models_ext::bn::Bn<ark_bn254_ext::Config<H>> as Pairing>::G2Prepared;
 pub type Bn254<H> = ark_bn254_ext::Bn254<H>;

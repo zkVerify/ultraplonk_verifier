@@ -16,15 +16,8 @@
 
 use crate::errors::VerifyError;
 use crate::utils::{IntoFq, IntoFr};
-use crate::{Fq, Fq2, VK_SIZE};
-use crate::{Fr, G1, G2, U256};
+use crate::{Fq, Fq2, Fr, G1, G2, U256, VK_SIZE};
 use ark_bn254_ext::CurveHooks;
-use core::convert::TryFrom;
-use core::convert::TryInto;
-
-use core::result::Result;
-use core::result::Result::Err;
-use core::result::Result::Ok;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct VerificationKey<H: CurveHooks> {
