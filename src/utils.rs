@@ -14,7 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::errors::{FieldError, GroupError};
+use crate::types::G1;
 use crate::{Fq, Fr, U256};
+use ark_bn254_ext::CurveHooks;
 use ark_ff::PrimeField;
 
 pub(crate) trait IntoFq {
@@ -147,6 +150,55 @@ impl IntoBytes for Fq {
     fn into_bytes(self) -> [u8; 32] {
         self.into_bigint().into_bytes()
     }
+}
+
+// Parsing utility for points in G1
+pub(crate) fn read_g1_util<H: CurveHooks>(data: &[u8], reverse: bool) -> Result<G1<H>, GroupError> {
+    if data.len() != 64 {
+        return Err(GroupError::InvalidSliceLength);
+    }
+
+    let x: Fq;
+    let y: Fq;
+
+    if reverse {
+        y = read_fq_util(&data[0..32]).unwrap();
+        x = read_fq_util(&data[32..64]).unwrap();
+    } else {
+        x = read_fq_util(&data[0..32]).unwrap();
+        y = read_fq_util(&data[32..64]).unwrap();
+    }
+
+    let point = G1::new_unchecked(x, y);
+
+    // Validate point
+    if !point.is_on_curve() {
+        return Err(GroupError::NotOnCurve);
+    }
+    if !point.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(GroupError::NotInSubgroup);
+    }
+
+    Ok(point)
+}
+
+// Utility function for parsing points in G2
+pub(crate) fn read_fq_util(data: &[u8]) -> Result<Fq, FieldError> {
+    if data.len() != 32 {
+        return Err(FieldError::InvalidSliceLength);
+    }
+
+    // Convert bytes to limbs manually
+    let mut limbs = [0u64; 4];
+    for (i, chunk) in data.chunks(8).enumerate() {
+        limbs[3 - i] = u64::from_be_bytes(chunk.try_into().unwrap());
+    }
+
+    // Create a U256
+    let bigint = U256::new(limbs);
+
+    // Try to construct an Fq element
+    Ok(bigint.into_fq())
 }
 
 #[cfg(all(test, feature = "std"))]

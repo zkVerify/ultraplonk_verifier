@@ -26,3 +26,17 @@ pub enum VerifyError {
     /// Provided an invalid verification key.
     InvalidVerificationKey,
 }
+
+#[derive(Debug)]
+pub enum GroupError {
+    InvalidSliceLength,
+    NotOnCurve,
+    NotInSubgroup,
+}
+
+#[derive(Debug)]
+pub enum FieldError {
+    InvalidSliceLength,
+    InvalidU512Encoding,
+    NotMember,
+}

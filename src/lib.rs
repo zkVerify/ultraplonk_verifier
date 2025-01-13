@@ -19,15 +19,15 @@
 mod errors;
 mod key;
 mod macros;
+mod proof;
 mod resources;
 mod srs;
+mod testhooks;
 mod types;
 mod utils;
 
-#[cfg(test)]
-mod testhooks;
-
-use crate::key::{read_fq, read_g1, read_g2, VerificationKey};
+use crate::key::{read_g2, VerificationKey};
+use crate::proof::Proof;
 use crate::srs::SRS_G2;
 use ark_bn254_ext::{Config, CurveHooks};
 use ark_ec::{pairing::Pairing, short_weierstrass::SWCurveConfig, AffineRepr, CurveGroup};
@@ -46,217 +46,7 @@ use alloc::vec::Vec;
 
 const PROOF_SIZE: usize = 2144; // = 67 * 32
 const PUBS_SIZE: usize = 32;
-const VK_SIZE: usize = 1577; // = 2 * 4 + 49 * 32 + 1 // TODO: Revise once recursive proofs are supported
-
-// TODO: Since most of the evaluations are being used as elements of Fr
-// rather than Fq, maybe it is worthwhile to store them as such directly
-// to save on having to convert into Fr all the time.
-#[derive(Debug)]
-pub struct Proof<H: CurveHooks> {
-    w1: G1<H>,
-    w2: G1<H>,
-    w3: G1<H>,
-    w4: G1<H>,
-    s: G1<H>,
-    z: G1<H>,
-    z_lookup: G1<H>,
-    t1: G1<H>,
-    t2: G1<H>,
-    t3: G1<H>,
-    t4: G1<H>,
-    w1_eval: Fq,
-    w2_eval: Fq,
-    w3_eval: Fq,
-    w4_eval: Fq,
-    s_eval: Fq,
-    z_eval: Fq,
-    z_lookup_eval: Fq,
-    q1_eval: Fq,
-    q2_eval: Fq,
-    q3_eval: Fq,
-    q4_eval: Fq,
-    qm_eval: Fq,
-    qc_eval: Fq,
-    q_arith_eval: Fq,
-    q_sort_eval: Fq,
-    q_elliptic_eval: Fq,
-    q_aux_eval: Fq,
-    sigma1_eval: Fq,
-    sigma2_eval: Fq,
-    sigma3_eval: Fq,
-    sigma4_eval: Fq,
-    table1_eval: Fq,
-    table2_eval: Fq,
-    table3_eval: Fq,
-    table4_eval: Fq,
-    table_type_eval: Fq,
-    id1_eval: Fq,
-    id2_eval: Fq,
-    id3_eval: Fq,
-    id4_eval: Fq,
-    w1_omega_eval: Fq,
-    w2_omega_eval: Fq,
-    w3_omega_eval: Fq,
-    w4_omega_eval: Fq,
-    s_omega_eval: Fq,
-    z_omega_eval: Fq,
-    z_lookup_omega_eval: Fq,
-    table1_omega_eval: Fq,
-    table2_omega_eval: Fq,
-    table3_omega_eval: Fq,
-    table4_omega_eval: Fq,
-    pi_z: G1<H>,
-    pi_z_omega: G1<H>,
-}
-
-impl<H: CurveHooks> Proof<H> {
-    fn try_from(proof: &[u8]) -> Result<Self, VerifyError> {
-        if proof.len() != PROOF_SIZE {
-            return Err(VerifyError::InvalidProofData);
-        }
-
-        let w1 = read_g1::<H>(&proof[0..64], true).map_err(|_| VerifyError::InvalidProofData)?;
-        let w2 = read_g1::<H>(&proof[64..128], true).map_err(|_| VerifyError::InvalidProofData)?;
-        let w3 = read_g1::<H>(&proof[128..192], true).map_err(|_| VerifyError::InvalidProofData)?;
-        let w4 = read_g1::<H>(&proof[192..256], true).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let s = read_g1::<H>(&proof[256..320], true).map_err(|_| VerifyError::InvalidProofData)?;
-        let z = read_g1::<H>(&proof[320..384], true).map_err(|_| VerifyError::InvalidProofData)?;
-        let z_lookup =
-            read_g1::<H>(&proof[384..448], true).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let t1 = read_g1::<H>(&proof[448..512], true).map_err(|_| VerifyError::InvalidProofData)?;
-        let t2 = read_g1::<H>(&proof[512..576], true).map_err(|_| VerifyError::InvalidProofData)?;
-        let t3 = read_g1::<H>(&proof[576..640], true).map_err(|_| VerifyError::InvalidProofData)?;
-        let t4 = read_g1::<H>(&proof[640..704], true).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let w1_eval = read_fq(&proof[704..736]).map_err(|_| VerifyError::InvalidProofData)?;
-        let w2_eval = read_fq(&proof[736..768]).map_err(|_| VerifyError::InvalidProofData)?;
-        let w3_eval = read_fq(&proof[768..800]).map_err(|_| VerifyError::InvalidProofData)?;
-        let w4_eval = read_fq(&proof[800..832]).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let s_eval = read_fq(&proof[832..864]).map_err(|_| VerifyError::InvalidProofData)?;
-        let z_eval = read_fq(&proof[864..896]).map_err(|_| VerifyError::InvalidProofData)?;
-        let z_lookup_eval = read_fq(&proof[896..928]).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let q1_eval = read_fq(&proof[928..960]).map_err(|_| VerifyError::InvalidProofData)?;
-        let q2_eval = read_fq(&proof[960..992]).map_err(|_| VerifyError::InvalidProofData)?;
-        let q3_eval = read_fq(&proof[992..1024]).map_err(|_| VerifyError::InvalidProofData)?;
-        let q4_eval = read_fq(&proof[1024..1056]).map_err(|_| VerifyError::InvalidProofData)?;
-        let qm_eval = read_fq(&proof[1056..1088]).map_err(|_| VerifyError::InvalidProofData)?;
-        let qc_eval = read_fq(&proof[1088..1120]).map_err(|_| VerifyError::InvalidProofData)?;
-        let q_arith_eval =
-            read_fq(&proof[1120..1152]).map_err(|_| VerifyError::InvalidProofData)?;
-        let q_sort_eval = read_fq(&proof[1152..1184]).map_err(|_| VerifyError::InvalidProofData)?;
-        let q_elliptic_eval =
-            read_fq(&proof[1184..1216]).map_err(|_| VerifyError::InvalidProofData)?;
-        let q_aux_eval = read_fq(&proof[1216..1248]).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let sigma1_eval = read_fq(&proof[1248..1280]).map_err(|_| VerifyError::InvalidProofData)?;
-        let sigma2_eval = read_fq(&proof[1280..1312]).map_err(|_| VerifyError::InvalidProofData)?;
-        let sigma3_eval = read_fq(&proof[1312..1344]).map_err(|_| VerifyError::InvalidProofData)?;
-        let sigma4_eval = read_fq(&proof[1344..1376]).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let table1_eval = read_fq(&proof[1376..1408]).map_err(|_| VerifyError::InvalidProofData)?;
-        let table2_eval = read_fq(&proof[1408..1440]).map_err(|_| VerifyError::InvalidProofData)?;
-        let table3_eval = read_fq(&proof[1440..1472]).map_err(|_| VerifyError::InvalidProofData)?;
-        let table4_eval = read_fq(&proof[1472..1504]).map_err(|_| VerifyError::InvalidProofData)?;
-        let table_type_eval =
-            read_fq(&proof[1504..1536]).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let id1_eval = read_fq(&proof[1536..1568]).map_err(|_| VerifyError::InvalidProofData)?;
-        let id2_eval = read_fq(&proof[1568..1600]).map_err(|_| VerifyError::InvalidProofData)?;
-        let id3_eval = read_fq(&proof[1600..1632]).map_err(|_| VerifyError::InvalidProofData)?;
-        let id4_eval = read_fq(&proof[1632..1664]).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let w1_omega_eval =
-            read_fq(&proof[1664..1696]).map_err(|_| VerifyError::InvalidProofData)?;
-        let w2_omega_eval =
-            read_fq(&proof[1696..1728]).map_err(|_| VerifyError::InvalidProofData)?;
-        let w3_omega_eval =
-            read_fq(&proof[1728..1760]).map_err(|_| VerifyError::InvalidProofData)?;
-        let w4_omega_eval =
-            read_fq(&proof[1760..1792]).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let s_omega_eval =
-            read_fq(&proof[1792..1824]).map_err(|_| VerifyError::InvalidProofData)?;
-        let z_omega_eval =
-            read_fq(&proof[1824..1856]).map_err(|_| VerifyError::InvalidProofData)?;
-        let z_lookup_omega_eval =
-            read_fq(&proof[1856..1888]).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let table1_omega_eval =
-            read_fq(&proof[1888..1920]).map_err(|_| VerifyError::InvalidProofData)?;
-        let table2_omega_eval =
-            read_fq(&proof[1920..1952]).map_err(|_| VerifyError::InvalidProofData)?;
-        let table3_omega_eval =
-            read_fq(&proof[1952..1984]).map_err(|_| VerifyError::InvalidProofData)?;
-        let table4_omega_eval =
-            read_fq(&proof[1984..2016]).map_err(|_| VerifyError::InvalidProofData)?;
-
-        let pi_z =
-            read_g1::<H>(&proof[2016..2080], true).map_err(|_| VerifyError::InvalidProofData)?;
-        let pi_z_omega =
-            read_g1::<H>(&proof[2080..2144], true).map_err(|_| VerifyError::InvalidProofData)?;
-
-        Ok(Proof::<H> {
-            w1,
-            w2,
-            w3,
-            w4,
-            s,
-            z,
-            z_lookup,
-            t1,
-            t2,
-            t3,
-            t4,
-            w1_eval,
-            w2_eval,
-            w3_eval,
-            w4_eval,
-            s_eval,
-            z_eval,
-            z_lookup_eval,
-            q1_eval,
-            q2_eval,
-            q3_eval,
-            q4_eval,
-            qm_eval,
-            qc_eval,
-            q_arith_eval,
-            q_sort_eval,
-            q_elliptic_eval,
-            q_aux_eval,
-            sigma1_eval,
-            sigma2_eval,
-            sigma3_eval,
-            sigma4_eval,
-            table1_eval,
-            table2_eval,
-            table3_eval,
-            table4_eval,
-            table_type_eval,
-            id1_eval,
-            id2_eval,
-            id3_eval,
-            id4_eval,
-            w1_omega_eval,
-            w2_omega_eval,
-            w3_omega_eval,
-            w4_omega_eval,
-            s_omega_eval,
-            z_omega_eval,
-            z_lookup_omega_eval,
-            table1_omega_eval,
-            table2_omega_eval,
-            table3_omega_eval,
-            table4_omega_eval,
-            pi_z,
-            pi_z_omega,
-        })
-    }
-}
+const VK_SIZE: usize = 1715; // TODO: Revise if necessary once recursive proofs are supported
 
 #[derive(Debug)]
 pub struct Challenges {
@@ -459,9 +249,6 @@ struct AuxiliaryEvaluations {
     aux_limb_accumulator_evaluation: Fr,
 }
 
-// TODO: Current signature assumes that the VerificationKey has
-// been parsed elsewhere. This should be changed to allow for
-// parsing to take place inside 'verify'.
 pub fn verify<H: CurveHooks>(
     raw_vk: &[u8],
     raw_proof: &[u8],
@@ -2284,7 +2071,7 @@ fn perform_final_checks<H: CurveHooks>(
     // Verification key fields verified to be on curve at contract deployment
     scalar = nu_challenges.c_v[13];
     // accumulator_2 = v13.[QARITH]
-    accumulator2 = vk.q_arith.into_group() * scalar;
+    accumulator2 = vk.q_arithmetic.into_group() * scalar;
     // accumulator = accumulator + accumulator_2
     accumulator += accumulator2;
 
