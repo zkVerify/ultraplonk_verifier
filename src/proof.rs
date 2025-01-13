@@ -87,7 +87,7 @@ pub struct Proof<H: CurveHooks> {
 }
 
 fn read_proof_g1<H: CurveHooks>(data: &[u8], offset: &mut usize) -> Result<G1<H>, ProofError> {
-    let res = read_g1_util::<H>(&data[*offset..*offset + 64], true)
+    read_g1_util::<H>(&data[*offset..*offset + 64], true)
         .map_err(|e| match e {
             GroupError::NotOnCurve => ProofError::PointNotOnCurve,
             GroupError::NotInSubgroup => ProofError::PointNotInCorrectSubgroup,
@@ -95,12 +95,11 @@ fn read_proof_g1<H: CurveHooks>(data: &[u8], offset: &mut usize) -> Result<G1<H>
         })
         .inspect(|_| {
             *offset += 64;
-        });
-    res
+        })
 }
 
 fn read_proof_fq(data: &[u8], offset: &mut usize) -> Result<Fq, ProofError> {
-    let res = read_fq_util(&data[*offset..*offset + 32])
+    read_fq_util(&data[*offset..*offset + 32])
         .map_err(|e| match e {
             FieldError::NotMember => ProofError::NotMember,
             FieldError::InvalidSliceLength => ProofError::IncorrectBufferSize,
@@ -108,8 +107,7 @@ fn read_proof_fq(data: &[u8], offset: &mut usize) -> Result<Fq, ProofError> {
         })
         .inspect(|_| {
             *offset += 32;
-        });
-    res
+        })
 }
 
 impl<H: CurveHooks> TryFrom<&[u8]> for Proof<H> {
@@ -122,72 +120,72 @@ impl<H: CurveHooks> TryFrom<&[u8]> for Proof<H> {
 
         let mut offset = 0;
 
-        let w1 = read_proof_g1::<H>(&proof, &mut offset)?;
-        let w2 = read_proof_g1::<H>(&proof, &mut offset)?;
-        let w3 = read_proof_g1::<H>(&proof, &mut offset)?;
-        let w4 = read_proof_g1::<H>(&proof, &mut offset)?;
+        let w1 = read_proof_g1::<H>(proof, &mut offset)?;
+        let w2 = read_proof_g1::<H>(proof, &mut offset)?;
+        let w3 = read_proof_g1::<H>(proof, &mut offset)?;
+        let w4 = read_proof_g1::<H>(proof, &mut offset)?;
 
-        let s = read_proof_g1::<H>(&proof, &mut offset)?;
-        let z = read_proof_g1::<H>(&proof, &mut offset)?;
-        let z_lookup = read_proof_g1::<H>(&proof, &mut offset)?;
+        let s = read_proof_g1::<H>(proof, &mut offset)?;
+        let z = read_proof_g1::<H>(proof, &mut offset)?;
+        let z_lookup = read_proof_g1::<H>(proof, &mut offset)?;
 
-        let t1 = read_proof_g1::<H>(&proof, &mut offset)?;
-        let t2 = read_proof_g1::<H>(&proof, &mut offset)?;
-        let t3 = read_proof_g1::<H>(&proof, &mut offset)?;
-        let t4 = read_proof_g1::<H>(&proof, &mut offset)?;
+        let t1 = read_proof_g1::<H>(proof, &mut offset)?;
+        let t2 = read_proof_g1::<H>(proof, &mut offset)?;
+        let t3 = read_proof_g1::<H>(proof, &mut offset)?;
+        let t4 = read_proof_g1::<H>(proof, &mut offset)?;
 
-        let w1_eval = read_proof_fq(&proof, &mut offset)?;
-        let w2_eval = read_proof_fq(&proof, &mut offset)?;
-        let w3_eval = read_proof_fq(&proof, &mut offset)?;
-        let w4_eval = read_proof_fq(&proof, &mut offset)?;
+        let w1_eval = read_proof_fq(proof, &mut offset)?;
+        let w2_eval = read_proof_fq(proof, &mut offset)?;
+        let w3_eval = read_proof_fq(proof, &mut offset)?;
+        let w4_eval = read_proof_fq(proof, &mut offset)?;
 
-        let s_eval = read_proof_fq(&proof, &mut offset)?;
-        let z_eval = read_proof_fq(&proof, &mut offset)?;
-        let z_lookup_eval = read_proof_fq(&proof, &mut offset)?;
+        let s_eval = read_proof_fq(proof, &mut offset)?;
+        let z_eval = read_proof_fq(proof, &mut offset)?;
+        let z_lookup_eval = read_proof_fq(proof, &mut offset)?;
 
-        let q1_eval = read_proof_fq(&proof, &mut offset)?;
-        let q2_eval = read_proof_fq(&proof, &mut offset)?;
-        let q3_eval = read_proof_fq(&proof, &mut offset)?;
-        let q4_eval = read_proof_fq(&proof, &mut offset)?;
-        let qm_eval = read_proof_fq(&proof, &mut offset)?;
-        let qc_eval = read_proof_fq(&proof, &mut offset)?;
-        let q_arith_eval = read_proof_fq(&proof, &mut offset)?;
-        let q_sort_eval = read_proof_fq(&proof, &mut offset)?;
-        let q_elliptic_eval = read_proof_fq(&proof, &mut offset)?;
-        let q_aux_eval = read_proof_fq(&proof, &mut offset)?;
+        let q1_eval = read_proof_fq(proof, &mut offset)?;
+        let q2_eval = read_proof_fq(proof, &mut offset)?;
+        let q3_eval = read_proof_fq(proof, &mut offset)?;
+        let q4_eval = read_proof_fq(proof, &mut offset)?;
+        let qm_eval = read_proof_fq(proof, &mut offset)?;
+        let qc_eval = read_proof_fq(proof, &mut offset)?;
+        let q_arith_eval = read_proof_fq(proof, &mut offset)?;
+        let q_sort_eval = read_proof_fq(proof, &mut offset)?;
+        let q_elliptic_eval = read_proof_fq(proof, &mut offset)?;
+        let q_aux_eval = read_proof_fq(proof, &mut offset)?;
 
-        let sigma1_eval = read_proof_fq(&proof, &mut offset)?;
-        let sigma2_eval = read_proof_fq(&proof, &mut offset)?;
-        let sigma3_eval = read_proof_fq(&proof, &mut offset)?;
-        let sigma4_eval = read_proof_fq(&proof, &mut offset)?;
+        let sigma1_eval = read_proof_fq(proof, &mut offset)?;
+        let sigma2_eval = read_proof_fq(proof, &mut offset)?;
+        let sigma3_eval = read_proof_fq(proof, &mut offset)?;
+        let sigma4_eval = read_proof_fq(proof, &mut offset)?;
 
-        let table1_eval = read_proof_fq(&proof, &mut offset)?;
-        let table2_eval = read_proof_fq(&proof, &mut offset)?;
-        let table3_eval = read_proof_fq(&proof, &mut offset)?;
-        let table4_eval = read_proof_fq(&proof, &mut offset)?;
-        let table_type_eval = read_proof_fq(&proof, &mut offset)?;
+        let table1_eval = read_proof_fq(proof, &mut offset)?;
+        let table2_eval = read_proof_fq(proof, &mut offset)?;
+        let table3_eval = read_proof_fq(proof, &mut offset)?;
+        let table4_eval = read_proof_fq(proof, &mut offset)?;
+        let table_type_eval = read_proof_fq(proof, &mut offset)?;
 
-        let id1_eval = read_proof_fq(&proof, &mut offset)?;
-        let id2_eval = read_proof_fq(&proof, &mut offset)?;
-        let id3_eval = read_proof_fq(&proof, &mut offset)?;
-        let id4_eval = read_proof_fq(&proof, &mut offset)?;
+        let id1_eval = read_proof_fq(proof, &mut offset)?;
+        let id2_eval = read_proof_fq(proof, &mut offset)?;
+        let id3_eval = read_proof_fq(proof, &mut offset)?;
+        let id4_eval = read_proof_fq(proof, &mut offset)?;
 
-        let w1_omega_eval = read_proof_fq(&proof, &mut offset)?;
-        let w2_omega_eval = read_proof_fq(&proof, &mut offset)?;
-        let w3_omega_eval = read_proof_fq(&proof, &mut offset)?;
-        let w4_omega_eval = read_proof_fq(&proof, &mut offset)?;
+        let w1_omega_eval = read_proof_fq(proof, &mut offset)?;
+        let w2_omega_eval = read_proof_fq(proof, &mut offset)?;
+        let w3_omega_eval = read_proof_fq(proof, &mut offset)?;
+        let w4_omega_eval = read_proof_fq(proof, &mut offset)?;
 
-        let s_omega_eval = read_proof_fq(&proof, &mut offset)?;
-        let z_omega_eval = read_proof_fq(&proof, &mut offset)?;
-        let z_lookup_omega_eval = read_proof_fq(&proof, &mut offset)?;
+        let s_omega_eval = read_proof_fq(proof, &mut offset)?;
+        let z_omega_eval = read_proof_fq(proof, &mut offset)?;
+        let z_lookup_omega_eval = read_proof_fq(proof, &mut offset)?;
 
-        let table1_omega_eval = read_proof_fq(&proof, &mut offset)?;
-        let table2_omega_eval = read_proof_fq(&proof, &mut offset)?;
-        let table3_omega_eval = read_proof_fq(&proof, &mut offset)?;
-        let table4_omega_eval = read_proof_fq(&proof, &mut offset)?;
+        let table1_omega_eval = read_proof_fq(proof, &mut offset)?;
+        let table2_omega_eval = read_proof_fq(proof, &mut offset)?;
+        let table3_omega_eval = read_proof_fq(proof, &mut offset)?;
+        let table4_omega_eval = read_proof_fq(proof, &mut offset)?;
 
-        let pi_z = read_proof_g1::<H>(&proof, &mut offset)?;
-        let pi_z_omega = read_proof_g1::<H>(&proof, &mut offset)?;
+        let pi_z = read_proof_g1::<H>(proof, &mut offset)?;
+        let pi_z_omega = read_proof_g1::<H>(proof, &mut offset)?;
 
         Ok(Proof::<H> {
             w1,
