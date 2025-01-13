@@ -604,27 +604,11 @@ pub fn verify<H: CurveHooks>(
  * Generate initial challenge
  */
 fn generate_initial_challenge(n: u32, num_public_inputs: u32) -> [u8; 32] {
-    let mut hasher = Keccak256::new();
-    let mut n = n.into_u256();
-    let mut num_public_inputs = num_public_inputs.into_u256();
-
-    // IMPORTANT NOTE: muln is deprecated since ark-ff 0.4.2 and should be replaced with <<
-    n.muln(224);
-    num_public_inputs.muln(224);
-
-    let mut buffer = [0u8; 8];
-
-    // copy bytes into buffer
-    buffer[..4].copy_from_slice(&n.into_bytes()[..4]);
-    buffer[4..].copy_from_slice(&num_public_inputs.into_bytes()[..4]);
-
-    hasher.update(buffer);
-
-    let mut hash = [0u8; 32];
-
-    hash.copy_from_slice(&hasher.finalize());
-
-    hash
+    Keccak256::new()
+        .chain_update(n.to_be_bytes())
+        .chain_update(num_public_inputs.to_be_bytes())
+        .finalize()
+        .into()
 }
 
 /**
