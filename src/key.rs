@@ -278,8 +278,9 @@ pub struct VerificationKey<H: CurveHooks> {
     // TODO: The following three fields should be revised once support
     // for recursive functions is added.
     pub contains_recursive_proof: bool,
-    pub recursive_proof_public_inputs_size: u32,
-    pub is_recursive_circuit: bool,
+    pub recursive_proof_indices: u32,
+    // pub recursive_proof_public_inputs_size: u32,
+    // pub is_recursive_circuit: bool,
 }
 
 impl<H: CurveHooks> VerificationKey<H> {
@@ -319,7 +320,7 @@ impl<H: CurveHooks> VerificationKey<H> {
         // Contains recursive proof
         data.push(if self.contains_recursive_proof { 1 } else { 0 });
         data.extend_from_slice(&0u32.to_be_bytes());
-        data.push(if self.is_recursive_circuit { 1 } else { 0 });
+        // data.push(if self.is_recursive_circuit { 1 } else { 0 });
 
         data
     }
@@ -376,18 +377,25 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
             VerificationKeyError::RecursionNotSupported,
         )?;
 
-        let recursive_proof_public_inputs_size = read_u32_and_check(
+        let recursive_proof_indices = read_u32_and_check(
             raw_vk,
             &mut offset,
             0,
             VerificationKeyError::RecursionNotSupported,
         )?;
-        let is_recursive_circuit = read_bool_and_check(
-            raw_vk,
-            &mut offset,
-            false,
-            VerificationKeyError::RecursionNotSupported,
-        )?;
+
+        // let recursive_proof_public_inputs_size = read_u32_and_check(
+        //     raw_vk,
+        //     &mut offset,
+        //     0,
+        //     VerificationKeyError::RecursionNotSupported,
+        // )?;
+        // let is_recursive_circuit = read_bool_and_check(
+        //     raw_vk,
+        //     &mut offset,
+        //     false,
+        //     VerificationKeyError::RecursionNotSupported,
+        // )?;
 
         // NOTE: The following three fields can actually be computed just from the circuit_size (and r)
         // Hence, one optimization could be to create a lookup table for each value of 2^i, i = 0, 1, ...
@@ -426,8 +434,8 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
             id_3,
             id_4,
             contains_recursive_proof,
-            recursive_proof_public_inputs_size,
-            is_recursive_circuit,
+            recursive_proof_indices, // recursive_proof_public_inputs_size,
+                                     // is_recursive_circuit,
         })
     }
 }

@@ -46,7 +46,7 @@ use alloc::vec::Vec;
 
 const PROOF_SIZE: usize = 2144; // = 67 * 32
 const PUBS_SIZE: usize = 32;
-const VK_SIZE: usize = 1715; // TODO: Revise if necessary once recursive proofs are supported
+const VK_SIZE: usize = 1714; // TODO: Revise if necessary once recursive proofs are supported
 
 #[derive(Debug)]
 pub struct Challenges {
