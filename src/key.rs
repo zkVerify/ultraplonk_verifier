@@ -16,12 +16,16 @@
 
 #![allow(non_camel_case_types)]
 
-use crate::errors::{FieldError, GroupError};
-use crate::utils::{read_fq_util, read_g1_util, IntoBytes, IntoFr};
-use crate::{Fq, Fq2, Fr, G1, G2, U256, VK_SIZE};
-use alloc::format;
-use alloc::string::{String, ToString};
-use alloc::vec::Vec;
+use crate::{
+    errors::{FieldError, GroupError},
+    utils::{read_fq_util, read_g1_util, IntoBytes, IntoFr},
+    Fq, Fq2, Fr, G1, G2, U256, VK_SIZE,
+};
+use alloc::{
+    format,
+    string::{String, ToString},
+    vec::Vec,
+};
 use ark_bn254_ext::CurveHooks;
 use ark_ff::{FftField, Field};
 use snafu::Snafu;
@@ -246,7 +250,7 @@ impl CommitmentField {
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct VerificationKey<H: CurveHooks> {
-    // pub circuit_type: u32, // Q: What is this for?
+    // pub circuit_type: u32,
     pub circuit_size: u32,
     pub num_public_inputs: u32,
     pub work_root: Fr,

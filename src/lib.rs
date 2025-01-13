@@ -26,9 +26,11 @@ mod testhooks;
 mod types;
 mod utils;
 
-use crate::key::{read_g2, VerificationKey};
-use crate::proof::Proof;
-use crate::srs::SRS_G2;
+use crate::{
+    key::{read_g2, VerificationKey},
+    proof::Proof,
+    srs::SRS_G2,
+};
 use ark_bn254_ext::{Config, CurveHooks};
 use ark_ec::{pairing::Pairing, short_weierstrass::SWCurveConfig, AffineRepr, CurveGroup};
 use ark_ff::{BigInteger, Field, MontConfig, One};

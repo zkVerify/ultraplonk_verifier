@@ -1,7 +1,8 @@
-use crate::errors::{FieldError, GroupError};
-use crate::utils::{read_fq_util, read_g1_util};
-use crate::PROOF_SIZE;
-use crate::{Fq, G1};
+use crate::{
+    errors::{FieldError, GroupError},
+    utils::{read_fq_util, read_g1_util},
+    Fq, G1, PROOF_SIZE,
+};
 use ark_bn254_ext::CurveHooks;
 use snafu::Snafu;
 

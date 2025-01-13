@@ -14,9 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::errors::{FieldError, GroupError};
-use crate::types::G1;
-use crate::{Fq, Fr, U256};
+use crate::{
+    errors::{FieldError, GroupError},
+    types::G1,
+    Fq, Fr, U256,
+};
 use ark_bn254_ext::CurveHooks;
 use ark_ff::PrimeField;
 
