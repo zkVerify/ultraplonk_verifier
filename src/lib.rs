@@ -107,7 +107,7 @@ impl Challenges {
 
 #[derive(Debug)]
 pub struct NuChallenges {
-    c_v: [Fr; 31],
+    c_v: [Fr; 30],
     c_u: Fr,
 }
 
@@ -192,7 +192,6 @@ impl NuChallenges {
 
         Ok(Self { c_v, c_u })
     }
-    }
 }
 
 struct AuxiliaryEvaluations {
@@ -204,7 +203,7 @@ struct AuxiliaryEvaluations {
 }
 
 pub fn validate_vk<H: CurveHooks>(raw_vk: &[u8; VK_SIZE]) -> Result<(), VerifyError> {
-    let _vk = VerificationKey::<H>::try_from(&raw_vk[..]).map_err(|e| {
+    let _vk = VerificationKey::<H>::try_from(&raw_vk[..]).map_err(|_| {
         // log::debug!("Cannot parse verification key: {:?}", e);
         VerifyError::InvalidVerificationKey
     })?;
