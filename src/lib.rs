@@ -18,7 +18,6 @@
 
 pub mod errors;
 mod key;
-mod macros;
 mod proof;
 mod resources;
 mod srs;
@@ -36,7 +35,6 @@ use ark_ec::{pairing::Pairing, short_weierstrass::SWCurveConfig, AffineRepr, Cur
 use ark_ff::{Field, MontConfig, One};
 use ark_models_ext::bn::{BnConfig, G1Prepared, G2Prepared};
 use errors::VerifyError;
-use macros::u256;
 use sha3::{Digest, Keccak256};
 use utils::{IntoBytes, IntoFr, IntoU256};
 
@@ -280,7 +278,8 @@ pub fn verify<H: CurveHooks>(
      *   ΔPI = ∏ᵢ∈ℓ(wᵢ + β σ(i) + γ) / ∏ᵢ∈ℓ(wᵢ + β σ'(i) + γ)
      */
     let (delta_numerator, delta_denominator) =
-        compute_public_input_delta(public_inputs, &vk.work_root, &mut challenges);
+        compute_public_input_delta(public_inputs, &vk.work_root, &mut challenges)
+            .map_err(|_| VerifyError::InvalidInput)?;
 
     /*
      *  Compute Plookup delta factor [γ(1 + β)]^{n-k}
@@ -500,7 +499,7 @@ fn compute_public_input_delta(
     public_inputs: &[U256],
     work_root: &Fr,
     challenges: &mut Challenges,
-) -> (Fr, Fr) {
+) -> Result<(Fr, Fr), VerifyError> {
     let mut numerator_value = Fr::ONE;
     let mut denominator_value = Fr::ONE;
     let mut valid_inputs = true;
@@ -532,13 +531,10 @@ fn compute_public_input_delta(
     }
 
     if !valid_inputs {
-        panic!("Invalid inputs provided!"); // Q: Is this the desired handling approach?
-
-        // mstore(0x00, PUBLIC_INPUT_GE_P_SELECTOR)
-        // revert(0x00, 0x04)
+        return Err(VerifyError::InvalidInput);
     }
 
-    (numerator_value, denominator_value)
+    Ok((numerator_value, denominator_value))
 }
 
 fn compute_plookup_delta_factor(circuit_size: u32, challenges: &Challenges) -> (Fr, Fr) {
@@ -850,8 +846,10 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
      * the next gate. Then we can treat (q_arith - 1) as a simulated q_6 selector and scale q_m to handle (q_arith - 3) at
      * product.
      */
-    let negative_inverse_of_2_modulo_r =
-        crate::macros::fr!("183227397098d014dc2822db40c0ac2e9419f4243cdcb848a1f0fac9f8000000"); // = -2^{-1} (mod r)
+    let negative_inverse_of_2_modulo_r = -Fr::from(2u64)
+        .inverse()
+        .expect("2 has an inverse in the field");
+    // crate::macros::fr!("183227397098d014dc2822db40c0ac2e9419f4243cdcb848a1f0fac9f8000000"); // = -2^{-1} (mod r)
 
     let w1q1 = proof.w1_eval.into_fr() * proof.q1_eval.into_fr();
     let w2q2 = proof.w2_eval.into_fr() * proof.q2_eval.into_fr();
@@ -1607,47 +1605,47 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use super::*;
-    use crate::macros::u256;
+    // use crate::macros::u256;
     use crate::resources::VALID_VK;
 
-    #[test]
-    fn test_parse_proof() {
-        let proof = resources::VALID_PROOF;
-        println!("{:?}", proof);
-    }
+    // #[test]
+    // fn test_parse_proof() {
+    //     let proof = resources::VALID_PROOF;
+    //     println!("{:?}", proof);
+    // }
 
-    #[test]
-    fn test_foo() {
-        println!(
-            "{:?}",
-            u256!("0000001000000000000000000000000000000000000000000000000000000000") //.into_bytes()
-        );
-        println!(
-            "{:?}",
-            u256!("0000000100000000000000000000000000000000000000000000000000000000")
-        );
+    // #[test]
+    // fn test_foo() {
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000001000000000000000000000000000000000000000000000000000000000") //.into_bytes()
+    //     );
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000000100000000000000000000000000000000000000000000000000000000")
+    //     );
 
-        println!(
-            "{:?}",
-            u256!("0000001000000001000000000000000000000000000000000000000000000000") // value that gets hashed
-        );
-        //         00000010 00000001 00000000 00000000 00000000 00000000 00000000 00000000
-        //         <------4th------> <------3rd------> <------2nd------> <------1st------>
-        //         0 0 0 16  0 0 0 1  0 0 0 0  0 0 0 0 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000001000000001000000000000000000000000000000000000000000000000") // value that gets hashed
+    //     );
+    //     //         00000010 00000001 00000000 00000000 00000000 00000000 00000000 00000000
+    //     //         <------4th------> <------3rd------> <------2nd------> <------1st------>
+    //     //         0 0 0 16  0 0 0 1  0 0 0 0  0 0 0 0 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0
 
-        println!(
-            "{:?}",
-            u256!("0000001000000000000000000000000000000000000000000000000000000000").into_bytes()
-        );
-        println!(
-            "{:?}",
-            u256!("0000000100000000000000000000000000000000000000000000000000000000").into_bytes()
-        );
-        println!(
-            "{:?}",
-            u256!("0000001000000001000000000000000000000000000000000000000000000000").into_bytes()
-        );
-    }
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000001000000000000000000000000000000000000000000000000000000000").into_bytes()
+    //     );
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000000100000000000000000000000000000000000000000000000000000000").into_bytes()
+    //     );
+    //     println!(
+    //         "{:?}",
+    //         u256!("0000001000000001000000000000000000000000000000000000000000000000").into_bytes()
+    //     );
+    // }
 
     #[test]
     fn test_verify() {
