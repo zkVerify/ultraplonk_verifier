@@ -126,7 +126,6 @@ pub(crate) trait IntoBytes {
     fn into_bytes(self) -> [u8; 32];
 }
 
-// TODO: Double-check correctness
 impl IntoBytes for U256 {
     fn into_bytes(self) -> [u8; 32] {
         let mut bytes = [0u8; 32];
@@ -140,14 +139,12 @@ impl IntoBytes for U256 {
     }
 }
 
-// TODO: Add unit test
 impl IntoBytes for Fr {
     fn into_bytes(self) -> [u8; 32] {
         self.into_bigint().into_bytes()
     }
 }
 
-// TODO: Add unit test
 impl IntoBytes for Fq {
     fn into_bytes(self) -> [u8; 32] {
         self.into_bigint().into_bytes()

@@ -24,8 +24,6 @@ use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
 pub enum ProofError {
-    // #[snafu(display("Buffer too short"))]
-    // BufferTooShort,
     #[snafu(display("Buffer size is incorrect"))]
     IncorrectBufferSize,
 
@@ -132,7 +130,7 @@ impl<H: CurveHooks> TryFrom<&[u8]> for Proof<H> {
 
     fn try_from(proof: &[u8]) -> Result<Self, ProofError> {
         if proof.len() != PROOF_SIZE {
-            return Err(ProofError::IncorrectBufferSize); // TODO: REVISE ERRORS THROUGHOUT
+            return Err(ProofError::IncorrectBufferSize);
         }
 
         let mut offset = 0;

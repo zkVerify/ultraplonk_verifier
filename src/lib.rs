@@ -122,14 +122,6 @@ impl NuChallenges {
         }
         let current_challenge = c_current;
 
-        // assert_eq!(
-        //     current_challenge,
-        //     crate::macros::u256!(
-        //         "802605d8a0f13f61f89a8efb2632b86aae9a4fcec0cb67f914a547b82e4238b4"
-        //     )
-        //     .into_bytes()
-        // );
-
         let nu_challenge_input_a = current_challenge;
         let nu_challenge_input_b = quotient_eval;
 
@@ -198,14 +190,6 @@ impl NuChallenges {
         let mut hash = [0u8; 32];
         hash.copy_from_slice(&hasher.finalize_reset());
         let mut challenge = hash;
-
-        // assert_eq!(
-        //     challenge,
-        //     crate::macros::u256!(
-        //         "769d4ae9acae5f1e11f7ea48f7167f309cece8da71a6c2f886a1aff61048cd2e"
-        //     )
-        //     .into_bytes()
-        // );
 
         c_v[0] = challenge.into_fr();
 
@@ -284,53 +268,23 @@ pub fn verify<H: CurveHooks>(
     // Initial Challenge
     let mut challenge = generate_initial_challenge(vk.circuit_size, vk.num_public_inputs);
 
-    // assert_eq!(
-    //     challenge,
-    //     crate::macros::u256!("e2ea8b7ebb1c3baf6697641e614c44a88bc17efa13d1c86e283b4662fe9a1d05")
-    //         .into_bytes() // expected output
-    // );
-
     // Eta Challenge
     challenge = generate_eta_challenge::<H>(&proof, public_inputs, &challenge);
-
-    // assert_eq!(
-    //     challenge,
-    //     crate::macros::u256!("ac5020942cd0e8a2d7ea16f03ff2d90c0ed7082432d8caa93918aab86b09bcf7")
-    //         .into_bytes() // expected output
-    // );
 
     let eta = challenge.into_fr();
 
     // Beta challenge
     challenge = generate_beta_challenge::<H>(&proof, &challenge);
 
-    // assert_eq!(
-    //     challenge,
-    //     crate::macros::u256!("6a55ee92866db968ed1233e27e4902feb54f9fed60904d7e24899f108b9b9a4c")
-    //         .into_bytes() // expected output
-    // );
-
     let beta = challenge.into_fr();
 
     // Gamma challenge
     challenge = generate_gamma_challenge(&challenge);
 
-    // assert_eq!(
-    //     challenge,
-    //     crate::macros::u256!("7594d2d6aed54232381fa8d2103aabb6806c2cb37943e2012e84cea756a04578")
-    //         .into_bytes() // expected output
-    // );
-
     let gamma = challenge.into_fr();
 
     // Alpha challenge
     challenge = generate_alpha_challenge::<H>(&proof, &challenge);
-
-    // assert_eq!(
-    //     challenge,
-    //     crate::macros::u256!("3e437396c11f77796537424853cba05cb5478ac4f2cc3718bc94177e04a40623")
-    //         .into_bytes() // expected output
-    // );
 
     let alpha = challenge.into_fr();
 
@@ -338,25 +292,9 @@ pub fn verify<H: CurveHooks>(
     challenge = generate_zeta_challenge::<H>(&proof, &challenge);
     let zeta = challenge.into_fr();
 
-    // assert_eq!(
-    //     zeta,
-    //     crate::macros::fr!("1f5d68f2de8dff0e87fa038e233007b05e327f3dcd5886d68ce15c904e4238b2")
-    // );
-
     let c_current = challenge;
 
-    // assert_eq!(
-    //     c_current,
-    //     crate::macros::u256!("802605d8a0f13f61f89a8efb2632b86aae9a4fcec0cb67f914a547b82e4238b4")
-    //         .into_bytes() // expected output
-    // );
-
     let mut challenges = Challenges::new(alpha, beta, gamma, zeta, eta, vk.circuit_size);
-
-    // assert_eq!(
-    //     challenges.zeta_pow_n,
-    //     crate::macros::fr!("0551acf450da38cc8f866b3135ff7b5742f55614eae8361d00c479e3c4a32482")
-    // );
 
     /*
      *   EVALUATE FIELD OPERATIONS
@@ -369,32 +307,12 @@ pub fn verify<H: CurveHooks>(
     let (delta_numerator, delta_denominator) =
         compute_public_input_delta(public_inputs, &vk.work_root, &mut challenges);
 
-    // assert_eq!(
-    //     delta_numerator,
-    //     crate::macros::fr!("142a7fdddf74bf207d6721f9f4163df5005780a82daaae1772bb7176e0aa48f1")
-    // );
-
-    // assert_eq!(
-    //     delta_denominator,
-    //     crate::macros::fr!("26a36d245a8c6e8d2c327779d18125769a7a43e6afbf34077841673fa1eb80f6")
-    // );
-
     /*
      *  Compute Plookup delta factor [γ(1 + β)]^{n-k}
      *  k = num roots cut out of Z_H = 4
      */
     let (plookup_delta_numerator, plookup_delta_denominator) =
         compute_plookup_delta_factor(vk.circuit_size, &challenges);
-
-    // assert_eq!(
-    //     plookup_delta_numerator,
-    //     crate::macros::fr!("03a30d522722de22dfe21f63a4cba0ec297c6a02d03ae0cbff647e0e052a8193")
-    // );
-
-    // assert_eq!(
-    //     plookup_delta_denominator,
-    //     crate::macros::fr!("0f66d4b19a12385466977c27c25162e333ff1295f45292753b2e25d823e3629c")
-    // );
 
     /*
      * Compute lagrange poly and vanishing poly fractions
@@ -408,36 +326,6 @@ pub fn verify<H: CurveHooks>(
             &plookup_delta_numerator, // Same as above
             &plookup_delta_denominator,
         );
-
-    // assert_eq!(
-    //     public_input_delta,
-    //     crate::macros::fr!("0b6abc592553a9e92da907e1a2b8bb35f8b6694169a540ebae80f627c210ef65")
-    // );
-
-    // assert_eq!(
-    //     zero_poly,
-    //     crate::macros::fr!("1a483a8e1a5bc10f1e26b02dc6109744b9c57755987302e7979461c2941beb0c")
-    // );
-
-    // assert_eq!(
-    //     zero_poly_inverse,
-    //     crate::macros::fr!("2dc243ba08117f3958824e7934100d0c49e1a21a8f1527e2f2e800965ae7ec6e")
-    // );
-
-    // assert_eq!(
-    //     plookup_delta,
-    //     crate::macros::fr!("0474099bf2133bd17d79f5081b0b743397cd879603e3ef32e32c2c1ce277c05e")
-    // );
-
-    // assert_eq!(
-    //     l_start,
-    //     crate::macros::fr!("18ad94627bf75e2f186f990afea1f1ac7973d09ad752fd644663150b0ffba7e4")
-    // );
-
-    // assert_eq!(
-    //     l_end,
-    //     crate::macros::fr!("212aac641a1a1ea11ef222aee8995efc54ed55c2adbcd7470e96ed17895f8364")
-    // );
 
     /*
      * UltraPlonk Widget Ordering:
@@ -462,11 +350,6 @@ pub fn verify<H: CurveHooks>(
         &public_input_delta,
     );
 
-    // assert_eq!(
-    //     permutation_identity,
-    //     crate::macros::fr!("07de1f4206c238b084b02fbf7c9275c69bfa2d8fcafcd805fd7abba7b5a81cbd")
-    // );
-
     /*
      * COMPUTE PLOOKUP WIDGET EVALUATION
      */
@@ -478,50 +361,25 @@ pub fn verify<H: CurveHooks>(
         &plookup_delta,
     );
 
-    // assert_eq!(
-    //     plookup_identity,
-    //     crate::macros::fr!("182aa25c5a92378b0292f0742fe03c14b4c1556372f7c78265be639a92c08aa8")
-    // );
-
     /*
      * COMPUTE ARITHMETIC WIDGET EVALUATION
      */
     let arithmetic_identity = compute_arithmetic_widget_evaluation::<H>(&proof, &mut challenges);
-
-    // assert_eq!(
-    //     arithmetic_identity,
-    //     crate::macros::fr!("2773137c5e574993b2407d7cd70ad46c900d1b4ecd8eb925ae4272fee9159c5e")
-    // );
 
     /*
      * COMPUTE GENPERMSORT WIDGET EVALUATION
      */
     let sort_identity = compute_genpermsort_widget_evaluation::<H>(&proof, &mut challenges);
 
-    // assert_eq!(
-    //     sort_identity,
-    //     crate::macros::fr!("079d6b36013ffbe5fc5b76136bae9a9a63989bda11044e3f276aaf28dfcae36d")
-    // );
-
     /*
      * COMPUTE ELLIPTIC WIDGET EVALUATION
      */
     let elliptic_identity = compute_elliptic_widget_evaluation::<H>(&proof, &mut challenges);
 
-    // assert_eq!(
-    //     elliptic_identity,
-    //     crate::macros::fr!("1a645471486e9e0917e4b710d31adab734b97376928df0230d25ca5f1c53cefa")
-    // );
-
     /*
      * COMPUTE AUXILIARY WIDGET EVALUATION
      */
     let aux_identity = compute_auxiliary_widget_evaluation::<H>(&proof, &mut challenges);
-
-    // assert_eq!(
-    //     aux_identity,
-    //     crate::macros::fr!("2545253e8c90b125eb57be54ad39b4491c6c3585a1e8efd141c8c89f2e9d5795")
-    // );
 
     /*
      * QUOTIENT EVALUATION
@@ -536,58 +394,10 @@ pub fn verify<H: CurveHooks>(
         &zero_poly_inverse,
     );
 
-    // assert_eq!(
-    //     quotient_eval,
-    //     crate::macros::fr!("1f6eeb3c59606f4a302bf15cd31da47ff915fc8a066e7919ae2defa9cea5f02a")
-    // );
-
     /*
      * GENERATE NU AND SEPARATOR CHALLENGES
      */
     let nu_challenges = NuChallenges::new(&proof, &c_current, &quotient_eval).unwrap();
-
-    // let expected_c_v = [
-    //     crate::macros::fr!("15d4ae03ea4b1ecaa1575edbf413ce764c8518497e33e1d5feddc4ce3048cd2c"),
-    //     crate::macros::fr!("015bd919d73b1aedf38a35d4e73db09c00e1f37752fa6469df82f03e606f16d6"),
-    //     crate::macros::fr!("2267f04915850d1a9e4f3db39612c71c79321610c0c6f056c42184c1f6f4b40f"),
-    //     crate::macros::fr!("2813ed668d0e87d010f517999846368d06b7052296c862c312a4b1fcacbee9a6"),
-    //     crate::macros::fr!("23fa2e334e0e056934b8fc98d89bb581cfb040a3ce326ef193e56d416dc8a1bd"),
-    //     crate::macros::fr!("0196ee9d2542e01bc6c847728cad89db1ea842a5d1a9b70a1a6a9f55b4936f94"),
-    //     crate::macros::fr!("11d843ef02ef1f8353aa0edb1330450b4092900be85237009453200dfe8c1378"),
-    //     crate::macros::fr!("093babb324cebf412b19bba33c7052e2af0539d475d4154c7599b530aeb1ba0c"),
-    //     crate::macros::fr!("220eaebb15254dad6376aecfbdd67b1ded236e7e4caa41eaa0e45449f885ca58"),
-    //     crate::macros::fr!("1c97dee1ddf83386a271cb8ace1846f070139f7c5236bbeaf5d3b60d6dbc231b"),
-    //     crate::macros::fr!("0374c384ebe5a9978a64991cf58a6c163eef12f6d67bd96a2cdd83b2f6a0cc9c"),
-    //     crate::macros::fr!("040ca0fd1a44634d419c4ab001ef3114bf70b765b86979208ac0e387be981a3c"),
-    //     crate::macros::fr!("13add2c050c03d1e7d28d64f6f2da808874cac99cc2ab36902754257c1cd5ddd"),
-    //     crate::macros::fr!("2d21c7e5c27e1c317b9ed60dbbce489926219f3d069d38ee08d02836892443e2"),
-    //     crate::macros::fr!("1251af0498381b5f5c3bb17729a390f81c5f14d889b7aa026597a2efa09f5363"),
-    //     crate::macros::fr!("2621c704b3bfd547bcaaccef7cfffbc387c3bbc06fc706cf414ddee885c143b8"),
-    //     crate::macros::fr!("0ade26efdcd4bbede24270b0ac58c885cd34149db75f14dbcbb133afabc4a6e7"),
-    //     crate::macros::fr!("03a1403d83796abbf5837b08468142bf5b1e3a34f94777f1b03623f707e53a89"),
-    //     crate::macros::fr!("15832f94b9d94169b4bce882b3e63dad1ecd5d43b77abf0339872855f08a2ee9"),
-    //     crate::macros::fr!("2fa60afe3363b3abece69c07368663b8a9c50c4540398345990db4d63fcc2f70"),
-    //     crate::macros::fr!("1bc6bef215dc394d887bff2321b219ee3d7a2017acc1d16840f083a17c2ba6d0"),
-    //     crate::macros::fr!("08c3d018670ed7f468fe6f06c8f4f28646cb39ea9ccbfa0ddd934c523117c0ce"),
-    //     crate::macros::fr!("1f10acae56484911cd25506e8b46a33a062368a8e5d0da59973db0e9015c245e"),
-    //     crate::macros::fr!("0a6dcb0c408b2ed8f0d5e70b832d4f928753180450e3a5d8321509128193d22b"),
-    //     crate::macros::fr!("10482eb5e55eb43b4fb25466d08a8f071ba6d377cd0272180a8da87989153a95"),
-    //     crate::macros::fr!("23d23854bf5e1f16464d61b428aaa7969d4f167c9fd83813cb1100b89a3a504c"),
-    //     crate::macros::fr!("25ac39ef063b4c3abb8226cb71e713e14e245e62a7d44ebda83ebd9a664b6ece"),
-    //     crate::macros::fr!("276bd73e859d2a6ee90ac32aac000b8dd7c449914ad5364a3282aa51ef13827a"),
-    //     crate::macros::fr!("04dcd4929af7387f9a64b568567e6f5586c3c2bd14bdf0ebcc3447b55afef9cf"),
-    //     crate::macros::fr!("25424b7da95a0deb4b217f22f5f216608ed0469984692a7732923e3bd4ebe4c1"),
-    //     crate::macros::fr!("25424b7da95a0deb4b217f22f5f216608ed0469984692a7732923e3bd4ebe4c1"),
-    // ];
-
-    // for i in 0..=30 {
-    //     assert_eq!(nu_challenges.c_v[i], expected_c_v[i]);
-    // }
-
-    // assert_eq!(
-    //     nu_challenges.c_u,
-    //     crate::macros::fr!("06f6272c85636c826afebd2f0945accb6460e69a3c2299cfef1ea7dc9c6e95ef")
-    // );
 
     /*
      * PERFORM FINAL CHECKS
@@ -621,7 +431,7 @@ fn generate_eta_challenge<H: CurveHooks>(
 ) -> [u8; 32] {
     // Challenge is the old challenge + public inputs + W1, W2, W3 (0x20 + public_input_size + 0xc0)
     let mut hasher = Keccak256::new();
-    let mut buffer = Vec::new(); // [0u8; 32 + public_inputs.len() * 32 + 3 * 64];
+    let mut buffer = Vec::new();
 
     // copy initial challenge bytes
     buffer.extend_from_slice(initial_challenge);
@@ -652,10 +462,10 @@ fn generate_eta_challenge<H: CurveHooks>(
 fn generate_beta_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]) -> [u8; 32] {
     Keccak256::new()
         .chain_update(challenge)
-        .chain_update(&proof.w4.y.into_bytes())
-        .chain_update(&proof.w4.x.into_bytes())
-        .chain_update(&proof.s.y.into_bytes())
-        .chain_update(&proof.s.x.into_bytes())
+        .chain_update(proof.w4.y.into_bytes())
+        .chain_update(proof.w4.x.into_bytes())
+        .chain_update(proof.s.y.into_bytes())
+        .chain_update(proof.s.x.into_bytes())
         .finalize()
         .into()
 }
@@ -746,15 +556,6 @@ fn compute_public_input_delta(
         root_2 *= work_root;
     }
 
-    // assert_eq!(
-    //     numerator_value,
-    //     crate::macros::fr!("142a7fdddf74bf207d6721f9f4163df5005780a82daaae1772bb7176e0aa48f1")
-    // );
-    // assert_eq!(
-    //     denominator_value,
-    //     crate::macros::fr!("26a36d245a8c6e8d2c327779d18125769a7a43e6afbf34077841673fa1eb80f6")
-    // );
-
     if !valid_inputs {
         panic!("Invalid inputs provided!"); // Q: Is this the desired handling approach?
 
@@ -816,17 +617,7 @@ fn compute_lagrange_and_vanishing_poly<H: CurveHooks>(
 
     let mut vanishing_numerator = challenges.zeta_pow_n;
 
-    // assert_eq!(
-    //     challenges.zeta_pow_n,
-    //     crate::macros::fr!("0551acf450da38cc8f866b3135ff7b5742f55614eae8361d00c479e3c4a32482")
-    // );
-
     vanishing_numerator -= Fr::ONE;
-
-    // assert_eq!(
-    //     vanishing_numerator,
-    //     crate::macros::fr!("0551acf450da38cc8f866b3135ff7b5742f55614eae8361d00c479e3c4a32481")
-    // );
 
     let accumulating_root = vk.work_root_inverse;
     let mut work_root = -accumulating_root;
@@ -864,7 +655,7 @@ fn compute_lagrange_and_vanishing_poly<H: CurveHooks>(
         // Q: Is it worthwhile to move modular exponentiation to native?
         let base = accumulator * l_end_denominator;
         let mut expon = FrConfig::MODULUS;
-        expon.0[0] -= 2u64; // FrConfig::MODULUS - 2u32.into_u256()
+        expon.0[0] -= 2u64;
         accumulator = base.pow(expon);
     }
 
@@ -1149,10 +940,6 @@ fn compute_genpermsort_widget_evaluation<H: CurveHooks>(
      *   D4(D4 - 1)(D4 - 2)(D4 - 3).α_d +
      * ) . q_sort
      */
-    // let mut minus_two = FrConfig::MODULUS;
-    // minus_two.0[0] -= 2u64;
-    // let mut minus_three = FrConfig::MODULUS;
-    // minus_three.0[0] -= 3u64;
 
     let d1 = proof.w2_eval.into_fr() - proof.w1_eval.into_fr();
     let d2 = proof.w3_eval.into_fr() - proof.w2_eval.into_fr();
@@ -1335,22 +1122,9 @@ fn compute_aux_non_native_field_evaluation<H: CurveHooks>(proof: &Proof<H>) -> F
         - (proof.w3_omega_eval.into_fr() + proof.w4_omega_eval.into_fr()))
         * proof.qm_eval.into_fr();
 
-    // let non_native_field_identity =
-    //     (non_native_field_gate_1 + non_native_field_gate_2 + non_native_field_gate_3)
-    //         * proof.q2_eval.into_fr();
-
     // compute non_native_field_identity
     (non_native_field_gate_1 + non_native_field_gate_2 + non_native_field_gate_3)
         * proof.q2_eval.into_fr()
-
-    // let aux_non_native_field_evaluation = non_native_field_identity;
-
-    // // assert_eq!(
-    // //     aux_non_native_field_evaluation,
-    // //     crate::macros::fr!("0eb8b1fefb472249833127bf535e1e00d13df4faca4bf14da4b381c2a6b87319")
-    // // );
-
-    // aux_non_native_field_evaluation
 }
 
 fn compute_aux_limb_accumulator_evaluation<H: CurveHooks>(proof: &Proof<H>) -> Fr {
@@ -1406,16 +1180,6 @@ fn compute_aux_limb_accumulator_evaluation<H: CurveHooks>(proof: &Proof<H>) -> F
     limb_accumulator_2 *= proof.qm_eval.into_fr();
 
     (limb_accumulator_1 + limb_accumulator_2) * proof.q3_eval.into_fr()
-
-    // let aux_limb_accumulator_evaluation =
-    //     (limb_accumulator_1 + limb_accumulator_2) * proof.q3_eval.into_fr();
-
-    // // assert_eq!(
-    // //     aux_limb_accumulator_evaluation,
-    // //     crate::macros::fr!("078280b92a0853ec534893876f5f66e23b8251c6ac222cde3027aa5ba19b0874")
-    // // );
-
-    // aux_limb_accumulator_evaluation
 }
 
 fn compute_aux_ram_consistency_evaluation<H: CurveHooks>(
@@ -1564,11 +1328,6 @@ fn compute_auxiliary_widget_evaluation<H: CurveHooks>(
 
     let aux_memory_evaluation = memory_record_check;
 
-    // assert_eq!(
-    //     aux_memory_evaluation,
-    //     crate::macros::fr!("2a0addd6dddfc4d71e6ba910a84343f162a0857acf5df519d75e8a1489f3d710")
-    // );
-
     // index_delta = w_1_omega - w_1
     let index_delta = proof.w1_omega_eval.into_fr() - proof.w1_eval.into_fr();
     // record_delta = w_4_omega - w_4
@@ -1593,16 +1352,6 @@ fn compute_auxiliary_widget_evaluation<H: CurveHooks>(
         &partial_record_check,
         &index_is_monotonically_increasing,
     );
-
-    // assert_eq!(
-    //     aux_rom_consistency_evaluation,
-    //     crate::macros::fr!("27c8e9796351f7747ea1ecc0163ad32225528fa3802d0d87d98213346443bf65")
-    // );
-
-    // assert_eq!(
-    //     aux_ram_consistency_evaluation,
-    //     crate::macros::fr!("0bd9ace98d894621c4a5c719f2cbe4fea6b8522638d43cdd3868587a84cf433d")
-    // );
 
     let aux_evaluations = AuxiliaryEvaluations {
         aux_memory_evaluation,

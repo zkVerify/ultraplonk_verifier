@@ -18,8 +18,8 @@
 
 use crate::{
     errors::{FieldError, GroupError},
-    utils::{read_fq_util, read_g1_util, IntoBytes, IntoFr},
-    Fq, Fq2, Fr, G1, G2, U256, VK_SIZE,
+    utils::{read_fq_util, read_g1_util, IntoBytes},
+    Fq, Fq2, Fr, G1, G2, VK_SIZE,
 };
 use alloc::{
     format,
@@ -29,36 +29,6 @@ use alloc::{
 use ark_bn254_ext::CurveHooks;
 use ark_ff::{FftField, Field};
 use snafu::Snafu;
-
-// #[derive(Debug, thiserror::Error)]
-// pub enum VerificationKeyError {
-//     #[error("Buffer too short")]
-//     BufferTooShort,
-//     #[error("Invalid field '{field}': {error:?}")]
-//     InvalidField {
-//         field: &'static str,
-//         error: FieldError,
-//     },
-//     #[error("Invalid group '{field}': {error:?}")]
-//     InvalidGroup {
-//         field: &'static str,
-//         error: GroupError,
-//     },
-//     #[error("Invalid value '{value}'")]
-//     InvalidValue { value: String },
-//     #[error("Invalid circuit type, expected 2")]
-//     InvalidCircuitType,
-//     #[error("Invalid commitment field: {value:?}")]
-//     InvalidCommitmentField { value: String },
-//     #[error("Invalid commitments number, expected 23")]
-//     InvalidCommitmentsNumber,
-//     #[error("Invalid commitment key at offset {offset:?}")]
-//     InvalidCommitmentKey { offset: usize },
-//     #[error("Unexpected commitment key: {key:?}, expected {expected:?}")]
-//     UnexpectedCommitmentKey { key: String, expected: String },
-//     #[error("Recursion is not supported")]
-//     RecursionNotSupported,
-// }
 
 #[derive(Debug, Snafu)]
 pub enum VerificationKeyError {
@@ -88,8 +58,6 @@ pub enum VerificationKeyError {
     #[snafu(display("Invalid value '{}'", value))]
     InvalidValue { value: String },
 
-    // #[snafu(display("Invalid circuit type, expected 2"))]
-    // InvalidCircuitType,
     #[snafu(display("Invalid commitment field: {:?}", value))]
     InvalidCommitmentField { value: String },
 
@@ -458,7 +426,7 @@ fn read_u32_and_check(
 }
 
 fn read_u32(data: &[u8], offset: &mut usize) -> u32 {
-    let value = u32::from_be_bytes(data[*offset..*offset + 4].try_into().unwrap()); // BigEndian::read_u32(&data[*offset..*offset + 4]);
+    let value = u32::from_be_bytes(data[*offset..*offset + 4].try_into().unwrap());
     *offset += 4;
     value
 }
@@ -569,31 +537,26 @@ pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, ()> {
 }
 
 pub(crate) fn read_fq(addr: &'static str, data: &[u8]) -> Result<Fq, VerificationKeyError> {
-    // Fq::from_slice(data).map_err(|e| VerificationKeyError::InvalidField {
-    //     field: addr,
-    //     error: e,
-    // })
     read_fq_util(data).map_err(|e| VerificationKeyError::InvalidField {
         field: addr,
         error: e,
     })
 }
 
-pub(crate) fn read_fr(data: &[u8]) -> Result<Fr, ()> {
-    // VerificationKeyError
-    if data.len() != 32 {
-        return Err(());
-    }
+// pub(crate) fn read_fr(data: &[u8]) -> Result<Fr, ()> {
+//     if data.len() != 32 {
+//         return Err(());
+//     }
 
-    // Convert bytes to limbs manually
-    let mut limbs = [0u64; 4];
-    for (i, chunk) in data.chunks(8).enumerate() {
-        limbs[3 - i] = u64::from_be_bytes(chunk.try_into().unwrap());
-    }
+//     // Convert bytes to limbs manually
+//     let mut limbs = [0u64; 4];
+//     for (i, chunk) in data.chunks(8).enumerate() {
+//         limbs[3 - i] = u64::from_be_bytes(chunk.try_into().unwrap());
+//     }
 
-    // Create a U256
-    let bigint = U256::new(limbs);
+//     // Create a U256
+//     let bigint = U256::new(limbs);
 
-    // Try to construct an Fr element
-    Ok(bigint.into_fr())
-}
+//     // Try to construct an Fr element
+//     Ok(bigint.into_fr())
+// }
