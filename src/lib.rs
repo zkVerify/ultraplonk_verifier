@@ -46,9 +46,9 @@ extern crate alloc;
 extern crate core;
 use alloc::vec::Vec;
 
-const PROOF_SIZE: usize = 2144; // = 67 * 32
-const PUBS_SIZE: usize = 32;
-const VK_SIZE: usize = 1714; // TODO: Revise if necessary once recursive proofs are supported
+pub const PROOF_SIZE: usize = 2144; // = 67 * 32
+pub const PUBS_SIZE: usize = 32;
+pub const VK_SIZE: usize = 1714; // TODO: Revise if necessary once recursive proofs are supported
 
 #[derive(Debug)]
 pub struct Challenges {
