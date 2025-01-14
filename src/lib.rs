@@ -235,6 +235,14 @@ struct AuxiliaryEvaluations {
     aux_limb_accumulator_evaluation: Fr,
 }
 
+pub fn validate_vk<H: CurveHooks>(raw_vk: &[u8; VK_SIZE]) -> Result<(), VerifyError> {
+    let _vk = VerificationKey::<H>::try_from(&raw_vk[..]).map_err(|e| {
+        // log::debug!("Cannot parse verification key: {:?}", e);
+        VerifyError::InvalidVerificationKey
+    })?;
+    Ok(())
+}
+
 pub fn verify<H: CurveHooks>(
     raw_vk: &[u8],
     raw_proof: &[u8],
