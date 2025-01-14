@@ -120,110 +120,78 @@ impl NuChallenges {
         if c_current.len() != 32 {
             return Err(());
         }
-        let current_challenge = c_current;
+        let challenge: [u8; 32] = Keccak256::new()
+            .chain_update(c_current)
+            .chain_update(&quotient_eval.into_bytes())
+            .chain_update(&proof.w1_eval.into_bytes())
+            .chain_update(&proof.w2_eval.into_bytes())
+            .chain_update(&proof.w3_eval.into_bytes())
+            .chain_update(&proof.w4_eval.into_bytes())
+            .chain_update(&proof.s_eval.into_bytes())
+            .chain_update(&proof.z_eval.into_bytes())
+            .chain_update(&proof.z_lookup_eval.into_bytes())
+            .chain_update(&proof.q1_eval.into_bytes())
+            .chain_update(&proof.q2_eval.into_bytes())
+            .chain_update(&proof.q3_eval.into_bytes())
+            .chain_update(&proof.q4_eval.into_bytes())
+            .chain_update(&proof.qm_eval.into_bytes())
+            .chain_update(&proof.qc_eval.into_bytes())
+            .chain_update(&proof.q_arith_eval.into_bytes())
+            .chain_update(&proof.q_sort_eval.into_bytes())
+            .chain_update(&proof.q_elliptic_eval.into_bytes())
+            .chain_update(&proof.q_aux_eval.into_bytes())
+            .chain_update(&proof.sigma1_eval.into_bytes())
+            .chain_update(&proof.sigma2_eval.into_bytes())
+            .chain_update(&proof.sigma3_eval.into_bytes())
+            .chain_update(&proof.sigma4_eval.into_bytes())
+            .chain_update(&proof.table1_eval.into_bytes())
+            .chain_update(&proof.table2_eval.into_bytes())
+            .chain_update(&proof.table3_eval.into_bytes())
+            .chain_update(&proof.table4_eval.into_bytes())
+            .chain_update(&proof.table_type_eval.into_bytes())
+            .chain_update(&proof.id1_eval.into_bytes())
+            .chain_update(&proof.id2_eval.into_bytes())
+            .chain_update(&proof.id3_eval.into_bytes())
+            .chain_update(&proof.id4_eval.into_bytes())
+            .chain_update(&proof.w1_omega_eval.into_bytes())
+            .chain_update(&proof.w2_omega_eval.into_bytes())
+            .chain_update(&proof.w3_omega_eval.into_bytes())
+            .chain_update(&proof.w4_omega_eval.into_bytes())
+            .chain_update(&proof.s_omega_eval.into_bytes())
+            .chain_update(&proof.z_omega_eval.into_bytes())
+            .chain_update(&proof.z_lookup_omega_eval.into_bytes())
+            .chain_update(&proof.table1_omega_eval.into_bytes())
+            .chain_update(&proof.table2_omega_eval.into_bytes())
+            .chain_update(&proof.table3_omega_eval.into_bytes())
+            .chain_update(&proof.table4_omega_eval.into_bytes())
+            .finalize()
+            .into();
 
-        let nu_challenge_input_a = current_challenge;
-        let nu_challenge_input_b = quotient_eval;
+        let c_v: [Fr; 30] = core::array::from_fn(|i| {
+            if i == 0 {
+                challenge.into_fr()
+            } else {
+                let hash: [u8; 32] = Keccak256::new()
+                    .chain_update(&challenge)
+                    .chain_update([i as u8])
+                    .finalize()
+                    .into();
+                hash.into_fr()
+            }
+        });
 
-        let mut hasher = Keccak256::new();
-
-        let mut buffer = [0u8; 1376]; // 1376 = (41 + 2) * 32
-        buffer[..32].copy_from_slice(nu_challenge_input_a);
-        buffer[32..64].copy_from_slice(&nu_challenge_input_b.into_bytes());
-
-        buffer[64..96].copy_from_slice(&proof.w1_eval.into_bytes());
-        buffer[96..128].copy_from_slice(&proof.w2_eval.into_bytes());
-        buffer[128..160].copy_from_slice(&proof.w3_eval.into_bytes());
-        buffer[160..192].copy_from_slice(&proof.w4_eval.into_bytes());
-
-        buffer[192..224].copy_from_slice(&proof.s_eval.into_bytes());
-        buffer[224..256].copy_from_slice(&proof.z_eval.into_bytes());
-        buffer[256..288].copy_from_slice(&proof.z_lookup_eval.into_bytes());
-
-        buffer[288..320].copy_from_slice(&proof.q1_eval.into_bytes());
-        buffer[320..352].copy_from_slice(&proof.q2_eval.into_bytes());
-        buffer[352..384].copy_from_slice(&proof.q3_eval.into_bytes());
-        buffer[384..416].copy_from_slice(&proof.q4_eval.into_bytes());
-
-        buffer[416..448].copy_from_slice(&proof.qm_eval.into_bytes());
-        buffer[448..480].copy_from_slice(&proof.qc_eval.into_bytes());
-
-        buffer[480..512].copy_from_slice(&proof.q_arith_eval.into_bytes());
-        buffer[512..544].copy_from_slice(&proof.q_sort_eval.into_bytes());
-        buffer[544..576].copy_from_slice(&proof.q_elliptic_eval.into_bytes());
-        buffer[576..608].copy_from_slice(&proof.q_aux_eval.into_bytes());
-
-        buffer[608..640].copy_from_slice(&proof.sigma1_eval.into_bytes());
-        buffer[640..672].copy_from_slice(&proof.sigma2_eval.into_bytes());
-        buffer[672..704].copy_from_slice(&proof.sigma3_eval.into_bytes());
-        buffer[704..736].copy_from_slice(&proof.sigma4_eval.into_bytes());
-
-        buffer[736..768].copy_from_slice(&proof.table1_eval.into_bytes());
-        buffer[768..800].copy_from_slice(&proof.table2_eval.into_bytes());
-        buffer[800..832].copy_from_slice(&proof.table3_eval.into_bytes());
-        buffer[832..864].copy_from_slice(&proof.table4_eval.into_bytes());
-        buffer[864..896].copy_from_slice(&proof.table_type_eval.into_bytes());
-
-        buffer[896..928].copy_from_slice(&proof.id1_eval.into_bytes());
-        buffer[928..960].copy_from_slice(&proof.id2_eval.into_bytes());
-        buffer[960..992].copy_from_slice(&proof.id3_eval.into_bytes());
-        buffer[992..1024].copy_from_slice(&proof.id4_eval.into_bytes());
-
-        buffer[1024..1056].copy_from_slice(&proof.w1_omega_eval.into_bytes());
-        buffer[1056..1088].copy_from_slice(&proof.w2_omega_eval.into_bytes());
-        buffer[1088..1120].copy_from_slice(&proof.w3_omega_eval.into_bytes());
-        buffer[1120..1152].copy_from_slice(&proof.w4_omega_eval.into_bytes());
-
-        buffer[1152..1184].copy_from_slice(&proof.s_omega_eval.into_bytes());
-        buffer[1184..1216].copy_from_slice(&proof.z_omega_eval.into_bytes());
-        buffer[1216..1248].copy_from_slice(&proof.z_lookup_omega_eval.into_bytes());
-
-        buffer[1248..1280].copy_from_slice(&proof.table1_omega_eval.into_bytes());
-        buffer[1280..1312].copy_from_slice(&proof.table2_omega_eval.into_bytes());
-        buffer[1312..1344].copy_from_slice(&proof.table3_omega_eval.into_bytes());
-        buffer[1344..1376].copy_from_slice(&proof.table4_omega_eval.into_bytes());
-
-        // nu challenges
-        let mut c_v: [Fr; 31] = [Fr::ONE; 31];
-
-        hasher.update(buffer);
-        let mut hash = [0u8; 32];
-        hash.copy_from_slice(&hasher.finalize_reset());
-        let mut challenge = hash;
-
-        c_v[0] = challenge.into_fr();
-
-        // We need THIRTY-ONE independent nu challenges!
-        let mut buffer = [0u8; 33];
-        buffer[..32].copy_from_slice(&challenge);
-        for i in 1..30_usize {
-            buffer[32] = i as u8;
-            hasher.update(buffer);
-            hash.copy_from_slice(&hasher.finalize_reset());
-            c_v[i] = hash.into_fr();
-        }
-
-        // @follow-up - Why are both v29 and v30 using appending 0x1d to the prior challenge and hashing, should it not change?
-        buffer[32] = 0x1d_u8;
-        hasher.update(buffer);
-        hash.copy_from_slice(&hasher.finalize_reset());
-        challenge = hash;
-        c_v[30] = challenge.into_fr();
-
-        // separator
-        let mut buffer = [0u8; 160]; // 160 = 32 * 5
-        buffer[..32].copy_from_slice(&challenge);
-        buffer[32..64].copy_from_slice(&proof.pi_z.y.into_bytes());
-        buffer[64..96].copy_from_slice(&proof.pi_z.x.into_bytes());
-        buffer[96..128].copy_from_slice(&proof.pi_z_omega.y.into_bytes());
-        buffer[128..160].copy_from_slice(&proof.pi_z_omega.x.into_bytes());
-
-        hasher.update(buffer);
-        let mut hash = [0u8; 32];
-        hash.copy_from_slice(&hasher.finalize());
+        let hash: [u8; 32] = Keccak256::new()
+            .chain_update(&challenge)
+            .chain_update(&proof.pi_z.y.into_bytes())
+            .chain_update(&proof.pi_z.x.into_bytes())
+            .chain_update(&proof.pi_z_omega.y.into_bytes())
+            .chain_update(&proof.pi_z_omega.x.into_bytes())
+            .finalize()
+            .into();
         let c_u = hash.into_fr();
 
         Ok(Self { c_v, c_u })
+    }
     }
 }
 
