@@ -192,7 +192,7 @@ impl NuChallenges {
         buffer[1344..1376].copy_from_slice(&proof.table4_omega_eval.into_bytes());
 
         // nu challenges
-        let mut c_v: [Fr; 31] = [Fr::one(); 31];
+        let mut c_v: [Fr; 31] = [Fr::ONE; 31];
 
         hasher.update(buffer);
         let mut hash = [0u8; 32];
@@ -716,8 +716,8 @@ fn compute_public_input_delta(
     work_root: &Fr,
     challenges: &mut Challenges,
 ) -> (Fr, Fr) {
-    let mut numerator_value = Fr::one();
-    let mut denominator_value = Fr::one();
+    let mut numerator_value = Fr::ONE;
+    let mut denominator_value = Fr::ONE;
     let mut valid_inputs = true;
 
     // root_1 = β * 0x05
@@ -766,7 +766,7 @@ fn compute_public_input_delta(
 }
 
 fn compute_plookup_delta_factor(circuit_size: u32, challenges: &Challenges) -> (Fr, Fr) {
-    let delta_base = challenges.gamma * (challenges.beta + Fr::one());
+    let delta_base = challenges.gamma * (challenges.beta + Fr::ONE);
     let mut delta_numerator = delta_base;
     {
         let exponent = circuit_size;
@@ -821,7 +821,7 @@ fn compute_lagrange_and_vanishing_poly<H: CurveHooks>(
     //     crate::macros::fr!("0551acf450da38cc8f866b3135ff7b5742f55614eae8361d00c479e3c4a32482")
     // );
 
-    vanishing_numerator -= Fr::one();
+    vanishing_numerator -= Fr::ONE;
 
     // assert_eq!(
     //     vanishing_numerator,
@@ -841,11 +841,11 @@ fn compute_lagrange_and_vanishing_poly<H: CurveHooks>(
 
     work_root = vk.work_root;
     let lagrange_numerator = vanishing_numerator * domain_inverse;
-    let l_start_denominator = challenges.zeta - Fr::one();
+    let l_start_denominator = challenges.zeta - Fr::ONE;
 
     let accumulating_root = work_root.square();
 
-    let l_end_denominator = accumulating_root.square() * work_root * challenges.zeta - Fr::one();
+    let l_end_denominator = accumulating_root.square() * work_root * challenges.zeta - Fr::ONE;
 
     /*
      * Compute inversions using Montgomery's batch inversion trick
@@ -952,7 +952,7 @@ fn compute_permutation_widget_evaluation<H: CurveHooks>(
     challenges.alpha_base *= challenges.alpha;
     result += challenges.alpha_base * l_end * (z_omega_eval - public_input_delta);
     challenges.alpha_base *= challenges.alpha;
-    let permutation_identity = result + challenges.alpha_base * l_start * (z_eval - Fr::one());
+    let permutation_identity = result + challenges.alpha_base * l_start * (z_eval - Fr::ONE);
     challenges.alpha_base *= challenges.alpha;
 
     permutation_identity
@@ -1007,11 +1007,11 @@ fn compute_plookup_widget_evaluation<H: CurveHooks>(
      * numerator -= temp0
      */
 
-    let gamma_beta_constant = challenges.gamma * (challenges.beta + Fr::one());
+    let gamma_beta_constant = challenges.gamma * (challenges.beta + Fr::ONE);
     let mut numerator = f * proof.table_type_eval.into_fr() + challenges.gamma;
     let temp0 = t + t_omega * challenges.beta + gamma_beta_constant;
     numerator *= temp0;
-    numerator *= challenges.beta + Fr::one();
+    numerator *= challenges.beta + Fr::ONE;
     let temp0 = challenges.alpha * l_start;
     numerator += temp0;
     numerator *= proof.z_lookup_eval.into_fr();
@@ -1118,7 +1118,7 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
     let arithmetic_identity = challenges.alpha_base
         * proof.q_arith_eval.into_fr()
         * (identity
-            + (proof.q_arith_eval.into_fr() - Fr::one())
+            + (proof.q_arith_eval.into_fr() - Fr::ONE)
                 * (proof.w4_omega_eval.into_fr() + extra_small_addition_gate_identity));
 
     // update alpha
@@ -1160,21 +1160,21 @@ fn compute_genpermsort_widget_evaluation<H: CurveHooks>(
     let d4 = proof.w1_omega_eval.into_fr() - proof.w4_eval.into_fr();
 
     let mut range_accumulator =
-        d1 * (d1 - Fr::one()) * (d1 - Fr::from(2)) * (d1 - Fr::from(3)) * challenges.alpha_base;
+        d1 * (d1 - Fr::ONE) * (d1 - Fr::from(2)) * (d1 - Fr::from(3)) * challenges.alpha_base;
     range_accumulator += d2
-        * (d2 - Fr::one())
+        * (d2 - Fr::ONE)
         * (d2 - Fr::from(2))
         * (d2 - Fr::from(3))
         * challenges.alpha_base
         * challenges.alpha;
     range_accumulator += d3
-        * (d3 - Fr::one())
+        * (d3 - Fr::ONE)
         * (d3 - Fr::from(2))
         * (d3 - Fr::from(3))
         * challenges.alpha_base
         * challenges.alpha_sqr;
     range_accumulator += d4
-        * (d4 - Fr::one())
+        * (d4 - Fr::ONE)
         * (d4 - Fr::from(2))
         * (d4 - Fr::from(3))
         * challenges.alpha_base
@@ -1226,7 +1226,7 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
         * x_diff.square()
         + y1y2.double()
         - (y1_sqr + y2_sqr);
-    x_add_identity = x_add_identity * (Fr::one() - proof.qm_eval.into_fr()) * challenges.alpha_base;
+    x_add_identity = x_add_identity * (Fr::ONE - proof.qm_eval.into_fr()) * challenges.alpha_base;
 
     // q_elliptic * (x3 + x2 + x1)(x2 - x1)(x2 - x1) - y2^2 - y1^2 + 2(y2y1)*q_sign = 0
     let y1_plus_y3 = y1_eval.into_fr() + y3_eval.into_fr();
@@ -1234,7 +1234,7 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
     let mut y_add_identity =
         y1_plus_y3 * x_diff + ((x3_eval.into_fr() - x1_eval.into_fr()) * y_diff);
     y_add_identity *=
-        (Fr::one() - proof.qm_eval.into_fr()) * challenges.alpha_base * challenges.alpha;
+        (Fr::ONE - proof.qm_eval.into_fr()) * challenges.alpha_base * challenges.alpha;
 
     // ELLIPTIC_IDENTITY = (x_identity + y_identity) * Q_ELLIPTIC_EVAL
     let mut elliptic_identity = (x_add_identity + y_add_identity) * proof.q_elliptic_eval.into_fr();
@@ -1447,7 +1447,7 @@ fn compute_aux_ram_consistency_evaluation<H: CurveHooks>(
 
     //  adjacent_values_match_if_adjacent_indices_match_and_next_access_is_a_read_operation = (1 - index_delta) * value_delta * (1 - next_gate_access_type);
     let adjacent_values_match_if_adjacent_indices_match_and_next_access_is_a_read_operation =
-        (Fr::one() - index_delta) * value_delta * (Fr::one() - next_gate_access_type);
+        (Fr::ONE - index_delta) * value_delta * (Fr::ONE - next_gate_access_type);
 
     // AUX_RAM_CONSISTENCY_EVALUATION
 
@@ -1466,10 +1466,10 @@ fn compute_aux_ram_consistency_evaluation<H: CurveHooks>(
 
     let access_type = proof.w4_eval.into_fr() - partial_record_check;
 
-    let access_check = access_type * (access_type - Fr::one());
+    let access_check = access_type * (access_type - Fr::ONE);
 
     let next_gate_access_type_is_boolean =
-        next_gate_access_type * (next_gate_access_type - Fr::one());
+        next_gate_access_type * (next_gate_access_type - Fr::ONE);
 
     let mut ram_cci =
         adjacent_values_match_if_adjacent_indices_match_and_next_access_is_a_read_operation
@@ -1495,7 +1495,7 @@ fn compute_auxiliary_identity<H: CurveHooks>(
 
     // RAM_timestamp_check_identity = (1 - index_delta) * timestamp_delta - w_3
     let ram_timestamp_check_identity =
-        (Fr::one() - index_delta) * timestamp_delta - proof.w3_eval.into_fr();
+        (Fr::ONE - index_delta) * timestamp_delta - proof.w3_eval.into_fr();
 
     /*
      * memory_identity = ROM_consistency_check_identity * q_2;
@@ -1574,10 +1574,10 @@ fn compute_auxiliary_widget_evaluation<H: CurveHooks>(
     // record_delta = w_4_omega - w_4
     let record_delta = proof.w4_omega_eval.into_fr() - proof.w4_eval.into_fr();
     // index_is_monotonically_increasing = index_delta * (index_delta - 1)
-    let index_is_monotonically_increasing = index_delta * (index_delta - Fr::one());
+    let index_is_monotonically_increasing = index_delta * (index_delta - Fr::ONE);
 
     // adjacent_values_match_if_adjacent_indices_match = record_delta * (1 - index_delta)
-    let adjacent_values_match_if_adjacent_indices_match = record_delta * (Fr::one() - index_delta);
+    let adjacent_values_match_if_adjacent_indices_match = record_delta * (Fr::ONE - index_delta);
 
     // AUX_ROM_CONSISTENCY_EVALUATION = ((adjacent_values_match_if_adjacent_indices_match * alpha) + index_is_monotonically_increasing) * alpha + memory_record_check
     let aux_rom_consistency_evaluation = (adjacent_values_match_if_adjacent_indices_match
