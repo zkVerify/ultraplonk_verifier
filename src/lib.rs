@@ -69,7 +69,6 @@ impl Challenges {
         let alpha_sqr = alpha.square();
         let alpha_cube = alpha_sqr * alpha;
         let alpha_quad = alpha_cube * alpha;
-        // let alpha_base = alpha;
         let eta_sqr = eta.square();
         let eta_cube = eta_sqr * eta;
 
@@ -118,48 +117,48 @@ impl NuChallenges {
         }
         let challenge: [u8; 32] = Keccak256::new()
             .chain_update(c_current)
-            .chain_update(&quotient_eval.into_bytes())
-            .chain_update(&proof.w1_eval.into_bytes())
-            .chain_update(&proof.w2_eval.into_bytes())
-            .chain_update(&proof.w3_eval.into_bytes())
-            .chain_update(&proof.w4_eval.into_bytes())
-            .chain_update(&proof.s_eval.into_bytes())
-            .chain_update(&proof.z_eval.into_bytes())
-            .chain_update(&proof.z_lookup_eval.into_bytes())
-            .chain_update(&proof.q1_eval.into_bytes())
-            .chain_update(&proof.q2_eval.into_bytes())
-            .chain_update(&proof.q3_eval.into_bytes())
-            .chain_update(&proof.q4_eval.into_bytes())
-            .chain_update(&proof.qm_eval.into_bytes())
-            .chain_update(&proof.qc_eval.into_bytes())
-            .chain_update(&proof.q_arith_eval.into_bytes())
-            .chain_update(&proof.q_sort_eval.into_bytes())
-            .chain_update(&proof.q_elliptic_eval.into_bytes())
-            .chain_update(&proof.q_aux_eval.into_bytes())
-            .chain_update(&proof.sigma1_eval.into_bytes())
-            .chain_update(&proof.sigma2_eval.into_bytes())
-            .chain_update(&proof.sigma3_eval.into_bytes())
-            .chain_update(&proof.sigma4_eval.into_bytes())
-            .chain_update(&proof.table1_eval.into_bytes())
-            .chain_update(&proof.table2_eval.into_bytes())
-            .chain_update(&proof.table3_eval.into_bytes())
-            .chain_update(&proof.table4_eval.into_bytes())
-            .chain_update(&proof.table_type_eval.into_bytes())
-            .chain_update(&proof.id1_eval.into_bytes())
-            .chain_update(&proof.id2_eval.into_bytes())
-            .chain_update(&proof.id3_eval.into_bytes())
-            .chain_update(&proof.id4_eval.into_bytes())
-            .chain_update(&proof.w1_omega_eval.into_bytes())
-            .chain_update(&proof.w2_omega_eval.into_bytes())
-            .chain_update(&proof.w3_omega_eval.into_bytes())
-            .chain_update(&proof.w4_omega_eval.into_bytes())
-            .chain_update(&proof.s_omega_eval.into_bytes())
-            .chain_update(&proof.z_omega_eval.into_bytes())
-            .chain_update(&proof.z_lookup_omega_eval.into_bytes())
-            .chain_update(&proof.table1_omega_eval.into_bytes())
-            .chain_update(&proof.table2_omega_eval.into_bytes())
-            .chain_update(&proof.table3_omega_eval.into_bytes())
-            .chain_update(&proof.table4_omega_eval.into_bytes())
+            .chain_update(quotient_eval.into_bytes())
+            .chain_update(proof.w1_eval.into_bytes())
+            .chain_update(proof.w2_eval.into_bytes())
+            .chain_update(proof.w3_eval.into_bytes())
+            .chain_update(proof.w4_eval.into_bytes())
+            .chain_update(proof.s_eval.into_bytes())
+            .chain_update(proof.z_eval.into_bytes())
+            .chain_update(proof.z_lookup_eval.into_bytes())
+            .chain_update(proof.q1_eval.into_bytes())
+            .chain_update(proof.q2_eval.into_bytes())
+            .chain_update(proof.q3_eval.into_bytes())
+            .chain_update(proof.q4_eval.into_bytes())
+            .chain_update(proof.qm_eval.into_bytes())
+            .chain_update(proof.qc_eval.into_bytes())
+            .chain_update(proof.q_arith_eval.into_bytes())
+            .chain_update(proof.q_sort_eval.into_bytes())
+            .chain_update(proof.q_elliptic_eval.into_bytes())
+            .chain_update(proof.q_aux_eval.into_bytes())
+            .chain_update(proof.sigma1_eval.into_bytes())
+            .chain_update(proof.sigma2_eval.into_bytes())
+            .chain_update(proof.sigma3_eval.into_bytes())
+            .chain_update(proof.sigma4_eval.into_bytes())
+            .chain_update(proof.table1_eval.into_bytes())
+            .chain_update(proof.table2_eval.into_bytes())
+            .chain_update(proof.table3_eval.into_bytes())
+            .chain_update(proof.table4_eval.into_bytes())
+            .chain_update(proof.table_type_eval.into_bytes())
+            .chain_update(proof.id1_eval.into_bytes())
+            .chain_update(proof.id2_eval.into_bytes())
+            .chain_update(proof.id3_eval.into_bytes())
+            .chain_update(proof.id4_eval.into_bytes())
+            .chain_update(proof.w1_omega_eval.into_bytes())
+            .chain_update(proof.w2_omega_eval.into_bytes())
+            .chain_update(proof.w3_omega_eval.into_bytes())
+            .chain_update(proof.w4_omega_eval.into_bytes())
+            .chain_update(proof.s_omega_eval.into_bytes())
+            .chain_update(proof.z_omega_eval.into_bytes())
+            .chain_update(proof.z_lookup_omega_eval.into_bytes())
+            .chain_update(proof.table1_omega_eval.into_bytes())
+            .chain_update(proof.table2_omega_eval.into_bytes())
+            .chain_update(proof.table3_omega_eval.into_bytes())
+            .chain_update(proof.table4_omega_eval.into_bytes())
             .finalize()
             .into();
 
@@ -168,7 +167,7 @@ impl NuChallenges {
                 challenge.into_fr()
             } else {
                 let hash: [u8; 32] = Keccak256::new()
-                    .chain_update(&challenge)
+                    .chain_update(challenge)
                     .chain_update([i as u8])
                     .finalize()
                     .into();
@@ -177,11 +176,11 @@ impl NuChallenges {
         });
 
         let hash: [u8; 32] = Keccak256::new()
-            .chain_update(&challenge)
-            .chain_update(&proof.pi_z.y.into_bytes())
-            .chain_update(&proof.pi_z.x.into_bytes())
-            .chain_update(&proof.pi_z_omega.y.into_bytes())
-            .chain_update(&proof.pi_z_omega.x.into_bytes())
+            .chain_update(challenge)
+            .chain_update(proof.pi_z.y.into_bytes())
+            .chain_update(proof.pi_z.x.into_bytes())
+            .chain_update(proof.pi_z_omega.y.into_bytes())
+            .chain_update(proof.pi_z_omega.x.into_bytes())
             .finalize()
             .into();
         let c_u = hash.into_fr();
@@ -265,7 +264,7 @@ pub fn verify<H: CurveHooks>(
 
     let c_current = challenge;
 
-    let mut challenges = Challenges::new(alpha, beta, gamma, zeta, eta, vk.circuit_size);
+    let challenges = Challenges::new(alpha, beta, gamma, zeta, eta, vk.circuit_size);
 
     /*
      *   EVALUATE FIELD OPERATIONS
@@ -316,7 +315,7 @@ pub fn verify<H: CurveHooks>(
      */
     let (permutation_identity, alpha_base) = compute_permutation_widget_evaluation::<H>(
         &proof,
-        &mut challenges,
+        &challenges,
         alpha_base,
         &l_start,
         &l_end,
@@ -411,13 +410,12 @@ fn generate_eta_challenge<H: CurveHooks>(
     let mut hasher = Keccak256::new();
     let mut buffer = Vec::new();
 
-    // copy initial challenge bytes
     buffer.extend_from_slice(initial_challenge);
-    // copy public input bytes
+
     for input in public_inputs {
         buffer.extend_from_slice(&input.into_bytes());
     }
-    // copy w1, w2, and w3 bytes
+
     buffer.extend_from_slice(&proof.w1.y.into_bytes());
     buffer.extend_from_slice(&proof.w1.x.into_bytes());
     buffer.extend_from_slice(&proof.w2.y.into_bytes());
@@ -513,18 +511,8 @@ fn compute_public_input_delta(
 
     // root_2 = β * 0x0c
     let mut root_2 = challenges.beta * Fr::from(12);
-    // @note 0x05 + 0x07 == 0x0c == external coset
 
     for &input in public_inputs {
-        /*
-           input = public_input[i]
-           valid_inputs &= input < p
-           temp = input + gamma
-           numerator_value *= (β.σ(i) + wᵢ + γ)  // σ(i) = 0x05.ωⁱ
-           denominator_value *= (β.σ'(i) + wᵢ + γ) // σ'(i) = 0x0c.ωⁱ
-           root_1 *= ω
-           root_2 *= ω
-        */
         valid_inputs &= input < FrConfig::MODULUS;
         let temp = input.into_fr() + challenges.gamma;
         numerator_value *= root_1 + temp;
@@ -569,27 +557,6 @@ fn compute_lagrange_and_vanishing_poly<H: CurveHooks>(
     plookup_delta_numerator: &Fr,
     plookup_delta_denominator: &Fr,
 ) -> [Fr; 6] {
-    /*
-     * vanishing_numerator = zeta
-     * ZETA_POW_N = zeta^n
-     * vanishing_numerator -= 1
-     * accumulating_root = omega_inverse
-     * work_root = p - accumulating_root
-     * domain_inverse = domain_inverse
-     * vanishing_denominator = zeta + work_root
-     * work_root *= accumulating_root
-     * vanishing_denominator *= (zeta + work_root)
-     * work_root *= accumulating_root
-     * vanishing_denominator *= (zeta + work_root)
-     * vanishing_denominator *= (zeta + (zeta + accumulating_root))
-     * work_root = omega
-     * lagrange_numerator = vanishing_numerator * domain_inverse
-     * l_start_denominator = zeta - 1
-     * accumulating_root = work_root^2
-     * l_end_denominator = accumulating_root^2 * work_root * zeta - 1
-     * Note: l_end_denominator term contains a term \omega^5 to cut out 5 roots of unity from vanishing poly
-     */
-
     let mut vanishing_numerator = challenges.zeta_pow_n;
 
     vanishing_numerator -= Fr::ONE;
@@ -627,7 +594,6 @@ fn compute_lagrange_and_vanishing_poly<H: CurveHooks>(
     accumulator *= plookup_delta_denominator;
     let mut t4 = accumulator;
     {
-        // Q: Is it worthwhile to move modular exponentiation to native?
         let base = accumulator * l_end_denominator;
         let mut expon = FrConfig::MODULUS;
         expon.0[0] -= 2u64;
@@ -676,15 +642,6 @@ fn compute_permutation_widget_evaluation<H: CurveHooks>(
     l_end: &Fr,
     public_input_delta: &Fr,
 ) -> (Fr, Fr) {
-    /*
-     * t1 = (W1 + gamma + beta * ID1) * (W2 + gamma + beta * ID2)
-     * t2 = (W3 + gamma + beta * ID3) * (W4 + gamma + beta * ID4)
-     * result = alpha_base * z_eval * t1 * t2
-     * t1 = (W1 + gamma + beta * sigma_1_eval) * (W2 + gamma + beta * sigma_2_eval)
-     * t2 = (W3 + gamma + beta * sigma_3_eval) * (W4 + gamma + beta * sigma_4_eval)
-     * result -= (alpha_base * z_omega_eval * t1 * t2)
-     */
-
     let w1_eval = proof.w1_eval.into_fr();
     let w2_eval = proof.w2_eval.into_fr();
     let w3_eval = proof.w3_eval.into_fr();
@@ -709,14 +666,6 @@ fn compute_permutation_widget_evaluation<H: CurveHooks>(
 
     result -= alpha_base * z_omega_eval * t1 * t2;
 
-    /*
-     * alpha_base *= alpha
-     * result += alpha_base . (L_{n-k}(ʓ) . (z(ʓ.ω) - ∆_{PI}))
-     * alpha_base *= alpha
-     * result += alpha_base . (L_1(ʓ)(Z(ʓ) - 1))
-     * alpha_Base *= alpha
-     */
-
     alpha_base *= challenges.alpha;
     result += alpha_base * l_end * (z_omega_eval - public_input_delta);
     alpha_base *= challenges.alpha;
@@ -734,16 +683,6 @@ fn compute_plookup_widget_evaluation<H: CurveHooks>(
     l_end: &Fr,
     plookup_delta: &Fr,
 ) -> (Fr, Fr) {
-    /*
-     * Goal: f = (w1(z) + q2.w1(zω)) + η(w2(z) + qm.w2(zω)) + η²(w3(z) + qc.w_3(zω)) + q3(z).η³
-     * f = η.q3(z)
-     * f += (w3(z) + qc.w_3(zω))
-     * f *= η
-     * f += (w2(z) + qm.w2(zω))
-     * f *= η
-     * f += (w1(z) + q2.w1(zω))
-     */
-
     let mut f = challenges.eta * proof.q3_eval.into_fr();
     f += proof.w3_eval.into_fr() + proof.qc_eval.into_fr() * proof.w3_omega_eval.into_fr();
     f *= challenges.eta;
@@ -751,30 +690,15 @@ fn compute_plookup_widget_evaluation<H: CurveHooks>(
     f *= challenges.eta;
     f += proof.w1_eval.into_fr() + proof.q2_eval.into_fr() * proof.w1_omega_eval.into_fr();
 
-    // t(z) = table4(z).η³ + table3(z).η² + table2(z).η + table1(z)
     let t = proof.table4_eval.into_fr() * challenges.eta_cube
         + proof.table3_eval.into_fr() * challenges.eta_sqr
         + proof.table2_eval.into_fr() * challenges.eta
         + proof.table1_eval.into_fr();
 
-    // t(zw) = table4(zw).η³ + table3(zw).η² + table2(zw).η + table1(zw)
     let t_omega = proof.table4_omega_eval.into_fr() * challenges.eta_cube
         + proof.table3_omega_eval.into_fr() * challenges.eta_sqr
         + proof.table2_omega_eval.into_fr() * challenges.eta
         + proof.table1_omega_eval.into_fr();
-
-    /*
-     * Goal: numerator = (TABLE_TYPE_EVAL * f(z) + γ) * (t(z) + βt(zω) + γ(β + 1)) * (β + 1)
-     * gamma_beta_constant = γ(β + 1)
-     * numerator = f * TABLE_TYPE_EVAL + gamma
-     * temp0 = t(z) + t(zω) * β + gamma_beta_constant
-     * numerator *= temp0
-     * numerator *= (β + 1)
-     * temp0 = alpha * l_1
-     * numerator += temp0
-     * numerator *= z_lookup(z)
-     * numerator -= temp0
-     */
 
     let gamma_beta_constant = challenges.gamma * (challenges.beta + Fr::ONE);
     let mut numerator = f * proof.table_type_eval.into_fr() + challenges.gamma;
@@ -785,18 +709,6 @@ fn compute_plookup_widget_evaluation<H: CurveHooks>(
     numerator += temp0;
     numerator *= proof.z_lookup_eval.into_fr();
     numerator -= temp0;
-
-    /*
-     * Goal: denominator = z_lookup(zω)*[s(z) + βs(zω) + γ(1 + β)] - [z_lookup(zω) - [γ(1 + β)]^{n-k}]*α²L_end(z)
-     * note: delta_factor = [γ(1 + β)]^{n-k}
-     * denominator = s(z) + βs(zω) + γ(β + 1)
-     * temp1 = α²L_end(z)
-     * denominator -= temp1
-     * denominator *= z_lookup(zω)
-     * denominator += temp1 * delta_factor
-     * PLOOKUP_IDENTITY = (numerator - denominator).alpha_base
-     * alpha_base *= alpha^3
-     */
 
     let mut denominator = proof.s_eval.into_fr()
         + proof.s_omega_eval.into_fr() * challenges.beta
@@ -819,41 +731,6 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
     challenges: &Challenges,
     mut alpha_base: Fr,
 ) -> (Fr, Fr) {
-    /*
-     * The basic arithmetic gate identity in standard plonk is as follows.
-     * (w_1 . w_2 . q_m) + (w_1 . q_1) + (w_2 . q_2) + (w_3 . q_3) + (w_4 . q_4) + q_c = 0
-     * However, for Ultraplonk, we extend this to support "passing" wires between rows (shown without alpha scaling below):
-     * q_arith * ( ( (-1/2) * (q_arith - 3) * q_m * w_1 * w_2 + q_1 * w_1 + q_2 * w_2 + q_3 * w_3 + q_4 * w_4 + q_c ) +
-     * (q_arith - 1)*( α * (q_arith - 2) * (w_1 + w_4 - w_1_omega + q_m) + w_4_omega) ) = 0
-     *
-     * This formula results in several cases depending on q_arith:
-     * 1. q_arith == 0: Arithmetic gate is completely disabled
-     *
-     * 2. q_arith == 1: Everything in the minigate on the right is disabled. The equation is just a standard plonk equation
-     * with extra wires: q_m * w_1 * w_2 + q_1 * w_1 + q_2 * w_2 + q_3 * w_3 + q_4 * w_4 + q_c = 0
-     *
-     * 3. q_arith == 2: The (w_1 + w_4 - ...) term is disabled. THe equation is:
-     * (1/2) * q_m * w_1 * w_2 + q_1 * w_1 + q_2 * w_2 + q_3 * w_3 + q_4 * w_4 + q_c + w_4_omega = 0
-     * It allows defining w_4 at next index (w_4_omega) in terms of current wire values
-     *
-     * 4. q_arith == 3: The product of w_1 and w_2 is disabled, but a mini addition gate is enabled. α allows us to split
-     * the equation into two:
-     *
-     * q_1 * w_1 + q_2 * w_2 + q_3 * w_3 + q_4 * w_4 + q_c + 2 * w_4_omega = 0
-     * and
-     * w_1 + w_4 - w_1_omega + q_m = 0  (we are reusing q_m here)
-     *
-     * 5. q_arith > 3: The product of w_1 and w_2 is scaled by (q_arith - 3), while the w_4_omega term is scaled by (q_arith - 1).
-     * The equation can be split into two:
-     *
-     * (q_arith - 3)* q_m * w_1 * w_ 2 + q_1 * w_1 + q_2 * w_2 + q_3 * w_3 + q_4 * w_4 + q_c + (q_arith - 1) * w_4_omega = 0
-     * and
-     * w_1 + w_4 - w_1_omega + q_m = 0
-     *
-     * The problem that q_m is used both in both equations can be dealt with by appropriately changing selector values at
-     * the next gate. Then we can treat (q_arith - 1) as a simulated q_6 selector and scale q_m to handle (q_arith - 3) at
-     * product.
-     */
     let negative_inverse_of_2_modulo_r = -Fr::from(2u64)
         .inverse()
         .expect("2 does not have an inverse in the field"); // unreachable for BN254
@@ -863,29 +740,19 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
     let w3q3 = proof.w3_eval.into_fr() * proof.q3_eval.into_fr();
     let w4q4 = proof.w4_eval.into_fr() * proof.q4_eval.into_fr();
 
-    // @todo - Add a explicit test that hits QARITH == 3
-    // w1w2qm := (w_1 . w_2 . q_m . (QARITH_EVAL_LOC - 3)) / 2
     let w1w2qm = proof.w1_eval.into_fr()
         * proof.w2_eval.into_fr()
         * proof.qm_eval.into_fr()
         * (proof.q_arith_eval.into_fr() - Fr::from(3))
         * negative_inverse_of_2_modulo_r;
 
-    // (w_1 . w_2 . q_m . (q_arith - 3)) / -2) + (w_1 . q_1) + (w_2 . q_2) + (w_3 . q_3) + (w_4 . q_4) + q_c
     let identity = w1w2qm + w1q1 + w2q2 + w3q3 + w4q4 + proof.qc_eval.into_fr();
 
-    // if q_arith == 3 we evaluate an additional mini addition gate (on top of the regular one), where:
-    // w_1 + w_4 - w_1_omega + q_m = 0
-    // we use this gate to save an addition gate when adding or subtracting non-native field elements
-    // α * (q_arith - 2) * (w_1 + w_4 - w_1_omega + q_m)
     let extra_small_addition_gate_identity = challenges.alpha
         * (proof.q_arith_eval.into_fr() - Fr::from(2))
         * (proof.w1_eval.into_fr() + proof.w4_eval.into_fr() - proof.w1_omega_eval.into_fr()
             + proof.qm_eval.into_fr());
 
-    // if q_arith == 2 OR q_arith == 3 we add the 4th wire of the NEXT gate into the arithmetic identity
-    // N.B. if q_arith > 2, this wire value will be scaled by (q_arith - 1) relative to the other gate wires!
-    // alpha_base * q_arith * (identity + (q_arith - 1) * (w_4_omega + extra_small_addition_gate_identity))
     let arithmetic_identity = alpha_base
         * proof.q_arith_eval.into_fr()
         * (identity
@@ -903,25 +770,6 @@ fn compute_genpermsort_widget_evaluation<H: CurveHooks>(
     challenges: &Challenges,
     mut alpha_base: Fr,
 ) -> (Fr, Fr) {
-    /*
-     * D1 = (w2 - w1)
-     * D2 = (w3 - w2)
-     * D3 = (w4 - w3)
-     * D4 = (w1_omega - w4)
-     *
-     * α_a = alpha_base
-     * α_b = alpha_base * α
-     * α_c = alpha_base * α^2
-     * α_d = alpha_base * α^3
-     *
-     * range_accumulator = (
-     *   D1(D1 - 1)(D1 - 2)(D1 - 3).α_a +
-     *   D2(D2 - 1)(D2 - 2)(D2 - 3).α_b +
-     *   D3(D3 - 1)(D3 - 2)(D3 - 3).α_c +
-     *   D4(D4 - 1)(D4 - 2)(D4 - 3).α_d +
-     * ) . q_sort
-     */
-
     let d1 = proof.w2_eval.into_fr() - proof.w1_eval.into_fr();
     let d2 = proof.w3_eval.into_fr() - proof.w2_eval.into_fr();
     let d3 = proof.w4_eval.into_fr() - proof.w3_eval.into_fr();
@@ -962,20 +810,6 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
     challenges: &Challenges,
     mut alpha_base: Fr,
 ) -> (Fr, Fr) {
-    /*
-     * endo_term = (-x_2) * x_1 * (x_3 * 2 + x_1) * q_beta
-     * endo_sqr_term = x_2^2
-     * endo_sqr_term *= (x_3 - x_1)
-     * endo_sqr_term *= q_beta^2
-     * leftovers = x_2^2
-     * leftovers *= x_2
-     * leftovers += x_1^2 * (x_3 + x_1) @follow-up Invalid comment in BB widget
-     * leftovers -= (y_2^2 + y_1^2)
-     * sign_term = y_2 * y_1
-     * sign_term += sign_term
-     * sign_term *= q_sign
-     */
-
     // Aliases:
     let x1_eval = &proof.w2_eval;
     let x2_eval = &proof.w1_omega_eval;
@@ -985,7 +819,6 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
     let y3_eval = &proof.w3_omega_eval;
     let qsign = &proof.q1_eval;
 
-    // q_elliptic * (x3 + x2 + x1)(x2 - x1)(x2 - x1) - y2^2 - y1^2 + 2(y2y1)*q_sign = 0
     let x_diff = x2_eval.into_fr() - x1_eval.into_fr();
     let y2_sqr = y2_eval.into_fr().square();
     let y1_sqr = y1_eval.into_fr().square();
@@ -997,35 +830,18 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
         - (y1_sqr + y2_sqr);
     x_add_identity = x_add_identity * (Fr::ONE - proof.qm_eval.into_fr()) * alpha_base;
 
-    // q_elliptic * (x3 + x2 + x1)(x2 - x1)(x2 - x1) - y2^2 - y1^2 + 2(y2y1)*q_sign = 0
     let y1_plus_y3 = y1_eval.into_fr() + y3_eval.into_fr();
     let y_diff = y2_eval.into_fr() * qsign.into_fr() - y1_eval.into_fr();
     let mut y_add_identity =
         y1_plus_y3 * x_diff + ((x3_eval.into_fr() - x1_eval.into_fr()) * y_diff);
     y_add_identity *= (Fr::ONE - proof.qm_eval.into_fr()) * alpha_base * challenges.alpha;
 
-    // ELLIPTIC_IDENTITY = (x_identity + y_identity) * Q_ELLIPTIC_EVAL
     let mut elliptic_identity = (x_add_identity + y_add_identity) * proof.q_elliptic_eval.into_fr();
-
-    /*
-     * x_pow_4 = (y_1_sqr - curve_b) * x_1;
-     * y_1_sqr_mul_4 = y_1_sqr + y_1_sqr;
-     * y_1_sqr_mul_4 += y_1_sqr_mul_4;
-     * x_1_pow_4_mul_9 = x_pow_4;
-     * x_1_pow_4_mul_9 += x_1_pow_4_mul_9;
-     * x_1_pow_4_mul_9 += x_1_pow_4_mul_9;
-     * x_1_pow_4_mul_9 += x_1_pow_4_mul_9;
-     * x_1_pow_4_mul_9 += x_pow_4;
-     * x_1_sqr_mul_3 = x_1_sqr + x_1_sqr + x_1_sqr;
-     * x_double_identity = (x_3 + x_1 + x_1) * y_1_sqr_mul_4 - x_1_pow_4_mul_9;
-     * y_double_identity = x_1_sqr_mul_3 * (x_1 - x_3) - (y_1 + y_1) * (y_1 + y_3);
-     */
 
     // y^2 = x^3 + ax + b
     // for Grumpkin, a = 0 and b = -17. We use b in a custom gate relation that evaluates elliptic curve arithmetic
     let grumpkin_curve_b_parameter_negated = Fr::from(17);
 
-    // (x3 + x1 + x1) (4y1*y1) - 9 * x1 * x1 * x1 * x1 = 0
     let x1_sqr = x1_eval.into_fr().square();
     let x_pow_4 = (y1_sqr + grumpkin_curve_b_parameter_negated) * x1_eval.into_fr();
     let y1_sqr_mul_4 = y1_sqr * Fr::from(4);
@@ -1034,7 +850,6 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
     let mut x_double_identity =
         (x3_eval.into_fr() + x1_eval.into_fr().double()) * y1_sqr_mul_4 - x1_pow_4_mul_9;
 
-    // (y1 + y1) (2y1) - (3 * x1 * x1)(x1 - x3) = 0
     let mut y_double_identity = x1_sqr_mul_3 * (x1_eval.into_fr() - x3_eval.into_fr())
         - y1_eval.into_fr().double() * (y1_eval.into_fr() + y3_eval.into_fr());
 
@@ -1043,7 +858,6 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
     x_double_identity *= proof.qm_eval.into_fr();
     y_double_identity *= proof.qm_eval.into_fr();
 
-    // ELLIPTIC_IDENTITY += (x_double_identity + y_double_identity) * Q_DOUBLE_EVAL
     elliptic_identity += (x_double_identity + y_double_identity) * proof.q_elliptic_eval.into_fr();
 
     // update alpha
@@ -1053,26 +867,6 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
 }
 
 fn compute_aux_non_native_field_evaluation<H: CurveHooks>(proof: &Proof<H>) -> Fr {
-    /*
-     * Non native field arithmetic gate 2
-     *             _                                                                               _
-     *            /   _                   _                               _       14                \
-     * q_2 . q_4 |   (w_1 . w_2) + (w_1 . w_2) + (w_1 . w_4 + w_2 . w_3 - w_3) . 2    - w_3 - w_4   |
-     *            \_                                                                               _/
-     *
-     * limb_subproduct = w_1 . w_2_omega + w_1_omega . w_2
-     * non_native_field_gate_2 = w_1 * w_4 + w_4 * w_3 - w_3_omega
-     * non_native_field_gate_2 = non_native_field_gate_2 * limb_size
-     * non_native_field_gate_2 -= w_4_omega
-     * non_native_field_gate_2 += limb_subproduct
-     * non_native_field_gate_2 *= q_4
-     * limb_subproduct *= limb_size
-     * limb_subproduct += w_1_omega * w_2_omega
-     * non_native_field_gate_1 = (limb_subproduct + w_3 + w_4) * q_3
-     * non_native_field_gate_3 = (limb_subproduct + w_4 - (w_3_omega + w_4_omega)) * q_m
-     * non_native_field_identity = (non_native_field_gate_1 + non_native_field_gate_2 + non_native_field_gate_3) * q_2
-     */
-
     let limb_size: Fr = U256::new([
         0x0000000000000000,
         0x0000000000000010,
@@ -1109,20 +903,6 @@ fn compute_aux_non_native_field_evaluation<H: CurveHooks>(proof: &Proof<H>) -> F
 }
 
 fn compute_aux_limb_accumulator_evaluation<H: CurveHooks>(proof: &Proof<H>) -> Fr {
-    /*
-     * limb_accumulator_1 = w_2_omega;
-     * limb_accumulator_1 *= SUBLIMB_SHIFT;
-     * limb_accumulator_1 += w_1_omega;
-     * limb_accumulator_1 *= SUBLIMB_SHIFT;
-     * limb_accumulator_1 += w_3;
-     * limb_accumulator_1 *= SUBLIMB_SHIFT;
-     * limb_accumulator_1 += w_2;
-     * limb_accumulator_1 *= SUBLIMB_SHIFT;
-     * limb_accumulator_1 += w_1;
-     * limb_accumulator_1 -= w_4;
-     * limb_accumulator_1 *= q_4;
-     */
-
     let sublimb_shift: Fr = Fr::from(0x4000); // 1 << 14 = 0x4000
 
     let mut limb_accumulator_1 = proof.w2_omega_eval.into_fr() * sublimb_shift;
@@ -1136,19 +916,6 @@ fn compute_aux_limb_accumulator_evaluation<H: CurveHooks>(proof: &Proof<H>) -> F
     limb_accumulator_1 += -proof.w4_eval.into_fr();
     limb_accumulator_1 *= proof.q4_eval.into_fr();
 
-    /*
-     * limb_accumulator_2 = w_3_omega;
-     * limb_accumulator_2 *= SUBLIMB_SHIFT;
-     * limb_accumulator_2 += w_2_omega;
-     * limb_accumulator_2 *= SUBLIMB_SHIFT;
-     * limb_accumulator_2 += w_1_omega;
-     * limb_accumulator_2 *= SUBLIMB_SHIFT;
-     * limb_accumulator_2 += w_4;
-     * limb_accumulator_2 *= SUBLIMB_SHIFT;
-     * limb_accumulator_2 += w_3;
-     * limb_accumulator_2 -= w_4_omega;
-     * limb_accumulator_2 *= q_m;
-     */
     let mut limb_accumulator_2 = proof.w3_omega_eval.into_fr() * sublimb_shift;
     limb_accumulator_2 += proof.w2_omega_eval.into_fr();
     limb_accumulator_2 *= sublimb_shift;
@@ -1170,16 +937,6 @@ fn compute_aux_ram_consistency_evaluation<H: CurveHooks>(
     partial_record_check: &Fr,
     index_is_monotonically_increasing: &Fr,
 ) -> Fr {
-    /*
-     * next_gate_access_type = w_3_omega;
-     * next_gate_access_type *= eta;
-     * next_gate_access_type += w_2_omega;
-     * next_gate_access_type *= eta;
-     * next_gate_access_type += w_1_omega;
-     * next_gate_access_type *= eta;
-     * next_gate_access_type = w_4_omega - next_gate_access_type;
-     */
-
     let mut next_gate_access_type = proof.w3_omega_eval.into_fr() * challenges.eta;
     next_gate_access_type += proof.w2_omega_eval.into_fr();
     next_gate_access_type *= challenges.eta;
@@ -1187,27 +944,12 @@ fn compute_aux_ram_consistency_evaluation<H: CurveHooks>(
     next_gate_access_type *= challenges.eta;
     next_gate_access_type = proof.w4_omega_eval.into_fr() - next_gate_access_type;
 
-    // value_delta = w_3_omega - w_3
     let value_delta = proof.w3_omega_eval.into_fr() - proof.w3_eval.into_fr();
 
-    //  adjacent_values_match_if_adjacent_indices_match_and_next_access_is_a_read_operation = (1 - index_delta) * value_delta * (1 - next_gate_access_type);
     let adjacent_values_match_if_adjacent_indices_match_and_next_access_is_a_read_operation =
         (Fr::ONE - index_delta) * value_delta * (Fr::ONE - next_gate_access_type);
 
     // AUX_RAM_CONSISTENCY_EVALUATION
-
-    /*
-     * access_type = w_4 - partial_record_check
-     * access_check = access_type^2 - access_type
-     * next_gate_access_type_is_boolean = next_gate_access_type^2 - next_gate_access_type
-     * RAM_consistency_check_identity = adjacent_values_match_if_adjacent_indices_match_and_next_access_is_a_read_operation;
-     * RAM_consistency_check_identity *= alpha;
-     * RAM_consistency_check_identity += index_is_monotonically_increasing;
-     * RAM_consistency_check_identity *= alpha;
-     * RAM_consistency_check_identity += next_gate_access_type_is_boolean;
-     * RAM_consistency_check_identity *= alpha;
-     * RAM_consistency_check_identity += access_check;
-     */
 
     let access_type = proof.w4_eval.into_fr() - partial_record_check;
 
@@ -1236,24 +978,10 @@ fn compute_auxiliary_identity<H: CurveHooks>(
     index_delta: &Fr,
     aux_evaluations: &AuxiliaryEvaluations,
 ) -> (Fr, Fr) {
-    // timestamp_delta = w_2_omega - w_2
     let timestamp_delta = proof.w2_omega_eval.into_fr() - proof.w2_eval.into_fr();
 
-    // RAM_timestamp_check_identity = (1 - index_delta) * timestamp_delta - w_3
     let ram_timestamp_check_identity =
         (Fr::ONE - index_delta) * timestamp_delta - proof.w3_eval.into_fr();
-
-    /*
-     * memory_identity = ROM_consistency_check_identity * q_2;
-     * memory_identity += RAM_timestamp_check_identity * q_4;
-     * memory_identity += AUX_MEMORY_EVALUATION * q_m;
-     * memory_identity *= q_1;
-     * memory_identity += (RAM_consistency_check_identity * q_arith);
-     *
-     * auxiliary_identity = memory_identity + non_native_field_identity + limb_accumulator_identity;
-     * auxiliary_identity *= q_aux;
-     * auxiliary_identity *= alpha_base;
-     */
 
     let mut memory_identity =
         aux_evaluations.aux_rom_consistency_evaluation * proof.q2_eval.into_fr();
@@ -1282,20 +1010,6 @@ fn compute_auxiliary_widget_evaluation<H: CurveHooks>(
     challenges: &Challenges,
     alpha_base: Fr,
 ) -> (Fr, Fr) {
-    /*
-     * memory_record_check = w_3;
-     * memory_record_check *= eta;
-     * memory_record_check += w_2;
-     * memory_record_check *= eta;
-     * memory_record_check += w_1;
-     * memory_record_check *= eta;
-     * memory_record_check += q_c;
-     *
-     * partial_record_check = memory_record_check;
-     *
-     * memory_record_check -= w_4;
-     */
-
     let aux_non_native_field_evaluation = compute_aux_non_native_field_evaluation::<H>(proof);
     let aux_limb_accumulator_evaluation = compute_aux_limb_accumulator_evaluation::<H>(proof);
 
@@ -1311,17 +1025,12 @@ fn compute_auxiliary_widget_evaluation<H: CurveHooks>(
 
     let aux_memory_evaluation = memory_record_check;
 
-    // index_delta = w_1_omega - w_1
     let index_delta = proof.w1_omega_eval.into_fr() - proof.w1_eval.into_fr();
-    // record_delta = w_4_omega - w_4
     let record_delta = proof.w4_omega_eval.into_fr() - proof.w4_eval.into_fr();
-    // index_is_monotonically_increasing = index_delta * (index_delta - 1)
     let index_is_monotonically_increasing = index_delta * (index_delta - Fr::ONE);
 
-    // adjacent_values_match_if_adjacent_indices_match = record_delta * (1 - index_delta)
     let adjacent_values_match_if_adjacent_indices_match = record_delta * (Fr::ONE - index_delta);
 
-    // AUX_ROM_CONSISTENCY_EVALUATION = ((adjacent_values_match_if_adjacent_indices_match * alpha) + index_is_monotonically_increasing) * alpha + memory_record_check
     let aux_rom_consistency_evaluation = (adjacent_values_match_if_adjacent_indices_match
         * challenges.alpha
         + index_is_monotonically_increasing)
@@ -1362,16 +1071,6 @@ fn quotient_evaluation(
     aux_identity: &Fr,
     zero_poly_inverse: &Fr,
 ) -> Fr {
-    /*
-     * quotient = ARITHMETIC_IDENTITY
-     * quotient += PERMUTATION_IDENTITY
-     * quotient += PLOOKUP_IDENTITY
-     * quotient += SORT_IDENTITY
-     * quotient += ELLIPTIC_IDENTITY
-     * quotient += AUX_IDENTITY
-     * quotient *= ZERO_POLY_INVERSE
-     */
-
     (permutation_identity
         + plookup_identity
         + arithmetic_identity
@@ -1396,7 +1095,6 @@ fn perform_final_checks<H: CurveHooks>(
     let u_plus_one = nu_challenges.c_u + Fr::ONE;
     let zeta_pow_2n = challenges.zeta_pow_n.square();
     let zeta_pow_3n = zeta_pow_2n * challenges.zeta_pow_n;
-    // COMPUTE BATCH EVALUATION SCALAR MULTIPLIER
     let batch_evaluation =
         compute_batch_evaluation_scalar_multiplier::<H>(proof, nu_challenges, quotient_eval);
 
@@ -1486,7 +1184,6 @@ fn perform_final_checks<H: CurveHooks>(
     let bases = [proof.pi_z_omega, proof.pi_z];
     let scalars = [nu_challenges.c_u, Fr::ONE];
     let mut pairing_lhs = H::bn254_msm_g1(&bases, &scalars).unwrap();
-    // negate lhs y-coordinate
     pairing_lhs.y = -pairing_lhs.y;
 
     /*
@@ -1520,15 +1217,6 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
     nu_challenges: &NuChallenges,
     quotient_eval: &Fr,
 ) -> Fr {
-    /*
-     * batch_evaluation = v0 * (w_1_omega * u + w_1_eval)
-     * batch_evaluation += v1 * (w_2_omega * u + w_2_eval)
-     * batch_evaluation += v2 * (w_3_omega * u + w_3_eval)
-     * batch_evaluation += v3 * (w_4_omega * u + w_4_eval)
-     * batch_evaluation += v4 * (s_omega_eval * u + s_eval)
-     * batch_evaluation += v5 * (z_omega_eval * u + z_eval)
-     * batch_evaluation += v6 * (z_lookup_omega_eval * u + z_lookup_eval)
-     */
     let mut batch_evaluation = nu_challenges.c_v[0]
         * (proof.w1_omega_eval.into_fr() * nu_challenges.c_u + proof.w1_eval.into_fr());
 
@@ -1550,23 +1238,6 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
     batch_evaluation += nu_challenges.c_v[6]
         * (proof.z_lookup_omega_eval.into_fr() * nu_challenges.c_u + proof.z_lookup_eval.into_fr());
 
-    /*
-     * batch_evaluation += v7 * Q1_EVAL
-     * batch_evaluation += v8 * Q2_EVAL
-     * batch_evaluation += v9 * Q3_EVAL
-     * batch_evaluation += v10 * Q4_EVAL
-     * batch_evaluation += v11 * QM_EVAL
-     * batch_evaluation += v12 * QC_EVAL
-     * batch_evaluation += v13 * QARITH_EVAL
-     * batch_evaluation += v14 * QSORT_EVAL_LOC
-     * batch_evaluation += v15 * QELLIPTIC_EVAL_LOC
-     * batch_evaluation += v16 * QAUX_EVAL_LOC
-     * batch_evaluation += v17 * SIGMA1_EVAL_LOC
-     * batch_evaluation += v18 * SIGMA2_EVAL_LOC
-     * batch_evaluation += v19 * SIGMA3_EVAL_LOC
-     * batch_evaluation += v20 * SIGMA4_EVAL_LOC
-     */
-
     batch_evaluation += nu_challenges.c_v[7] * proof.q1_eval.into_fr();
     batch_evaluation += nu_challenges.c_v[8] * proof.q2_eval.into_fr();
     batch_evaluation += nu_challenges.c_v[9] * proof.q3_eval.into_fr();
@@ -1581,19 +1252,6 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
     batch_evaluation += nu_challenges.c_v[18] * proof.sigma2_eval.into_fr();
     batch_evaluation += nu_challenges.c_v[19] * proof.sigma3_eval.into_fr();
     batch_evaluation += nu_challenges.c_v[20] * proof.sigma4_eval.into_fr();
-
-    /*
-     * batch_evaluation += v21 * (table1(zw) * u + table1(z))
-     * batch_evaluation += v22 * (table2(zw) * u + table2(z))
-     * batch_evaluation += v23 * (table3(zw) * u + table3(z))
-     * batch_evaluation += v24 * (table4(zw) * u + table4(z))
-     * batch_evaluation += v25 * table_type_eval
-     * batch_evaluation += v26 * id1_eval
-     * batch_evaluation += v27 * id2_eval
-     * batch_evaluation += v28 * id3_eval
-     * batch_evaluation += v29 * id4_eval
-     * batch_evaluation += quotient_eval
-     */
 
     batch_evaluation += nu_challenges.c_v[21]
         * (proof.table1_omega_eval.into_fr() * nu_challenges.c_u + proof.table1_eval.into_fr());
