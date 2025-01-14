@@ -1654,914 +1654,103 @@ fn perform_final_checks<H: CurveHooks>(
      * VALIDATIONS AND ACCUMULATIONS
      */
 
-    // Note: Validations are performed automatically by Arkworks upon construction of EC points.
-    let mut accumulator = proof.t1.into_group();
-
-    // assert_eq!(
-    //     accumulator.x,
-    //     read_fq(&hex_literal::hex!(
-    //         "2a927caded56827ac403fab8e088eb4e4b80da829ed406e1ef308b95f18181fd"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     accumulator.y,
-    //     read_fq(&hex_literal::hex!(
-    //         "00b8e0558b77daed027ad8a2d7f6027de8e2dc9ddafd572170312d511f0e5df8"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // NOTE: EXPENSIVE OPERATIONS (SCALAR MULS and POINT ADDITIONS) OCCUR BELOW THIS POINT.
-    // TODO: MAKE USE OF NATIVE!!!
-
-    // T2
-
-    let mut scalar = challenges.zeta_pow_n;
-    // accumulator_2 = [T2].zeta^n
-    let mut accumulator2 = proof.t2.into_group() * scalar;
-    // accumulator = [T1] + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "1168bf9d60be65b1029b945ce70dd0457cd298692b410143152d8575df466f4e"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "221b867eeee1c324d9c77ea57a0e2978b36eec8868be10b01b19779bdf81566d"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // T3
-
-    scalar.square_in_place();
-    // accumulator_2 = [T3].zeta^{2n}
-    accumulator2 = proof.t3.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "021bdd4f0103fc1c96edbe883314b21be295d70a0a44850ffdd3b73bb81bfbaf"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "19e75758e39281e48044b10a2186bf27c5cf9d1b4917e1c401ebe67999208644"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // T4
-
-    scalar *= challenges.zeta_pow_n;
-    // accumulator_2 = [T4].zeta^{3n}
-    accumulator2 = proof.t4.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "2a6a2b71b82c6922ab29f883a125a2cfef185bd0082d20eec73ca5da5c292d4f"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "2db5e003e37435a1ed3a5c425823e094d78b508d03810cf0a102ea4dc593686e"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // W1
-
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[0];
-    // accumulator_2 = v0.(u + 1).[W1]
-    accumulator2 = proof.w1.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "08d867cca9d35082658b756c7f5eaf79b30de2d914a06388e833b7bec160e631"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "1f6c55a518a3da8fbcc5a09e73f2327e6562260698358029e476f55edd23dfe7"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // W2
-
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[1];
-    // accumulator_2 = v1.(u + 1).[W2]
-    accumulator2 = proof.w2.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "046d10f8563de265d4d466c6caa6f0675f9a6309d0be466fe52560c216f2c22c"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "116e082340f0c3277f2c621d1d18e1e5a878df850d727fdbd5eec902fee61b02"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // W3
-
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[2];
-    // accumulator_2 = v2.(u + 1).[W3]
-    accumulator2 = proof.w3.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "2bbe5273f3e00b8778a5d220b203333d990f32eba3a6eb99bf4bc1213d0f5f42"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "074b69333ef4a622781e86a55d34609a5c86cfcad53d37b6f1238d695cc24ec3"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // W4
-
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[3];
-    // accumulator_2 = v3.(u + 1).[W4]
-    accumulator2 = proof.w4.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "2052a9558ab82d8e4d7e7dab8acf9a8af96b3cde3f21f207df76285db45ce1ac"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "06aa831918f9a2e57f68120c1426aa831354a58caa52ee4e2a2b61d514e531c3"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // S
-
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[4];
-    // accumulator_2 = v4.(u + 1).[S]
-    accumulator2 = proof.s.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0fe2a2044deadc57711f7ba6aaa6e65bd9550ffe111eba93b2d0a311afd2268f"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "21c703ee9e8948aa47c6bd9140086b20e4685085fc403f73c5a1e1ba50e3337a"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // Z
-
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[5];
-    // accumulator_2 = v5.(u + 1).[Z]
-    accumulator2 = proof.z.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "26b9b255d47db2ca4abbe5e5947d1cc8b5d918feb8e5cd9b843b2cad30badb20"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "047d92ab6024dc768c651f4ed62e438a44b2cee621fd0ef12d40fdfce9ef6c9b"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // Z_LOOKUP
-
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[6];
-    // accumulator_2 = v6.(u + 1).[Z_LOOKUP]
-    accumulator2 = proof.z_lookup.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "07cb06d2db0167180ec5335a8e8fa07a33834f8eeb23ff1d05d71af7cbcb937b"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "1f2891cf3967bbc699204c04912ff4e2983555474580dc542d420fd871725905"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE Q1
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[7];
-    // accumulator_2 = v7.[Q1]
-    accumulator2 = vk.q_1.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "00ac9a9e7253699258aa0c55abf0da0630523c58abb1de3bf29267575a996f57"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "2017643c767f8dda5b759922c7df0866aadbfaec224add5fee3da185f4015da3"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE Q2
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[8];
-    // accumulator_2 = v8.[Q2]
-    accumulator2 = vk.q_2.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "21038c60e59a9ab8eabfff291e168857eb859bfef41dd70dfc44757c0480471e"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0fd8c76678742ec47d14585946ec83d78263095824109feaa76de7dfea8d7b83"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE Q3
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[9];
-    // accumulator_2 = v9.[Q3]
-    accumulator2 = vk.q_3.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "282e71621a291ae234bdbbce64e470fecbb47f16390f91cd6c07f30459122e61"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0389094c8bca435a4a57572e6d12262c86e58450748b5641ebf4d89a2e7fcce4"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE Q4
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[10];
-    // accumulator_2 = v10.[Q4]
-    accumulator2 = vk.q_4.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "02385f45ca661913e3750927572ae5597e260e40c18c30d288a8e66152dc21a8"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "01883a8afaef0d6aa182adc8718d90e6732792558cde634a8853716fe8cf0d55"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE QM
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[11];
-    // accumulator_2 = v11.[QM]
-    accumulator2 = vk.q_m.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "1e62ad61fff8afb95c92cb2e9f1043dbb49ffe32c98aa9c0a4312dd2aba4ad5e"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "18fd968a0423a992b68c76a0885f4b6a63fbbe8970bd36389642a8f0778b5e1d"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE QC
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[12];
-    // accumulator_2 = v12.[QC]
-    accumulator2 = vk.q_c.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "1e27be987d5cd1d38ce6e38f2171da60d4be2185117f7350f309840016a34c8b"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "031b4b24e187a33373391fa7251eb5d10e99bfac81fb30998000336b2335c6ff"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE QARITH
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[13];
-    // accumulator_2 = v13.[QARITH]
-    accumulator2 = vk.q_arithmetic.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "28e40ef3b9d60fff4ff2eb1782cf784162f451bca8b0a9b2f4d7b7699199e9c0"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "2ad8a608c51ae477fb786e554a14452907426a49fe3cd6568f662ffd0fddf326"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE QSORT
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[14];
-    // accumulator_2 = v14.[QSORT]
-    accumulator2 = vk.q_sort.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "28f936634c507351f270274a86f8a7fc41e32d5c39a7ec2de3caa3ee6d176738"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "190e279b9efecf262166ef8cb51b86d0497bec349d29482a7c0f78e94f930f5a"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE QELLIPTIC
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[15];
-    // accumulator_2 = v15.[QELLIPTIC]
-    accumulator2 = vk.q_elliptic.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "14127ba0b4a5719ed4049f8349351468d22fd40160a8557a4ab74fa5088257ec"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "19bca1dad32d9e93d5506fda91de86a7f0236a25437b0d6abcdd4c0c4db0aff9"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE QAUX
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[16];
-    // accumulator_2 = v16.[QAUX]
-    accumulator2 = vk.q_aux.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "109b5669329dee2e91fe657e900f77617b99331c111fc987534ae7fade0281f3"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "208937163af04438bdc122332075eb4e50c5f9047eedd902e4a4224a089181e6"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE SIGMA1
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[17];
-    // accumulator_2 = v17.[sigma1]
-    accumulator2 = vk.sigma_1.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "23e0e5345a50e2b73a8c57d3523d62a95519cfc66f95ccc550b89ba7b3552b12"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "03caf6c2b7a37eeb6c78b10df7ff773a535a8f42a7190b637872f6dc9aa2c048"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE SIGMA2
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[18];
-    // accumulator_2 = v18.[sigma2]
-    accumulator2 = vk.sigma_2.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "220a46a6bf3d46abe7318c0170c389ba167e64938faa1be9d37f87139df4a887"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "02954d9a29d4067400017fe5219d57a56db82c7fcf89976a61753d866c9a0476"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE SIGMA3
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[19];
-    // accumulator_2 = v19.[sigma3]
-    accumulator2 = vk.sigma_3.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "02d2d3dbf9c2261024a8011650e770ba8f4469f9f15ffa3ecc1549d2bcf19593"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "2dd080661c2875eff3125526ea1b7f8ec68549542e440839e00f317e4c1fa9df"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE SIGMA4
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[20];
-    // accumulator_2 = v20.[sigma4]
-    accumulator2 = vk.sigma_4.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "12b4d71edb8b96df6a42bb60ecd70f8de06cc171147a25a536894142e19a47bd"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "20637bf1c32d7480c605597e3cadcfe0ed0ad4eab774435d2f9753be0f0986ac"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE TABLE1
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[21];
-    // accumulator_2 = (u+1).v21.[table1]
-    accumulator2 = vk.table_1.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "248b937b8fec1798082b1e8e1101115588deed5d455850a45484e4c93c3e8663"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "09c3d27eec5bba9573981f8b061db452d5d7f193bef5898a53d5b9fe11cbb887"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE TABLE2
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[22];
-    // accumulator_2 = (u + 1).v22.[table2]
-    accumulator2 = vk.table_2.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "2dce3304102d7ff45307ee00099b96b635eb3e94bb6a4eb904c601d2179b4aae"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "069ff7a93ebdcc2977adcc7f974dec9553700941fc797d32a7b1355c59c56797"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE TABLE3
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[23];
-    // accumulator_2 = (u + 1).v23.[table3]
-    accumulator2 = vk.table_3.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "118776455da086cabeb20110f42267f76d58e404c6797aa1a6a3499d6471eb25"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0f753e81e8641547ef1ac06bfd68e9e40e45ae99373c1a9f0dd26cbf0f7dd4e1"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE TABLE4
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = (nu_challenges.c_u + Fr::one()) * nu_challenges.c_v[24];
-    // accumulator_2 = (u + 1).v24.[table4]
-    accumulator2 = vk.table_4.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "11127011895888e62971d3bfe0f69d4f7522a551c8c399c3bddd8cd2e4edc6ca"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "06fdda2ba420ecf6aad2d3ded58ec72486412b27cd59487bd6ab2cac4d71119c"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE TABLE_TYPE
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[25];
-    // accumulator_2 = v25.[TableType]
-    accumulator2 = vk.table_type.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "2ac1f4b92afecbaaf83a50099fd6515c62b66d36fc151b9076033fb8125233ab"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "00a1bf2e2319c4828e586b150aeed0b3d90ba1efa7f9521f7032ef64c90936b6"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE ID1
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[26];
-    // accumulator_2 = v26.[ID1]
-    accumulator2 = vk.id_1.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "028225874f74c6b89ba2ae62f3c67d25e0441abe7436eb95e770a99dbb3c6325"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "292c63dbe5a0fa3417373f185b50ab96e5865fe05e5b26c6472df54fad7008cf"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE ID2
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[27];
-    // accumulator_2 = v27.[ID2]
-    accumulator2 = vk.id_2.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "032c5c016a118b0cea2c4fabea0f3b7c5d51aae37cc07bbe281c0c716a50807d"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "061c4f9d40abd400e57cc695b71f6f68726ac6af568b7670e92509e17ac66767"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE ID3
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[28];
-    // accumulator_2 = v28.[ID3]
-    accumulator2 = vk.id_3.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "218388e274f4e27c0338e471f703d04b30b47b71d2d18a27847820720778a147"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0c7f450e07e3bcf57011d0033d800fc537d45bf71b8392bf1e21eaaad42901f0"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // ACCUMULATE ID4
-
-    // Verification key fields verified to be on curve at contract deployment
-    scalar = nu_challenges.c_v[29];
-    // accumulator_2 = v29.[ID4]
-    accumulator2 = vk.id_4.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "212cf4d7f87d25690d58478b568c629b1e0c04043600335509f4b2bb86349323"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0359e3ba837aac9daca8277f3d3c2041a905e0925a28324ddb60b8bf13d4028c"
-    //     ))
-    //     .unwrap()
-    // );
-
+    // Note: Validations already took place back when we parsed the proof.
+    let u_plus_one = nu_challenges.c_u + Fr::ONE;
+    let zeta_pow_2n = challenges.zeta_pow_n.square();
+    let zeta_pow_3n = zeta_pow_2n * challenges.zeta_pow_n;
     // COMPUTE BATCH EVALUATION SCALAR MULTIPLIER
     let batch_evaluation =
         compute_batch_evaluation_scalar_multiplier::<H>(proof, nu_challenges, quotient_eval);
-    let point = <<Config<H> as BnConfig>::G1Config as SWCurveConfig>::GENERATOR.into_group(); // G = (1, 2)
 
-    // accumulator_2 = -[1].(batch_evaluation)
-    accumulator2 = point * (-batch_evaluation);
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
+    // TODO: Update bases and scalars once support for recursive proofs is added.
+    let bases = [
+        proof.t1,
+        proof.t2,
+        proof.t3,
+        proof.t4,
+        proof.w1,
+        proof.w2,
+        proof.w3,
+        proof.w4,
+        proof.s,
+        proof.z,
+        proof.z_lookup,
+        vk.q_1,
+        vk.q_2,
+        vk.q_3,
+        vk.q_4,
+        vk.q_m,
+        vk.q_c,
+        vk.q_arithmetic,
+        vk.q_sort,
+        vk.q_elliptic,
+        vk.q_aux,
+        vk.sigma_1,
+        vk.sigma_2,
+        vk.sigma_3,
+        vk.sigma_4,
+        vk.table_1,
+        vk.table_2,
+        vk.table_3,
+        vk.table_4,
+        vk.table_type,
+        vk.id_1,
+        vk.id_2,
+        vk.id_3,
+        vk.id_4,
+        <<Config<H> as BnConfig>::G1Config as SWCurveConfig>::GENERATOR,
+        proof.pi_z,
+        proof.pi_z_omega,
+    ];
 
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "1b6b8919246da75789501bd861783891d85f80b49056998bbfb642f23b089de0"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0da28eb34af2fd1d4b218aacbb329c97efdfee44954734494fa0da94eb4fa003"
-    //     ))
-    //     .unwrap()
-    // );
+    let scalars = [
+        Fr::ONE,
+        challenges.zeta_pow_n,
+        zeta_pow_2n,
+        zeta_pow_3n,
+        nu_challenges.c_v[0] * u_plus_one,
+        nu_challenges.c_v[1] * u_plus_one,
+        nu_challenges.c_v[2] * u_plus_one,
+        nu_challenges.c_v[3] * u_plus_one,
+        nu_challenges.c_v[4] * u_plus_one,
+        nu_challenges.c_v[5] * u_plus_one,
+        nu_challenges.c_v[6] * u_plus_one,
+        nu_challenges.c_v[7],
+        nu_challenges.c_v[8],
+        nu_challenges.c_v[9],
+        nu_challenges.c_v[10],
+        nu_challenges.c_v[11],
+        nu_challenges.c_v[12],
+        nu_challenges.c_v[13],
+        nu_challenges.c_v[14],
+        nu_challenges.c_v[15],
+        nu_challenges.c_v[16],
+        nu_challenges.c_v[17],
+        nu_challenges.c_v[18],
+        nu_challenges.c_v[19],
+        nu_challenges.c_v[20],
+        nu_challenges.c_v[21] * u_plus_one,
+        nu_challenges.c_v[22] * u_plus_one,
+        nu_challenges.c_v[23] * u_plus_one,
+        nu_challenges.c_v[24] * u_plus_one,
+        nu_challenges.c_v[25],
+        nu_challenges.c_v[26],
+        nu_challenges.c_v[27],
+        nu_challenges.c_v[28],
+        nu_challenges.c_v[29],
+        -batch_evaluation,
+        challenges.zeta,
+        challenges.zeta * nu_challenges.c_u * vk.work_root,
+    ];
 
-    /*
-     * PERFORM PAIRING PREAMBLE
-     */
-    let mut pairing_lhs;
+    let pairing_rhs = H::bn254_msm_g1(&bases, &scalars).unwrap();
 
-    // u = nu_challenges.c_u
-    // zeta = challenges.zeta
-
-    // VALIDATE PI_Z
-
-    scalar = challenges.zeta;
-    // compute zeta.[PI_Z] and add into accumulator
-    accumulator2 = proof.pi_z.into_group() * scalar;
-    // accumulator = accumulator + accumulator_2
-    accumulator += accumulator2;
-
-    // assert_eq!(
-    //     *accumulator.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "23e62155a196ef1e8e02d2ddc09c914fb9c9c9371ab6a8e503cda05abfebd082"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *accumulator.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0028ac25bd05abf0b6f2eb1b8bfedc658bdb06e5328a78e7efdb13f9304b7c7a"
-    //     ))
-    //     .unwrap()
-    // );
-
-    // VALIDATE PI_Z_OMEGA
-
-    scalar = nu_challenges.c_u * challenges.zeta * vk.work_root;
-    // accumulator_2 = u.zeta.omega.[PI_Z_OMEGA]
-    accumulator2 = proof.pi_z_omega.into_group() * scalar;
-    // PAIRING_RHS = accumulator + accumulator_2
-    let pairing_rhs = accumulator + accumulator2;
-
-    // assert_eq!(
-    //     *pairing_rhs.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0f49ea18353cee38d7045f8d8fce93de9d43657a7443a238c732f5eddbddb93c"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *pairing_rhs.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "04ff64f4841dbd83d35b33298c797a563e100e731f0678c0f6f1e2c6eb7b74bf"
-    //     ))
-    //     .unwrap()
-    // );
-
-    scalar = nu_challenges.c_u;
-    // accumulator_2 = u.[PI_Z_OMEGA]
-    accumulator2 = proof.pi_z_omega.into_group() * scalar;
     // PAIRING_LHS = [PI_Z] + [PI_Z_OMEGA] * u
-    pairing_lhs = proof.pi_z.into_group() + accumulator2;
+    let bases = [proof.pi_z_omega, proof.pi_z];
+    let scalars = [nu_challenges.c_u, Fr::ONE];
+    let mut pairing_lhs = H::bn254_msm_g1(&bases, &scalars).unwrap();
     // negate lhs y-coordinate
     pairing_lhs.y = -pairing_lhs.y;
-
-    // assert_eq!(
-    //     *pairing_lhs.into_affine().x().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0938778e7f7309ca99231045c99ddc9f8fc94a841f66e18b9a3a9a66f7dfe9c1"
-    //     ))
-    //     .unwrap()
-    // );
-    // assert_eq!(
-    //     *pairing_lhs.into_affine().y().unwrap(),
-    //     read_fq(&hex_literal::hex!(
-    //         "0c09427d83a79ca0faef46564c0788056d2f05adb76248f9cf87dd864f5c3865"
-    //     ))
-    //     .unwrap()
-    // );
-
-    if vk.contains_recursive_proof {
-        // TODO: ADD CODE (LINES: 2682-2725)
-    }
 
     /*
      * PERFORM PAIRING
@@ -2569,10 +1758,6 @@ fn perform_final_checks<H: CurveHooks>(
 
     // rhs paired with [1]_2
     // lhs paired with [x]_2
-
-    // NOTE: Here, we need to convert to Affine. Hence, it probably
-    // makes sense to keep the points in Affine in the first place
-    // and only switch to Projective when computations are required.
 
     let g1_points = [
         G1Prepared::from(pairing_rhs.into_affine()),
