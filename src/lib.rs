@@ -54,7 +54,7 @@ pub struct Challenges {
     alpha_sqr: Fr,
     alpha_cube: Fr,
     alpha_quad: Fr,
-    alpha_base: Fr,
+    // alpha_base: Fr,
     beta: Fr,
     gamma: Fr,
     zeta: Fr,
@@ -70,7 +70,7 @@ impl Challenges {
         let alpha_sqr = alpha.square();
         let alpha_cube = alpha_sqr * alpha;
         let alpha_quad = alpha_cube * alpha;
-        let alpha_base = alpha;
+        // let alpha_base = alpha;
         let eta_sqr = eta.square();
         let eta_cube = eta_sqr * eta;
 
@@ -91,7 +91,7 @@ impl Challenges {
             alpha_sqr,
             alpha_cube,
             alpha_quad,
-            alpha_base,
+            // alpha_base,
             beta,
             gamma,
             zeta,
@@ -261,6 +261,8 @@ pub fn verify<H: CurveHooks>(
 
     let alpha = challenge.into_fr();
 
+    let alpha_base = alpha;
+
     // Zeta challenge
     challenge = generate_zeta_challenge::<H>(&proof, &challenge);
     let zeta = challenge.into_fr();
@@ -278,7 +280,7 @@ pub fn verify<H: CurveHooks>(
      *   ΔPI = ∏ᵢ∈ℓ(wᵢ + β σ(i) + γ) / ∏ᵢ∈ℓ(wᵢ + β σ'(i) + γ)
      */
     let (delta_numerator, delta_denominator) =
-        compute_public_input_delta(public_inputs, &vk.work_root, &mut challenges)
+        compute_public_input_delta(public_inputs, &vk.work_root, &challenges)
             .map_err(|_| VerifyError::InvalidInput)?;
 
     /*
@@ -316,9 +318,10 @@ pub fn verify<H: CurveHooks>(
     /*
      * COMPUTE PERMUTATION WIDGET EVALUATION
      */
-    let permutation_identity = compute_permutation_widget_evaluation::<H>(
+    let (permutation_identity, alpha_base) = compute_permutation_widget_evaluation::<H>(
         &proof,
         &mut challenges,
+        alpha_base,
         &l_start,
         &l_end,
         &public_input_delta,
@@ -327,9 +330,10 @@ pub fn verify<H: CurveHooks>(
     /*
      * COMPUTE PLOOKUP WIDGET EVALUATION
      */
-    let plookup_identity = compute_plookup_widget_evaluation::<H>(
+    let (plookup_identity, alpha_base) = compute_plookup_widget_evaluation::<H>(
         &proof,
-        &mut challenges,
+        &challenges,
+        alpha_base,
         &l_start,
         &l_end,
         &plookup_delta,
@@ -338,22 +342,26 @@ pub fn verify<H: CurveHooks>(
     /*
      * COMPUTE ARITHMETIC WIDGET EVALUATION
      */
-    let arithmetic_identity = compute_arithmetic_widget_evaluation::<H>(&proof, &mut challenges);
+    let (arithmetic_identity, alpha_base) =
+        compute_arithmetic_widget_evaluation::<H>(&proof, &challenges, alpha_base);
 
     /*
      * COMPUTE GENPERMSORT WIDGET EVALUATION
      */
-    let sort_identity = compute_genpermsort_widget_evaluation::<H>(&proof, &mut challenges);
+    let (sort_identity, alpha_base) =
+        compute_genpermsort_widget_evaluation::<H>(&proof, &challenges, alpha_base);
 
     /*
      * COMPUTE ELLIPTIC WIDGET EVALUATION
      */
-    let elliptic_identity = compute_elliptic_widget_evaluation::<H>(&proof, &mut challenges);
+    let (elliptic_identity, alpha_base) =
+        compute_elliptic_widget_evaluation::<H>(&proof, &challenges, alpha_base);
 
     /*
      * COMPUTE AUXILIARY WIDGET EVALUATION
      */
-    let aux_identity = compute_auxiliary_widget_evaluation::<H>(&proof, &mut challenges);
+    let (aux_identity, _alpha_base) =
+        compute_auxiliary_widget_evaluation::<H>(&proof, &challenges, alpha_base);
 
     /*
      * QUOTIENT EVALUATION
@@ -498,7 +506,7 @@ fn generate_zeta_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]
 fn compute_public_input_delta(
     public_inputs: &[U256],
     work_root: &Fr,
-    challenges: &mut Challenges,
+    challenges: &Challenges,
 ) -> Result<(Fr, Fr), VerifyError> {
     let mut numerator_value = Fr::ONE;
     let mut denominator_value = Fr::ONE;
@@ -666,11 +674,12 @@ fn compute_lagrange_and_vanishing_poly<H: CurveHooks>(
 
 fn compute_permutation_widget_evaluation<H: CurveHooks>(
     proof: &Proof<H>,
-    challenges: &mut Challenges,
+    challenges: &Challenges,
+    mut alpha_base: Fr,
     l_start: &Fr,
     l_end: &Fr,
     public_input_delta: &Fr,
-) -> Fr {
+) -> (Fr, Fr) {
     /*
      * t1 = (W1 + gamma + beta * ID1) * (W2 + gamma + beta * ID2)
      * t2 = (W3 + gamma + beta * ID3) * (W4 + gamma + beta * ID4)
@@ -679,6 +688,7 @@ fn compute_permutation_widget_evaluation<H: CurveHooks>(
      * t2 = (W3 + gamma + beta * sigma_3_eval) * (W4 + gamma + beta * sigma_4_eval)
      * result -= (alpha_base * z_omega_eval * t1 * t2)
      */
+
     let w1_eval = proof.w1_eval.into_fr();
     let w2_eval = proof.w2_eval.into_fr();
     let w3_eval = proof.w3_eval.into_fr();
@@ -693,7 +703,7 @@ fn compute_permutation_widget_evaluation<H: CurveHooks>(
     let mut t2 = (w3_eval + challenges.gamma + challenges.beta * proof.id3_eval.into_fr())
         * (w4_eval + challenges.gamma + challenges.beta * proof.id4_eval.into_fr());
 
-    let mut result = challenges.alpha_base * z_eval * t1 * t2;
+    let mut result = alpha_base * z_eval * t1 * t2;
 
     t1 = (w1_eval + challenges.gamma + challenges.beta * proof.sigma1_eval.into_fr())
         * (w2_eval + challenges.gamma + challenges.beta * proof.sigma2_eval.into_fr());
@@ -701,7 +711,7 @@ fn compute_permutation_widget_evaluation<H: CurveHooks>(
     t2 = (w3_eval + challenges.gamma + challenges.beta * proof.sigma3_eval.into_fr())
         * (w4_eval + challenges.gamma + challenges.beta * proof.sigma4_eval.into_fr());
 
-    result -= challenges.alpha_base * z_omega_eval * t1 * t2;
+    result -= alpha_base * z_omega_eval * t1 * t2;
 
     /*
      * alpha_base *= alpha
@@ -711,22 +721,23 @@ fn compute_permutation_widget_evaluation<H: CurveHooks>(
      * alpha_Base *= alpha
      */
 
-    challenges.alpha_base *= challenges.alpha;
-    result += challenges.alpha_base * l_end * (z_omega_eval - public_input_delta);
-    challenges.alpha_base *= challenges.alpha;
-    let permutation_identity = result + challenges.alpha_base * l_start * (z_eval - Fr::ONE);
-    challenges.alpha_base *= challenges.alpha;
+    alpha_base *= challenges.alpha;
+    result += alpha_base * l_end * (z_omega_eval - public_input_delta);
+    alpha_base *= challenges.alpha;
+    let permutation_identity = result + alpha_base * l_start * (z_eval - Fr::ONE);
+    alpha_base *= challenges.alpha;
 
-    permutation_identity
+    (permutation_identity, alpha_base)
 }
 
 fn compute_plookup_widget_evaluation<H: CurveHooks>(
     proof: &Proof<H>,
-    challenges: &mut Challenges,
+    challenges: &Challenges,
+    mut alpha_base: Fr,
     l_start: &Fr,
     l_end: &Fr,
     plookup_delta: &Fr,
-) -> Fr {
+) -> (Fr, Fr) {
     /*
      * Goal: f = (w1(z) + q2.w1(zω)) + η(w2(z) + qm.w2(zω)) + η²(w3(z) + qc.w_3(zω)) + q3(z).η³
      * f = η.q3(z)
@@ -799,18 +810,19 @@ fn compute_plookup_widget_evaluation<H: CurveHooks>(
     denominator *= proof.z_lookup_omega_eval.into_fr();
     denominator += temp1 * plookup_delta;
 
-    let plookup_identity = (numerator - denominator) * challenges.alpha_base;
+    let plookup_identity = (numerator - denominator) * alpha_base;
 
     // update alpha
-    challenges.alpha_base *= challenges.alpha_cube;
+    alpha_base *= challenges.alpha_cube;
 
-    plookup_identity
+    (plookup_identity, alpha_base)
 }
 
 fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
     proof: &Proof<H>,
-    challenges: &mut Challenges,
-) -> Fr {
+    challenges: &Challenges,
+    mut alpha_base: Fr,
+) -> (Fr, Fr) {
     /*
      * The basic arithmetic gate identity in standard plonk is as follows.
      * (w_1 . w_2 . q_m) + (w_1 . q_1) + (w_2 . q_2) + (w_3 . q_3) + (w_4 . q_4) + q_c = 0
@@ -879,22 +891,23 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
     // if q_arith == 2 OR q_arith == 3 we add the 4th wire of the NEXT gate into the arithmetic identity
     // N.B. if q_arith > 2, this wire value will be scaled by (q_arith - 1) relative to the other gate wires!
     // alpha_base * q_arith * (identity + (q_arith - 1) * (w_4_omega + extra_small_addition_gate_identity))
-    let arithmetic_identity = challenges.alpha_base
+    let arithmetic_identity = alpha_base
         * proof.q_arith_eval.into_fr()
         * (identity
             + (proof.q_arith_eval.into_fr() - Fr::ONE)
                 * (proof.w4_omega_eval.into_fr() + extra_small_addition_gate_identity));
 
     // update alpha
-    challenges.alpha_base *= challenges.alpha_sqr;
+    alpha_base *= challenges.alpha_sqr;
 
-    arithmetic_identity
+    (arithmetic_identity, alpha_base)
 }
 
 fn compute_genpermsort_widget_evaluation<H: CurveHooks>(
     proof: &Proof<H>,
-    challenges: &mut Challenges,
-) -> Fr {
+    challenges: &Challenges,
+    mut alpha_base: Fr,
+) -> (Fr, Fr) {
     /*
      * D1 = (w2 - w1)
      * D2 = (w3 - w2)
@@ -920,39 +933,40 @@ fn compute_genpermsort_widget_evaluation<H: CurveHooks>(
     let d4 = proof.w1_omega_eval.into_fr() - proof.w4_eval.into_fr();
 
     let mut range_accumulator =
-        d1 * (d1 - Fr::ONE) * (d1 - Fr::from(2)) * (d1 - Fr::from(3)) * challenges.alpha_base;
+        d1 * (d1 - Fr::ONE) * (d1 - Fr::from(2)) * (d1 - Fr::from(3)) * alpha_base;
     range_accumulator += d2
         * (d2 - Fr::ONE)
         * (d2 - Fr::from(2))
         * (d2 - Fr::from(3))
-        * challenges.alpha_base
+        * alpha_base
         * challenges.alpha;
     range_accumulator += d3
         * (d3 - Fr::ONE)
         * (d3 - Fr::from(2))
         * (d3 - Fr::from(3))
-        * challenges.alpha_base
+        * alpha_base
         * challenges.alpha_sqr;
     range_accumulator += d4
         * (d4 - Fr::ONE)
         * (d4 - Fr::from(2))
         * (d4 - Fr::from(3))
-        * challenges.alpha_base
+        * alpha_base
         * challenges.alpha_cube;
     range_accumulator *= proof.q_sort_eval.into_fr();
 
     let sort_identity = range_accumulator;
 
     // update alpha
-    challenges.alpha_base *= challenges.alpha_quad;
+    alpha_base *= challenges.alpha_quad;
 
-    sort_identity
+    (sort_identity, alpha_base)
 }
 
 fn compute_elliptic_widget_evaluation<H: CurveHooks>(
     proof: &Proof<H>,
-    challenges: &mut Challenges,
-) -> Fr {
+    challenges: &Challenges,
+    mut alpha_base: Fr,
+) -> (Fr, Fr) {
     /*
      * endo_term = (-x_2) * x_1 * (x_3 * 2 + x_1) * q_beta
      * endo_sqr_term = x_2^2
@@ -986,15 +1000,14 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
         * x_diff.square()
         + y1y2.double()
         - (y1_sqr + y2_sqr);
-    x_add_identity = x_add_identity * (Fr::ONE - proof.qm_eval.into_fr()) * challenges.alpha_base;
+    x_add_identity = x_add_identity * (Fr::ONE - proof.qm_eval.into_fr()) * alpha_base;
 
     // q_elliptic * (x3 + x2 + x1)(x2 - x1)(x2 - x1) - y2^2 - y1^2 + 2(y2y1)*q_sign = 0
     let y1_plus_y3 = y1_eval.into_fr() + y3_eval.into_fr();
     let y_diff = y2_eval.into_fr() * qsign.into_fr() - y1_eval.into_fr();
     let mut y_add_identity =
         y1_plus_y3 * x_diff + ((x3_eval.into_fr() - x1_eval.into_fr()) * y_diff);
-    y_add_identity *=
-        (Fr::ONE - proof.qm_eval.into_fr()) * challenges.alpha_base * challenges.alpha;
+    y_add_identity *= (Fr::ONE - proof.qm_eval.into_fr()) * alpha_base * challenges.alpha;
 
     // ELLIPTIC_IDENTITY = (x_identity + y_identity) * Q_ELLIPTIC_EVAL
     let mut elliptic_identity = (x_add_identity + y_add_identity) * proof.q_elliptic_eval.into_fr();
@@ -1030,8 +1043,8 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
     let mut y_double_identity = x1_sqr_mul_3 * (x1_eval.into_fr() - x3_eval.into_fr())
         - y1_eval.into_fr().double() * (y1_eval.into_fr() + y3_eval.into_fr());
 
-    x_double_identity *= challenges.alpha_base;
-    y_double_identity *= challenges.alpha_base * challenges.alpha;
+    x_double_identity *= alpha_base;
+    y_double_identity *= alpha_base * challenges.alpha;
     x_double_identity *= proof.qm_eval.into_fr();
     y_double_identity *= proof.qm_eval.into_fr();
 
@@ -1039,9 +1052,9 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
     elliptic_identity += (x_double_identity + y_double_identity) * proof.q_elliptic_eval.into_fr();
 
     // update alpha
-    challenges.alpha_base *= challenges.alpha_quad;
+    alpha_base *= challenges.alpha_quad;
 
-    elliptic_identity
+    (elliptic_identity, alpha_base)
 }
 
 fn compute_aux_non_native_field_evaluation<H: CurveHooks>(proof: &Proof<H>) -> Fr {
@@ -1157,7 +1170,7 @@ fn compute_aux_limb_accumulator_evaluation<H: CurveHooks>(proof: &Proof<H>) -> F
 
 fn compute_aux_ram_consistency_evaluation<H: CurveHooks>(
     proof: &Proof<H>,
-    challenges: &mut Challenges,
+    challenges: &Challenges,
     index_delta: &Fr,
     partial_record_check: &Fr,
     index_is_monotonically_increasing: &Fr,
@@ -1223,10 +1236,11 @@ fn compute_aux_ram_consistency_evaluation<H: CurveHooks>(
 
 fn compute_auxiliary_identity<H: CurveHooks>(
     proof: &Proof<H>,
-    challenges: &mut Challenges,
+    challenges: &Challenges,
+    mut alpha_base: Fr,
     index_delta: &Fr,
     aux_evaluations: &AuxiliaryEvaluations,
-) -> Fr {
+) -> (Fr, Fr) {
     // timestamp_delta = w_2_omega - w_2
     let timestamp_delta = proof.w2_omega_eval.into_fr() - proof.w2_eval.into_fr();
 
@@ -1260,18 +1274,19 @@ fn compute_auxiliary_identity<H: CurveHooks>(
 
     auxiliary_identity *= proof.q_aux_eval.into_fr();
 
-    auxiliary_identity *= challenges.alpha_base;
+    auxiliary_identity *= alpha_base;
 
     // update alpha
-    challenges.alpha_base *= challenges.alpha_cube;
+    alpha_base *= challenges.alpha_cube;
 
-    auxiliary_identity
+    (auxiliary_identity, alpha_base)
 }
 
 fn compute_auxiliary_widget_evaluation<H: CurveHooks>(
     proof: &Proof<H>,
-    challenges: &mut Challenges,
-) -> Fr {
+    challenges: &Challenges,
+    alpha_base: Fr,
+) -> (Fr, Fr) {
     /*
      * memory_record_check = w_3;
      * memory_record_check *= eta;
@@ -1334,7 +1349,13 @@ fn compute_auxiliary_widget_evaluation<H: CurveHooks>(
         aux_limb_accumulator_evaluation,
     };
 
-    compute_auxiliary_identity::<H>(proof, challenges, &index_delta, &aux_evaluations)
+    compute_auxiliary_identity::<H>(
+        proof,
+        challenges,
+        alpha_base,
+        &index_delta,
+        &aux_evaluations,
+    )
 }
 
 fn quotient_evaluation(
