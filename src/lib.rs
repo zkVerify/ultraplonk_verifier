@@ -32,7 +32,7 @@ use crate::{
 };
 use ark_bn254_ext::{Config, CurveHooks};
 use ark_ec::{pairing::Pairing, short_weierstrass::SWCurveConfig, AffineRepr, CurveGroup};
-use ark_ff::{Field, MontConfig, One};
+use ark_ff::{Field, MontConfig, MontFp, One};
 use ark_models_ext::bn::{BnConfig, G1Prepared, G2Prepared};
 use errors::VerifyError;
 use sha3::{Digest, Keccak256};
@@ -507,10 +507,10 @@ fn compute_public_input_delta(
     let mut valid_inputs = true;
 
     // root_1 = β * 0x05
-    let mut root_1 = challenges.beta * Fr::from(5); // k1.β
+    let mut root_1 = challenges.beta * MontFp!("5"); // k1.β
 
     // root_2 = β * 0x0c
-    let mut root_2 = challenges.beta * Fr::from(12);
+    let mut root_2 = challenges.beta * MontFp!("12");
 
     for &input in public_inputs {
         valid_inputs &= input < FrConfig::MODULUS;
@@ -731,7 +731,7 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
     challenges: &Challenges,
     mut alpha_base: Fr,
 ) -> (Fr, Fr) {
-    let negative_inverse_of_2_modulo_r = -Fr::from(2u64)
+    let negative_inverse_of_2_modulo_r = MontFp!("-2")
         .inverse()
         .expect("2 does not have an inverse in the field"); // unreachable for BN254
 
@@ -743,13 +743,13 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
     let w1w2qm = proof.w1_eval.into_fr()
         * proof.w2_eval.into_fr()
         * proof.qm_eval.into_fr()
-        * (proof.q_arith_eval.into_fr() - Fr::from(3))
+        * (proof.q_arith_eval.into_fr() - MontFp!("3"))
         * negative_inverse_of_2_modulo_r;
 
     let identity = w1w2qm + w1q1 + w2q2 + w3q3 + w4q4 + proof.qc_eval.into_fr();
 
     let extra_small_addition_gate_identity = challenges.alpha
-        * (proof.q_arith_eval.into_fr() - Fr::from(2))
+        * (proof.q_arith_eval.into_fr() - MontFp!("2"))
         * (proof.w1_eval.into_fr() + proof.w4_eval.into_fr() - proof.w1_omega_eval.into_fr()
             + proof.qm_eval.into_fr());
 
@@ -776,23 +776,23 @@ fn compute_genpermsort_widget_evaluation<H: CurveHooks>(
     let d4 = proof.w1_omega_eval.into_fr() - proof.w4_eval.into_fr();
 
     let mut range_accumulator =
-        d1 * (d1 - Fr::ONE) * (d1 - Fr::from(2)) * (d1 - Fr::from(3)) * alpha_base;
+        d1 * (d1 - Fr::ONE) * (d1 - MontFp!("2")) * (d1 - MontFp!("3")) * alpha_base;
     range_accumulator += d2
         * (d2 - Fr::ONE)
-        * (d2 - Fr::from(2))
-        * (d2 - Fr::from(3))
+        * (d2 - MontFp!("2"))
+        * (d2 - MontFp!("3"))
         * alpha_base
         * challenges.alpha;
     range_accumulator += d3
         * (d3 - Fr::ONE)
-        * (d3 - Fr::from(2))
-        * (d3 - Fr::from(3))
+        * (d3 - MontFp!("2"))
+        * (d3 - MontFp!("3"))
         * alpha_base
         * challenges.alpha_sqr;
     range_accumulator += d4
         * (d4 - Fr::ONE)
-        * (d4 - Fr::from(2))
-        * (d4 - Fr::from(3))
+        * (d4 - MontFp!("2"))
+        * (d4 - MontFp!("3"))
         * alpha_base
         * challenges.alpha_cube;
     range_accumulator *= proof.q_sort_eval.into_fr();
@@ -840,13 +840,13 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
 
     // y^2 = x^3 + ax + b
     // for Grumpkin, a = 0 and b = -17. We use b in a custom gate relation that evaluates elliptic curve arithmetic
-    let grumpkin_curve_b_parameter_negated = Fr::from(17);
+    let grumpkin_curve_b_parameter_negated = MontFp!("17");
 
     let x1_sqr = x1_eval.into_fr().square();
     let x_pow_4 = (y1_sqr + grumpkin_curve_b_parameter_negated) * x1_eval.into_fr();
-    let y1_sqr_mul_4 = y1_sqr * Fr::from(4);
-    let x1_pow_4_mul_9 = x_pow_4 * Fr::from(9);
-    let x1_sqr_mul_3 = x1_sqr * Fr::from(3);
+    let y1_sqr_mul_4 = y1_sqr * MontFp!("4");
+    let x1_pow_4_mul_9 = x_pow_4 * MontFp!("9");
+    let x1_sqr_mul_3 = x1_sqr * MontFp!("3");
     let mut x_double_identity =
         (x3_eval.into_fr() + x1_eval.into_fr().double()) * y1_sqr_mul_4 - x1_pow_4_mul_9;
 
@@ -903,7 +903,7 @@ fn compute_aux_non_native_field_evaluation<H: CurveHooks>(proof: &Proof<H>) -> F
 }
 
 fn compute_aux_limb_accumulator_evaluation<H: CurveHooks>(proof: &Proof<H>) -> Fr {
-    let sublimb_shift: Fr = Fr::from(0x4000); // 1 << 14 = 0x4000
+    let sublimb_shift: Fr = MontFp!("16384"); // 1 << 14 = 0x4000 = 16384
 
     let mut limb_accumulator_1 = proof.w2_omega_eval.into_fr() * sublimb_shift;
     limb_accumulator_1 += proof.w1_omega_eval.into_fr();
