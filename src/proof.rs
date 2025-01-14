@@ -40,9 +40,6 @@ pub enum ProofError {
     OtherError,
 }
 
-// TODO: Since most of the evaluations are being used as elements of Fr
-// rather than Fq, maybe it is worthwhile to store them as such directly
-// to save on having to convert into Fr all the time.
 #[derive(Debug)]
 pub struct Proof<H: CurveHooks> {
     pub w1: G1<H>,

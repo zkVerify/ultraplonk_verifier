@@ -19,7 +19,7 @@
 use crate::{
     errors::{FieldError, GroupError},
     utils::{read_fq_util, read_g1_util, IntoBytes},
-    Fq, Fq2, Fr, G1, G2, VK_SIZE,
+    Fq2, Fr, G1, G2, VK_SIZE,
 };
 use alloc::{
     format,
@@ -30,6 +30,7 @@ use ark_bn254_ext::CurveHooks;
 use ark_ff::{FftField, Field};
 use snafu::Snafu;
 
+#[allow(unused)]
 #[derive(Debug, Snafu)]
 pub enum VerificationKeyError {
     #[snafu(display("Buffer too short"))]
@@ -44,11 +45,6 @@ pub enum VerificationKeyError {
         error: FieldError,
     },
 
-    // #[snafu(display("Invalid group '{}': {:?}", field, error))]
-    // InvalidGroup {
-    //     field: &'static str,
-    //     error: GroupError,
-    // },
     #[snafu(display("Point for field '{}' is not on curve", field))]
     PointNotOnCurve { field: &'static str },
 
@@ -101,6 +97,7 @@ pub enum CommitmentField {
     ID_4,
 }
 
+#[allow(unused)]
 impl CommitmentField {
     pub fn str(&self) -> &'static str {
         match self {
@@ -218,7 +215,6 @@ impl CommitmentField {
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct VerificationKey<H: CurveHooks> {
-    // pub circuit_type: u32,
     pub circuit_size: u32,
     pub num_public_inputs: u32,
     pub work_root: Fr,
@@ -247,14 +243,11 @@ pub struct VerificationKey<H: CurveHooks> {
     pub id_2: G1<H>,
     pub id_3: G1<H>,
     pub id_4: G1<H>,
-    // TODO: The following three fields should be revised once support
-    // for recursive functions is added.
     pub contains_recursive_proof: bool,
     pub recursive_proof_indices: u32,
-    // pub recursive_proof_public_inputs_size: u32,
-    // pub is_recursive_circuit: bool,
 }
 
+#[allow(unused)]
 impl<H: CurveHooks> VerificationKey<H> {
     pub fn as_bytes(&self) -> Vec<u8> {
         let mut data = Vec::new();
@@ -292,7 +285,6 @@ impl<H: CurveHooks> VerificationKey<H> {
         // Contains recursive proof
         data.push(if self.contains_recursive_proof { 1 } else { 0 });
         data.extend_from_slice(&0u32.to_be_bytes());
-        // data.push(if self.is_recursive_circuit { 1 } else { 0 });
 
         data
     }
@@ -356,19 +348,6 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
             VerificationKeyError::RecursionNotSupported,
         )?;
 
-        // let recursive_proof_public_inputs_size = read_u32_and_check(
-        //     raw_vk,
-        //     &mut offset,
-        //     0,
-        //     VerificationKeyError::RecursionNotSupported,
-        // )?;
-        // let is_recursive_circuit = read_bool_and_check(
-        //     raw_vk,
-        //     &mut offset,
-        //     false,
-        //     VerificationKeyError::RecursionNotSupported,
-        // )?;
-
         // NOTE: The following three fields can actually be computed just from the circuit_size (and r)
         // Hence, one optimization could be to create a lookup table for each value of 2^i, i = 0, 1, ...
         // This should prevent having to do inversions everytime we call verify().
@@ -406,8 +385,7 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
             id_3,
             id_4,
             contains_recursive_proof,
-            recursive_proof_indices, // recursive_proof_public_inputs_size,
-                                     // is_recursive_circuit,
+            recursive_proof_indices,
         })
     }
 }
@@ -496,6 +474,7 @@ pub(crate) fn read_g1<H: CurveHooks>(
     })
 }
 
+#[allow(unused)]
 fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut Vec<u8>) {
     // Helper to convert a field to bytes
     let field_to_bytes = |field: &CommitmentField| -> Vec<u8> {
@@ -535,28 +514,3 @@ pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, ()> {
 
     Ok(G2::<H>::new(x, y))
 }
-
-pub(crate) fn read_fq(addr: &'static str, data: &[u8]) -> Result<Fq, VerificationKeyError> {
-    read_fq_util(data).map_err(|e| VerificationKeyError::InvalidField {
-        field: addr,
-        error: e,
-    })
-}
-
-// pub(crate) fn read_fr(data: &[u8]) -> Result<Fr, ()> {
-//     if data.len() != 32 {
-//         return Err(());
-//     }
-
-//     // Convert bytes to limbs manually
-//     let mut limbs = [0u64; 4];
-//     for (i, chunk) in data.chunks(8).enumerate() {
-//         limbs[3 - i] = u64::from_be_bytes(chunk.try_into().unwrap());
-//     }
-
-//     // Create a U256
-//     let bigint = U256::new(limbs);
-
-//     // Try to construct an Fr element
-//     Ok(bigint.into_fr())
-// }

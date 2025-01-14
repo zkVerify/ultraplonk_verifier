@@ -54,7 +54,6 @@ pub struct Challenges {
     alpha_sqr: Fr,
     alpha_cube: Fr,
     alpha_quad: Fr,
-    // alpha_base: Fr,
     beta: Fr,
     gamma: Fr,
     zeta: Fr,
@@ -91,7 +90,6 @@ impl Challenges {
             alpha_sqr,
             alpha_cube,
             alpha_quad,
-            // alpha_base,
             beta,
             gamma,
             zeta,
@@ -201,10 +199,8 @@ struct AuxiliaryEvaluations {
 }
 
 pub fn validate_vk<H: CurveHooks>(raw_vk: &[u8; VK_SIZE]) -> Result<(), VerifyError> {
-    let _vk = VerificationKey::<H>::try_from(&raw_vk[..]).map_err(|_| {
-        // log::debug!("Cannot parse verification key: {:?}", e);
-        VerifyError::InvalidVerificationKey
-    })?;
+    let _vk = VerificationKey::<H>::try_from(&raw_vk[..])
+        .map_err(|_| VerifyError::InvalidVerificationKey)?;
     Ok(())
 }
 
@@ -297,9 +293,9 @@ pub fn verify<H: CurveHooks>(
         compute_lagrange_and_vanishing_poly::<H>(
             &challenges,
             &vk,
-            &delta_numerator, // Q: Maybe combine numerator and denominator into one struct?
+            &delta_numerator,
             &delta_denominator,
-            &plookup_delta_numerator, // Same as above
+            &plookup_delta_numerator,
             &plookup_delta_denominator,
         );
 
@@ -860,8 +856,7 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
      */
     let negative_inverse_of_2_modulo_r = -Fr::from(2u64)
         .inverse()
-        .expect("2 has an inverse in the field");
-    // crate::macros::fr!("183227397098d014dc2822db40c0ac2e9419f4243cdcb848a1f0fac9f8000000"); // = -2^{-1} (mod r)
+        .expect("2 does not have an inverse in the field"); // unreachable for BN254
 
     let w1q1 = proof.w1_eval.into_fr() * proof.q1_eval.into_fr();
     let w2q2 = proof.w2_eval.into_fr() * proof.q2_eval.into_fr();
@@ -1405,7 +1400,6 @@ fn perform_final_checks<H: CurveHooks>(
     let batch_evaluation =
         compute_batch_evaluation_scalar_multiplier::<H>(proof, nu_challenges, quotient_eval);
 
-    // TODO: Update bases and scalars once support for recursive proofs is added.
     let bases = [
         proof.t1,
         proof.t2,
@@ -1626,47 +1620,7 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use super::*;
-    // use crate::macros::u256;
     use crate::resources::VALID_VK;
-
-    // #[test]
-    // fn test_parse_proof() {
-    //     let proof = resources::VALID_PROOF;
-    //     println!("{:?}", proof);
-    // }
-
-    // #[test]
-    // fn test_foo() {
-    //     println!(
-    //         "{:?}",
-    //         u256!("0000001000000000000000000000000000000000000000000000000000000000") //.into_bytes()
-    //     );
-    //     println!(
-    //         "{:?}",
-    //         u256!("0000000100000000000000000000000000000000000000000000000000000000")
-    //     );
-
-    //     println!(
-    //         "{:?}",
-    //         u256!("0000001000000001000000000000000000000000000000000000000000000000") // value that gets hashed
-    //     );
-    //     //         00000010 00000001 00000000 00000000 00000000 00000000 00000000 00000000
-    //     //         <------4th------> <------3rd------> <------2nd------> <------1st------>
-    //     //         0 0 0 16  0 0 0 1  0 0 0 0  0 0 0 0 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0
-
-    //     println!(
-    //         "{:?}",
-    //         u256!("0000001000000000000000000000000000000000000000000000000000000000").into_bytes()
-    //     );
-    //     println!(
-    //         "{:?}",
-    //         u256!("0000000100000000000000000000000000000000000000000000000000000000").into_bytes()
-    //     );
-    //     println!(
-    //         "{:?}",
-    //         u256!("0000001000000001000000000000000000000000000000000000000000000000").into_bytes()
-    //     );
-    // }
 
     #[test]
     fn test_verify() {
@@ -1676,8 +1630,6 @@ mod tests {
         let pi_1 = 10_u32.into_u256().into_bytes();
         let pubs: &[[u8; 32]] = &[pi_1];
 
-        // x = "5"  (witness)
-        // y = "10" (public input)
         assert_eq!(verify::<TestHooks>(&raw_vk, &raw_proof, pubs).unwrap(), ());
     }
 }
