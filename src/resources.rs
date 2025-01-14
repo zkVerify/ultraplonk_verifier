@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{PROOF_SIZE, VK_SIZE};
+use crate::{PublicInput, PROOF_SIZE, VK_SIZE};
 
 #[allow(dead_code)]
 pub(crate) static VALID_PROOF: [u8; PROOF_SIZE] = hex_literal::hex!(
@@ -148,3 +148,8 @@ pub(crate) static VALID_VK: [u8; VK_SIZE] = hex_literal::hex!(
     3c1ed10b834a695adf0068522a0000000000
     "
 );
+
+#[allow(dead_code)]
+pub(crate) static VALID_PI: [PublicInput; 1] = [hex_literal::hex!(
+    "000000000000000000000000000000000000000000000000000000000000000a"
+)];

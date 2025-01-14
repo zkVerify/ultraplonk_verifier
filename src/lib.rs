@@ -17,11 +17,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod errors;
-mod key;
-mod proof;
+pub mod key;
+pub mod proof;
 mod resources;
 mod srs;
-mod testhooks;
+pub mod testhooks;
 mod types;
 mod utils;
 
@@ -47,6 +47,9 @@ use alloc::vec::Vec;
 pub const PROOF_SIZE: usize = 2144; // = 67 * 32
 pub const PUBS_SIZE: usize = 32;
 pub const VK_SIZE: usize = 1714; // TODO: Revise if necessary once recursive proofs are supported
+
+/// The public input.
+pub type PublicInput = [u8; PUBS_SIZE];
 
 #[derive(Debug)]
 pub struct Challenges {
@@ -206,7 +209,7 @@ pub fn validate_vk<H: CurveHooks>(raw_vk: &[u8; VK_SIZE]) -> Result<(), VerifyEr
 pub fn verify<H: CurveHooks>(
     raw_vk: &[u8],
     raw_proof: &[u8],
-    pubs: &[[u8; PUBS_SIZE]],
+    pubs: &[PublicInput],
 ) -> Result<(), VerifyError> {
     /*
      * PARSE VERIFICATION KEY
@@ -1278,16 +1281,60 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use super::*;
-    use crate::resources::VALID_VK;
+    use crate::resources::{VALID_PI, VALID_PROOF, VALID_VK};
+    use testhooks::TestHooks;
 
     #[test]
     fn test_verify() {
-        use testhooks::TestHooks;
         let raw_proof = resources::VALID_PROOF;
         let raw_vk = VALID_VK.as_ref();
-        let pi_1 = 10_u32.into_u256().into_bytes();
-        let pubs: &[[u8; 32]] = &[pi_1];
+        let pubs = resources::VALID_PI;
 
-        assert_eq!(verify::<TestHooks>(&raw_vk, &raw_proof, pubs).unwrap(), ());
+        assert_eq!(verify::<TestHooks>(&raw_vk, &raw_proof, &pubs).unwrap(), ());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_verify_invalid_vk() {
+        let raw_proof = VALID_PROOF;
+        let pubs = VALID_PI;
+        let invalid_vk = [0u8; VK_SIZE];
+
+        verify::<TestHooks>(&invalid_vk, &raw_proof, &pubs).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_verify_invalid_proof() {
+        let invalid_proof = [0u8; PROOF_SIZE];
+        let raw_vk = VALID_VK.as_ref();
+        let pubs = VALID_PI;
+
+        verify::<TestHooks>(&raw_vk, &invalid_proof, &pubs).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_verify_invalid_pub_input() {
+        let raw_proof = resources::VALID_PROOF;
+        let raw_vk = VALID_VK.as_ref();
+        let invalid_pubs = [hex_literal::hex!(
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        )];
+
+        verify::<TestHooks>(&raw_vk, &raw_proof, &invalid_pubs).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_verify_invalid_pub_input_length() {
+        let raw_proof = resources::VALID_PROOF;
+        let raw_vk = VALID_VK.as_ref();
+        let invalid_pubs = [
+            hex_literal::hex!("000000000000000000000000000000000000000000000000000000000000000a"),
+            hex_literal::hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
+        ];
+
+        verify::<TestHooks>(&raw_vk, &raw_proof, &invalid_pubs).unwrap();
     }
 }

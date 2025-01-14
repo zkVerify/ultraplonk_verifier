@@ -22,5 +22,15 @@ hex-literal = { version = "0.4.1", default-features = false }
 sha3 = { version = "0.10.8", default-features = false }
 snafu = { version = "0.8.3", default-features = false }
 
+anyhow = { version = "1.0.86" }
+byteorder = "1.4"
+clap = { version = "4.5.4", features = ["derive"] }
+regex = { version = "1" }
+serde = { version = "1.0.197", default-features = false, features = [
+    "derive",
+] }
+serde_json = { version = "1.0.114" }
+thiserror = "1.0.61"
+
 [features]
 std = []
