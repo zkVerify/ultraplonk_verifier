@@ -359,12 +359,24 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
             VerificationKeyError::RecursionNotSupported,
         )?;
 
-        let recursive_proof_indices = read_u32_and_check(
-            raw_vk,
-            &mut offset,
-            0,
-            VerificationKeyError::RecursionNotSupported,
-        )?;
+        // let recursive_proof_indices = read_u32_and_check(
+        //     raw_vk,
+        //     &mut offset,
+        //     0,
+        //     VerificationKeyError::RecursionNotSupported,
+        // )?;
+
+        // this is merely a workaround
+        while offset < VK_SIZE {
+            let _ = read_bool_and_check(
+                raw_vk,
+                &mut offset,
+                false,
+                VerificationKeyError::RecursionNotSupported,
+            )?;
+        }
+
+        let recursive_proof_indices = 0u32;
 
         // NOTE: The following three fields can actually be computed just from the circuit_size (and r)
         // Hence, one optimization could be to create a lookup table for each value of 2^i, i = 0, 1, ...

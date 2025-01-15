@@ -46,7 +46,7 @@ use alloc::vec::Vec;
 
 pub const PROOF_SIZE: usize = 2144; // = 67 * 32
 pub const PUBS_SIZE: usize = 32;
-pub const VK_SIZE: usize = 1718; // TODO: Revise if necessary once recursive proofs are supported
+pub const VK_SIZE: usize = 1779; // TODO: Revise if necessary once recursive proofs are supported
 
 const NEGATIVE_INVERSE_OF_2_MODULO_R: Fr =
     MontFp!("10944121435919637611123202872628637544274182200208017171849102093287904247808");
@@ -213,7 +213,7 @@ pub fn verify<H: CurveHooks>(
      * PARSE VERIFICATION KEY
      */
     let vk =
-        VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::InvalidVerificationKey)?; // !!!
+        VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::InvalidVerificationKey)?;
 
     /*
      * PARSE PROOF
