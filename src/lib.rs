@@ -717,9 +717,8 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
     challenges: &Challenges,
     mut alpha_base: Fr,
 ) -> (Fr, Fr) {
-    let negative_inverse_of_2_modulo_r = MontFp!("-2")
-        .inverse()
-        .expect("2 does not have an inverse in the field"); // unreachable for BN254
+   const NEGATIVE_INVERSE_OF_2_MODULO_R: Fr =
+        MontFp!("10944121435919637611123202872628637544274182200208017171849102093287904247808");
 
     let w1q1 = proof.w1_eval.into_fr() * proof.q1_eval.into_fr();
     let w2q2 = proof.w2_eval.into_fr() * proof.q2_eval.into_fr();
@@ -730,7 +729,7 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
         * proof.w2_eval.into_fr()
         * proof.qm_eval.into_fr()
         * (proof.q_arith_eval.into_fr() - MontFp!("3"))
-        * negative_inverse_of_2_modulo_r;
+        * NEGATIVE_INVERSE_OF_2_MODULO_R;
 
     let identity = w1w2qm + w1q1 + w2q2 + w3q3 + w4q4 + proof.qc_eval.into_fr();
 
