@@ -410,30 +410,20 @@ fn generate_eta_challenge<H: CurveHooks>(
     public_inputs: &[U256],
     initial_challenge: &[u8; 32],
 ) -> [u8; 32] {
-    // Challenge is the old challenge + public inputs + W1, W2, W3 (0x20 + public_input_size + 0xc0)
     let mut hasher = Keccak256::new();
-    let mut buffer = Vec::new();
 
-    buffer.extend_from_slice(initial_challenge);
-
+    hasher.update(initial_challenge);
     for input in public_inputs {
-        buffer.extend_from_slice(&input.into_bytes());
+        hasher.update(input.into_bytes());
     }
+    hasher.update(proof.w1.y.into_bytes());
+    hasher.update(proof.w1.x.into_bytes());
+    hasher.update(proof.w2.y.into_bytes());
+    hasher.update(proof.w2.x.into_bytes());
+    hasher.update(proof.w3.y.into_bytes());
+    hasher.update(proof.w3.x.into_bytes());
 
-    buffer.extend_from_slice(&proof.w1.y.into_bytes());
-    buffer.extend_from_slice(&proof.w1.x.into_bytes());
-    buffer.extend_from_slice(&proof.w2.y.into_bytes());
-    buffer.extend_from_slice(&proof.w2.x.into_bytes());
-    buffer.extend_from_slice(&proof.w3.y.into_bytes());
-    buffer.extend_from_slice(&proof.w3.x.into_bytes());
-
-    hasher.update(&buffer);
-
-    let mut hash = [0u8; 32];
-
-    hash.copy_from_slice(&hasher.finalize());
-
-    hash
+    hasher.finalize().into()
 }
 
 /**
