@@ -48,6 +48,10 @@ pub const PROOF_SIZE: usize = 2144; // = 67 * 32
 pub const PUBS_SIZE: usize = 32;
 pub const VK_SIZE: usize = 1714; // TODO: Revise if necessary once recursive proofs are supported
 
+const NEGATIVE_INVERSE_OF_2_MODULO_R: Fr =
+    MontFp!("10944121435919637611123202872628637544274182200208017171849102093287904247808");
+const LIMB_SIZE: Fr = MontFp!("295147905179352825856"); // = 2 << 68
+
 /// The public input.
 pub type PublicInput = [u8; PUBS_SIZE];
 
@@ -717,9 +721,6 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
     challenges: &Challenges,
     mut alpha_base: Fr,
 ) -> (Fr, Fr) {
-   const NEGATIVE_INVERSE_OF_2_MODULO_R: Fr =
-        MontFp!("10944121435919637611123202872628637544274182200208017171849102093287904247808");
-
     let w1q1 = proof.w1_eval.into_fr() * proof.q1_eval.into_fr();
     let w2q2 = proof.w2_eval.into_fr() * proof.q2_eval.into_fr();
     let w3q3 = proof.w3_eval.into_fr() * proof.q3_eval.into_fr();
@@ -852,8 +853,6 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
 }
 
 fn compute_aux_non_native_field_evaluation<H: CurveHooks>(proof: &Proof<H>) -> Fr {
-    const LIMB_SIZE: Fr = MontFp!("295147905179352825856"); // = 2 << 68
-
     let mut limb_subproduct = proof.w1_eval.into_fr() * proof.w2_omega_eval.into_fr()
         + proof.w1_omega_eval.into_fr() * proof.w2_eval.into_fr();
 
