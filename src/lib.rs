@@ -1255,13 +1255,15 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_verify_invalid_proof() {
         let invalid_proof = [0u8; PROOF_SIZE];
         let raw_vk = VALID_VK.as_ref();
         let pubs = VALID_PI;
 
-        verify::<TestHooks>(&raw_vk, &invalid_proof, &pubs).unwrap();
+        assert_eq!(
+            verify::<TestHooks>(&raw_vk, &invalid_proof, &pubs),
+            Err(VerifyError::InvalidProofData)
+        );
     }
 
     #[test]
