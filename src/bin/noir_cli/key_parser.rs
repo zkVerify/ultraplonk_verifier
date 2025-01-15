@@ -65,9 +65,10 @@ fn parse_key_file(input: &PathBuf, output: Option<PathBuf>, verbose: bool) -> Re
 }
 
 fn parse_solidity_file(vk_file: &str) -> Result<VerificationKey<TestHooks>, CliError> {
-    let mut buf = [0u8; ultraplonk_no_std::VK_SIZE + 4];
+    let mut buf = [0u8; ultraplonk_no_std::VK_SIZE];
     let mut offset = 0;
-    // encode_u32(0x02, &mut buf, &mut offset); // circuit_type
+
+    encode_u32(0x02, &mut buf, &mut offset); // circuit_type
 
     encode_value_as_u32(vk_file, "0x00", &mut buf, &mut offset)?; // circuit_size
     encode_value_as_u32(vk_file, "0x20", &mut buf, &mut offset)?; // num_pub_inputs

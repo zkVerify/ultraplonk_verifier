@@ -60,6 +60,9 @@ pub enum VerificationKeyError {
     #[snafu(display("No roots of unity for {}", value))]
     NoRootsOfUnity { value: String },
 
+    #[snafu(display("Invalid circuit type, expected 2"))]
+    InvalidCircuitType,
+
     #[snafu(display("Invalid commitment field: {:?}", value))]
     InvalidCommitmentField { value: String },
 
@@ -221,6 +224,7 @@ impl CommitmentField {
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct VerificationKey<H: CurveHooks> {
+    pub circuit_type: u32,
     pub circuit_size: u32,
     pub num_public_inputs: u32,
     pub work_root: Fr,
@@ -257,6 +261,8 @@ pub struct VerificationKey<H: CurveHooks> {
 impl<H: CurveHooks> VerificationKey<H> {
     pub fn as_bytes(&self) -> Vec<u8> {
         let mut data = Vec::new();
+
+        data.extend_from_slice(&self.circuit_type.to_be_bytes());
 
         data.extend_from_slice(&self.circuit_size.to_be_bytes());
         data.extend_from_slice(&self.num_public_inputs.to_be_bytes());
@@ -306,6 +312,12 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
 
         let mut offset = 0;
 
+        let circuit_type = read_u32_and_check(
+            raw_vk,
+            &mut offset,
+            2,
+            VerificationKeyError::InvalidCircuitType,
+        )?;
         let circuit_size = read_u32(raw_vk, &mut offset); // Needs to be a power of 2
         let num_public_inputs = read_u32(raw_vk, &mut offset);
 
@@ -373,6 +385,7 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
             })?;
 
         Ok(VerificationKey::<H> {
+            circuit_type,
             circuit_size,
             num_public_inputs,
             work_root,

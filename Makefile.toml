@@ -1,9 +1,21 @@
 [config]
 default_to_workspace = false
 
+[tasks.ignore-members]
+workspace = false
+
 [tasks.clean]
 command = "cargo"
 args = ["clean"]
+
+[tasks.install-bare-metal]
+command = "rustup"
+args = ["target", "add", "thumbv7em-none-eabi"]
+
+[tasks.build-bare-metal]
+dependencies = ["install-bare-metal"]
+command = "cargo"
+args = ["build", "--no-default-features", "--target", "thumbv7em-none-eabi"]
 
 [tasks.build]
 command = "cargo"
@@ -57,9 +69,11 @@ dependencies = ["udeps-inst"]
 command = "cargo"
 args = ["udeps", "--all-targets"]
 
+[tasks.ci-common]
+dependencies = ["build", "build-bare-metal", "test", "clippy", "audit", "udeps"]
 
 [tasks.ci]
-dependencies = ["clean", "build", "test", "format", "clippy", "audit"]
+dependencies = ["format", "ci-common"]
 
 [tasks.ci-remote]
-dependencies = ["clean", "build", "test", "format-check", "clippy", "audit"]
+dependencies = ["format-check", "ci-common"]

@@ -15,7 +15,7 @@
 
 use std::path::PathBuf;
 use ultraplonk_no_std::testhooks::TestHooks;
-use ultraplonk_no_std::{key::VerificationKey, proof::Proof, verify as verify_proof, PublicInput};
+use ultraplonk_no_std::{verify as verify_proof, PublicInput};
 
 use crate::cli::Commands;
 use crate::errors::CliError;
@@ -36,8 +36,12 @@ fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf, verbose: bool) -> Resu
     }
 
     // Read and process the proof file
-    let key_data = std::fs::read(key)
-        .map_err(|_| CliError::CliError(format!("Failed to read proof file: {:?}", key)))?;
+    let key_data = std::fs::read(key).map_err(|_| {
+        CliError::CliError(format!(
+            "Failed to parse verification key from file: {:?}",
+            key
+        ))
+    })?;
 
     // let vk = VerificationKey::try_from(&key_data[..]).map_err(|_| {
     //     CliError::CliError(format!(
@@ -46,7 +50,7 @@ fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf, verbose: bool) -> Resu
     //     ))
     // })?;
 
-    let vk = &key_data[4..ultraplonk_no_std::VK_SIZE + 4]; // skip circuit_type
+    let vk = &key_data;
 
     // Read and process the proof file
     let proof = read_proof_file(proof)
@@ -90,7 +94,6 @@ pub(crate) fn convert_to_pub_inputs(data: &[u8]) -> Result<&[PublicInput], CliEr
 }
 
 fn read_proof_file(path: &PathBuf) -> Result<[u8; ultraplonk_no_std::PROOF_SIZE], CliError> {
-    // Result<Proof<TestHooks>, CliError>
     let data = std::fs::read(path)
         .map_err(|_| CliError::CliError(format!("Failed to read file: {:?}", path)))?;
 
