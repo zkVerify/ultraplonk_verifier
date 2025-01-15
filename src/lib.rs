@@ -1227,7 +1227,7 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
     batch_evaluation
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::resources::{VALID_PI, VALID_PROOF, VALID_VK};
