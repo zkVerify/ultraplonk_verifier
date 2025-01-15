@@ -1281,7 +1281,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_verify_invalid_pub_input_length() {
         let raw_proof = resources::VALID_PROOF;
         let raw_vk = VALID_VK.as_ref();
@@ -1290,6 +1289,9 @@ mod tests {
             hex_literal::hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
         ];
 
-        verify::<TestHooks>(&raw_vk, &raw_proof, &invalid_pubs).unwrap();
+        assert_eq!(
+            verify::<TestHooks>(&raw_vk, &raw_proof, &invalid_pubs),
+            Err(VerifyError::InvalidInput)
+        );
     }
 }
