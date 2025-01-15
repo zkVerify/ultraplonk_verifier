@@ -54,6 +54,12 @@ pub enum VerificationKeyError {
     #[snafu(display("Invalid value '{}'", value))]
     InvalidValue { value: String },
 
+    #[snafu(display("Non-invertible element {}", value))]
+    NonInvertibleElement { value: String },
+
+    #[snafu(display("No roots of unity for {}", value))]
+    NoRootsOfUnity { value: String },
+
     #[snafu(display("Invalid commitment field: {:?}", value))]
     InvalidCommitmentField { value: String },
 
@@ -351,9 +357,20 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
         // NOTE: The following three fields can actually be computed just from the circuit_size (and r)
         // Hence, one optimization could be to create a lookup table for each value of 2^i, i = 0, 1, ...
         // This should prevent having to do inversions everytime we call verify().
-        let domain_inverse = Fr::inverse(&Fr::from(circuit_size)).unwrap();
-        let work_root = Fr::get_root_of_unity(circuit_size.into()).unwrap();
-        let work_root_inverse = Fr::inverse(&work_root).unwrap();
+        let domain_inverse = Fr::inverse(&Fr::from(circuit_size)).ok_or(
+            VerificationKeyError::NonInvertibleElement {
+                value: circuit_size.to_string(),
+            },
+        )?;
+        let work_root = Fr::get_root_of_unity(circuit_size.into()).ok_or(
+            VerificationKeyError::NoRootsOfUnity {
+                value: circuit_size.to_string(),
+            },
+        )?;
+        let work_root_inverse =
+            Fr::inverse(&work_root).ok_or(VerificationKeyError::NonInvertibleElement {
+                value: work_root.to_string(),
+            })?;
 
         Ok(VerificationKey::<H> {
             circuit_size,

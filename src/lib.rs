@@ -386,7 +386,7 @@ pub fn verify<H: CurveHooks>(
     if perform_final_checks::<H>(&proof, &vk, &challenges, &nu_challenges, &quotient_eval) {
         Ok(())
     } else {
-        Err(VerifyError::VerifyError)
+        Err(VerifyError::VerificationError)
     }
 }
 

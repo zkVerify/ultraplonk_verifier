@@ -22,7 +22,7 @@ pub enum VerifyError {
     /// Provided data has not valid proof.
     InvalidProofData,
     /// Verify proof failed.
-    VerifyError,
+    VerificationError,
     /// Provided an invalid verification key.
     InvalidVerificationKey,
 }
