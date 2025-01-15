@@ -39,12 +39,14 @@ fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf, verbose: bool) -> Resu
     let key_data = std::fs::read(key)
         .map_err(|_| CliError::CliError(format!("Failed to read proof file: {:?}", key)))?;
 
-    let vk = VerificationKey::try_from(&key_data[..]).map_err(|_| {
-        CliError::CliError(format!(
-            "Failed to parse verification key from file: {:?}",
-            key
-        ))
-    })?;
+    // let vk = VerificationKey::try_from(&key_data[..]).map_err(|_| {
+    //     CliError::CliError(format!(
+    //         "Failed to parse verification key from file: {:?}",
+    //         key
+    //     ))
+    // })?;
+
+    let vk = &key_data[..];
 
     // Read and process the proof file
     let proof = read_proof_file(proof)
@@ -87,7 +89,8 @@ pub(crate) fn convert_to_pub_inputs(data: &[u8]) -> Result<&[PublicInput], CliEr
     Ok(pub_inputs)
 }
 
-fn read_proof_file(path: &PathBuf) -> Result<Proof<TestHooks>, CliError> {
+fn read_proof_file(path: &PathBuf) -> Result<[u8; ultraplonk_no_std::PROOF_SIZE], CliError> {
+    // Result<Proof<TestHooks>, CliError>
     let data = std::fs::read(path)
         .map_err(|_| CliError::CliError(format!("Failed to read file: {:?}", path)))?;
 

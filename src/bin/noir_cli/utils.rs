@@ -14,6 +14,7 @@
 // limitations under the License.
 
 use crate::errors::CliError;
+// use hex_new as hex;
 use regex::Regex;
 use std::fs::File;
 use std::io::Write;
@@ -64,7 +65,6 @@ pub fn encode_u32(value: u32, buf: &mut [u8], offset: &mut usize) {
     *offset += 4;
 }
 
-#[cfg(feature = "alloc")]
 pub fn encode_value(
     value: &str,
     variable_part: &str,

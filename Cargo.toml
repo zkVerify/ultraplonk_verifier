@@ -17,7 +17,7 @@ test-utils = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.gi
 ark-bn254 = { version = "0.4.0", default-features = false }
 ark-ec = { version = "0.4.0", default-features = false }
 ark-ff = { version = "0.4.0", default-features = false }
-hex = { version = "0.4.3", default-features = false, optional = true }
+hex = { version = "0.4.3", default-features = false, features = ["alloc"], optional = true }
 hex-literal = { version = "0.4.1", default-features = false }
 sha3 = { version = "0.10.8", default-features = false }
 snafu = { version = "0.8.3", default-features = false }
@@ -32,6 +32,12 @@ serde = { version = "1.0.197", default-features = false, features = [
 serde_json = { version = "1.0.114", optional = true }
 thiserror = "1.0.61"
 
+# [dependencies.hex_new]
+# package = "hex"
+# version = "0.4.3"
+# default-features = false
+# features = ["alloc"]
+
 [[bin]]
 name = "noir-cli"
 path = "src/bin/noir_cli/main.rs"
@@ -41,6 +47,7 @@ required-features = ["bins"]
 std = []
 bins = [
     "dep:clap",
+    # "dep:hex_new",
     "dep:hex",
     "dep:anyhow",
     "dep:regex",
