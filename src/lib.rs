@@ -1267,7 +1267,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_verify_invalid_pub_input() {
         let raw_proof = resources::VALID_PROOF;
         let raw_vk = VALID_VK.as_ref();
@@ -1275,7 +1274,10 @@ mod tests {
             "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         )];
 
-        verify::<TestHooks>(&raw_vk, &raw_proof, &invalid_pubs).unwrap();
+        assert_eq!(
+            verify::<TestHooks>(&raw_vk, &raw_proof, &invalid_pubs),
+            Err(VerifyError::InvalidInput)
+        );
     }
 
     #[test]
