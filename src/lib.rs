@@ -852,13 +852,7 @@ fn compute_elliptic_widget_evaluation<H: CurveHooks>(
 }
 
 fn compute_aux_non_native_field_evaluation<H: CurveHooks>(proof: &Proof<H>) -> Fr {
-    let limb_size: Fr = U256::new([
-        0x0000000000000000,
-        0x0000000000000010,
-        0x0000000000000000,
-        0x0000000000000000,
-    ])
-    .into_fr(); // = 2 << 68 = 0x100000000000000000
+    const LIMB_SIZE: Fr = MontFp!("295147905179352825856"); // = 2 << 68
 
     let mut limb_subproduct = proof.w1_eval.into_fr() * proof.w2_omega_eval.into_fr()
         + proof.w1_omega_eval.into_fr() * proof.w2_eval.into_fr();
@@ -867,11 +861,11 @@ fn compute_aux_non_native_field_evaluation<H: CurveHooks>(proof: &Proof<H>) -> F
         + proof.w2_eval.into_fr() * proof.w3_eval.into_fr()
         - proof.w3_omega_eval.into_fr();
 
-    non_native_field_gate_2 *= limb_size;
+    non_native_field_gate_2 *= LIMB_SIZE;
     non_native_field_gate_2 -= proof.w4_omega_eval.into_fr();
     non_native_field_gate_2 += limb_subproduct;
     non_native_field_gate_2 *= proof.q4_eval.into_fr();
-    limb_subproduct *= limb_size;
+    limb_subproduct *= LIMB_SIZE;
     limb_subproduct += proof.w1_omega_eval.into_fr() * proof.w2_omega_eval.into_fr();
 
     let non_native_field_gate_1 = (limb_subproduct
