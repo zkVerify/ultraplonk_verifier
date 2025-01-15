@@ -444,13 +444,11 @@ fn generate_beta_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]
  * Generate gamma challenge
  */
 fn generate_gamma_challenge(challenge: &[u8; 32]) -> [u8; 32] {
-    let mut hasher = Keccak256::new();
-    let mut buffer = [1u8; 33];
-    buffer[..32].copy_from_slice(challenge);
-    hasher.update(buffer);
-    let mut hash = [0u8; 32];
-    hash.copy_from_slice(&hasher.finalize());
-    hash
+    Keccak256::new()
+        .chain_update(challenge)
+        .chain_update([1u8])
+        .finalize()
+        .into()
 }
 
 /**
