@@ -17,6 +17,8 @@
 /// The verification error type
 #[derive(Debug, PartialEq)]
 pub enum VerifyError {
+    /// Failure due to another reason.
+    OtherError,
     /// Provided data has not valid public inputs.
     InvalidInput,
     /// Provided data has not valid proof.

@@ -377,7 +377,8 @@ pub fn verify<H: CurveHooks>(
     /*
      * GENERATE NU AND SEPARATOR CHALLENGES
      */
-    let nu_challenges = NuChallenges::new(&proof, &c_current, &quotient_eval).unwrap();
+    let nu_challenges = NuChallenges::new(&proof, &c_current, &quotient_eval)
+        .map_err(|_| VerifyError::OtherError)?;
 
     /*
      * PERFORM FINAL CHECKS
