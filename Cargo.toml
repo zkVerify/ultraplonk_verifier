@@ -23,14 +23,14 @@ sha3 = { version = "0.10.8", default-features = false }
 snafu = { version = "0.8.3", default-features = false }
 
 # Dependencies for noir-cli:
-anyhow = { version = "1.0.86", optional = true }
+anyhow = { version = "1.0.86", default-features = false, optional = true }
 clap = { version = "4.5.4", features = ["derive"], optional = true }
-regex = { version = "1", optional = true }
+regex = { version = "1", default-features = false, optional = true }
 serde = { version = "1.0.197", default-features = false, features = [
     "derive",
 ], optional = true }
 serde_json = { version = "1.0.114", optional = true }
-thiserror = { version = "1.0.61", optional = true }
+thiserror = { version = "1.0.61", default-features = false, optional = true }
 
 [[bin]]
 name = "noir-cli"
