@@ -46,7 +46,7 @@ fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf, verbose: bool) -> Resu
     //     ))
     // })?;
 
-    let vk = &key_data[..];
+    let vk = &key_data[4..ultraplonk_no_std::VK_SIZE + 4]; // skip circuit_type
 
     // Read and process the proof file
     let proof = read_proof_file(proof)

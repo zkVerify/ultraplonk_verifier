@@ -219,7 +219,7 @@ pub fn verify<H: CurveHooks>(
      * PARSE VERIFICATION KEY
      */
     let vk =
-        VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::InvalidVerificationKey)?;
+        VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::InvalidVerificationKey)?; // !!!
 
     /*
      * PARSE PROOF

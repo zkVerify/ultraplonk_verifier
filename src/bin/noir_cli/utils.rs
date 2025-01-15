@@ -14,7 +14,6 @@
 // limitations under the License.
 
 use crate::errors::CliError;
-// use hex_new as hex;
 use regex::Regex;
 use std::fs::File;
 use std::io::Write;
