@@ -1243,13 +1243,15 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_verify_invalid_vk() {
         let raw_proof = VALID_PROOF;
         let pubs = VALID_PI;
         let invalid_vk = [0u8; VK_SIZE];
 
-        verify::<TestHooks>(&invalid_vk, &raw_proof, &pubs).unwrap();
+        assert_eq!(
+            verify::<TestHooks>(&invalid_vk, &raw_proof, &pubs),
+            Err(VerifyError::InvalidVerificationKey)
+        );
     }
 
     #[test]
