@@ -570,49 +570,23 @@ fn compute_lagrange_and_vanishing_poly<H: CurveHooks>(
 
     let l_end_denominator = accumulating_root.square() * work_root * challenges.zeta - Fr::ONE;
 
-    /*
-     * Compute inversions using Montgomery's batch inversion trick
-     */
-    let mut accumulator = *delta_denominator;
-    let mut t0 = accumulator;
-    accumulator *= vanishing_denominator;
-    let mut t1 = accumulator;
-    accumulator *= vanishing_numerator;
-    let mut t2 = accumulator;
-    accumulator *= l_start_denominator;
-    let mut t3 = accumulator;
-    accumulator *= plookup_delta_denominator;
-    let mut t4 = accumulator;
-    {
-        let base = accumulator * l_end_denominator;
-        let mut expon = FrConfig::MODULUS;
-        expon.0[0] -= 2u64;
-        accumulator = base.pow(expon);
-    }
+    let mut inverses = [
+        *delta_denominator,
+        vanishing_denominator,
+        vanishing_numerator,
+        l_start_denominator,
+        *plookup_delta_denominator,
+        l_end_denominator,
+    ];
 
-    t4 *= accumulator;
-    accumulator *= l_end_denominator;
+    ark_ff::fields::batch_inversion(&mut inverses);
 
-    t3 *= accumulator;
-    accumulator *= plookup_delta_denominator;
-
-    t2 *= accumulator;
-    accumulator *= l_start_denominator;
-
-    t1 *= accumulator;
-    accumulator *= vanishing_numerator;
-
-    t0 *= accumulator;
-    accumulator *= vanishing_denominator;
-
-    accumulator = accumulator.square() * delta_denominator;
-
-    let public_input_delta = *delta_numerator * accumulator;
-    let zero_poly = vanishing_numerator * t0;
-    let zero_poly_inverse = vanishing_denominator * t1;
-    let l_start = lagrange_numerator * t2;
-    let plookup_delta = *plookup_delta_numerator * t3;
-    let l_end = lagrange_numerator * t4;
+    let public_input_delta = *delta_numerator * inverses[0];
+    let zero_poly = vanishing_numerator * inverses[1];
+    let zero_poly_inverse = vanishing_denominator * inverses[2];
+    let l_start = lagrange_numerator * inverses[3];
+    let plookup_delta = *plookup_delta_numerator * inverses[4];
+    let l_end = lagrange_numerator * inverses[5];
 
     [
         public_input_delta,
