@@ -24,14 +24,13 @@ snafu = { version = "0.8.3", default-features = false }
 
 # Dependencies for noir-cli:
 anyhow = { version = "1.0.86", optional = true }
-byteorder = { version = "1.4", optional = true }
 clap = { version = "4.5.4", features = ["derive"], optional = true }
 regex = { version = "1", optional = true }
 serde = { version = "1.0.197", default-features = false, features = [
     "derive",
 ], optional = true }
 serde_json = { version = "1.0.114", optional = true }
-thiserror = "1.0.61"
+thiserror = { version = "1.0.61", optional = true }
 
 [[bin]]
 name = "noir-cli"
@@ -43,8 +42,8 @@ std = []
 bins = [
     "dep:clap",
     "dep:hex",
-    "dep:byteorder",
     "dep:anyhow",
+    "dep:thiserror",
     "dep:regex",
     "dep:serde_json",
     "dep:serde",

@@ -838,7 +838,6 @@ dependencies = [
  "ark-ec",
  "ark-ff",
  "ark-models-ext",
- "byteorder",
  "clap",
  "hex",
  "hex-literal",
