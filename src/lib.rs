@@ -455,17 +455,14 @@ fn generate_gamma_challenge(challenge: &[u8; 32]) -> [u8; 32] {
  * Generate alpha challenge
  */
 fn generate_alpha_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]) -> [u8; 32] {
-    let mut hasher = Keccak256::new();
-    let mut buffer = [0u8; 160];
-    buffer[..32].copy_from_slice(challenge);
-    buffer[32..64].copy_from_slice(&proof.z.y.into_bytes());
-    buffer[64..96].copy_from_slice(&proof.z.x.into_bytes());
-    buffer[96..128].copy_from_slice(&proof.z_lookup.y.into_bytes());
-    buffer[128..160].copy_from_slice(&proof.z_lookup.x.into_bytes());
-    hasher.update(buffer);
-    let mut hash = [0u8; 32];
-    hash.copy_from_slice(&hasher.finalize());
-    hash
+    Keccak256::new()
+        .chain_update(challenge)
+        .chain_update(proof.z.y.into_bytes())
+        .chain_update(proof.z.x.into_bytes())
+        .chain_update(proof.z_lookup.y.into_bytes())
+        .chain_update(proof.z_lookup.x.into_bytes())
+        .finalize()
+        .into()
 }
 
 /**
