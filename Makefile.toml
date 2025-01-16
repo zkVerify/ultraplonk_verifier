@@ -62,10 +62,12 @@ args = ["llvm-cov", "--workspace", "--lcov", "--output-path", "lcov.info"]
 
 [tasks.udeps-inst]
 command = "cargo"
+toolchain = "nightly"
 args = ["install", "cargo-udeps", "--locked"]
 
 [tasks.udeps]
 dependencies = ["udeps-inst"]
+toolchain = "nightly"
 command = "cargo"
 args = ["udeps", "--all-targets"]
 
