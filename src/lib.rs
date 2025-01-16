@@ -44,7 +44,7 @@ extern crate alloc;
 extern crate core;
 use alloc::vec::Vec;
 
-pub const PROOF_SIZE: usize = 2144; // = 67 * 32
+pub const PROOF_SIZE: usize = 2144; // = 67 * 32 bytes
 pub const PUBS_SIZE: usize = 32;
 pub const VK_SIZE: usize = 1779;
 
@@ -237,26 +237,19 @@ pub fn verify<H: CurveHooks>(
     let c_current = challenge;
     let challenges = Challenges::new(alpha, beta, gamma, zeta, eta, vk.circuit_size);
 
-    // Evaluate Field Operations
+    // Evaluate Field Operations:
 
-    /*
-     *   COMPUTE PUBLIC INPUT DELTA
-     *   ΔPI = ∏ᵢ∈ℓ(wᵢ + β σ(i) + γ) / ∏ᵢ∈ℓ(wᵢ + β σ'(i) + γ)
-     */
+    // Compute Public Input Delta
     let (delta_numerator, delta_denominator) =
         compute_public_input_delta(public_inputs, &vk.work_root, &challenges)
             .map_err(|_| VerifyError::InvalidInput)?;
 
-    /*
-     *  Compute Plookup delta factor [γ(1 + β)]^{n-k}
-     *  k = num roots cut out of Z_H = 4
-     */
+    // Compute Plookup delta factor [γ(1 + β)]^{n-k},
+    // where: k = num roots cut out of Z_H = 4
     let (plookup_delta_numerator, plookup_delta_denominator) =
         compute_plookup_delta_factor(vk.circuit_size, &challenges);
 
-    /*
-     * Compute lagrange poly and vanishing poly fractions
-     */
+    // Compute lagrange poly and vanishing poly fractions
     let [public_input_delta, _zero_poly, zero_poly_inverse, plookup_delta, l_start, l_end] =
         compute_lagrange_and_vanishing_poly::<H>(
             &challenges,
@@ -267,21 +260,9 @@ pub fn verify<H: CurveHooks>(
             &plookup_delta_denominator,
         );
 
-    /*
-     * UltraPlonk Widget Ordering:
-     *
-     * 1. Permutation widget
-     * 2. Plookup widget
-     * 3. Arithmetic widget
-     * 4. Fixed base widget (?)
-     * 5. GenPermSort widget
-     * 6. Elliptic widget
-     * 7. Auxiliary widget
-     */
+    // UltraPlonk Widgets:
 
-    /*
-     * COMPUTE PERMUTATION WIDGET EVALUATION
-     */
+    // 1. Permutation Widget Evaluation
     let (permutation_identity, alpha_base) = compute_permutation_widget_evaluation::<H>(
         &proof,
         &challenges,
@@ -291,9 +272,7 @@ pub fn verify<H: CurveHooks>(
         &public_input_delta,
     );
 
-    /*
-     * COMPUTE PLOOKUP WIDGET EVALUATION
-     */
+    // 2. Plookup Widget Evaluation
     let (plookup_identity, alpha_base) = compute_plookup_widget_evaluation::<H>(
         &proof,
         &challenges,
@@ -303,33 +282,23 @@ pub fn verify<H: CurveHooks>(
         &plookup_delta,
     );
 
-    /*
-     * COMPUTE ARITHMETIC WIDGET EVALUATION
-     */
+    // 3. Arithmetic Widget Evaluation
     let (arithmetic_identity, alpha_base) =
         compute_arithmetic_widget_evaluation::<H>(&proof, &challenges, alpha_base);
 
-    /*
-     * COMPUTE GENPERMSORT WIDGET EVALUATION
-     */
+    // 4. Genpermsort Widget Evaluation
     let (sort_identity, alpha_base) =
         compute_genpermsort_widget_evaluation::<H>(&proof, &challenges, alpha_base);
 
-    /*
-     * COMPUTE ELLIPTIC WIDGET EVALUATION
-     */
+    // 5. Elliptic Widget Evaluation
     let (elliptic_identity, alpha_base) =
         compute_elliptic_widget_evaluation::<H>(&proof, &challenges, alpha_base);
 
-    /*
-     * COMPUTE AUXILIARY WIDGET EVALUATION
-     */
+    // 6. Auxiliary Widget Evaluation
     let (aux_identity, _alpha_base) =
         compute_auxiliary_widget_evaluation::<H>(&proof, &challenges, alpha_base);
 
-    /*
-     * QUOTIENT EVALUATION
-     */
+    // Quotient Evaluation
     let quotient_eval = quotient_evaluation(
         &permutation_identity,
         &plookup_identity,
@@ -340,16 +309,11 @@ pub fn verify<H: CurveHooks>(
         &zero_poly_inverse,
     );
 
-    /*
-     * GENERATE NU AND SEPARATOR CHALLENGES
-     */
+    // Generate Nu and Separator Challenges
     let nu_challenges = NuChallenges::new(&proof, &c_current, &quotient_eval)
         .map_err(|_| VerifyError::OtherError)?;
 
-    /*
-     * PERFORM FINAL CHECKS
-     */
-
+    // Check pairing relation
     if perform_final_checks::<H>(&proof, &vk, &challenges, &nu_challenges, &quotient_eval) {
         Ok(())
     } else {
@@ -357,9 +321,7 @@ pub fn verify<H: CurveHooks>(
     }
 }
 
-/**
- * Generate initial challenge
- */
+// Generate initial challenge
 fn generate_initial_challenge(n: u32, num_public_inputs: u32) -> [u8; 32] {
     Keccak256::new()
         .chain_update(n.to_be_bytes())
@@ -368,9 +330,7 @@ fn generate_initial_challenge(n: u32, num_public_inputs: u32) -> [u8; 32] {
         .into()
 }
 
-/**
- * Generate eta challenge
- */
+// Generate eta challenge
 fn generate_eta_challenge<H: CurveHooks>(
     proof: &Proof<H>,
     public_inputs: &[U256],
@@ -392,9 +352,7 @@ fn generate_eta_challenge<H: CurveHooks>(
     hasher.finalize().into()
 }
 
-/**
- * Generate beta challenge
- */
+// Generate beta challenge
 fn generate_beta_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]) -> [u8; 32] {
     Keccak256::new()
         .chain_update(challenge)
@@ -406,9 +364,7 @@ fn generate_beta_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]
         .into()
 }
 
-/**
- * Generate gamma challenge
- */
+// Generate gamma challenge
 fn generate_gamma_challenge(challenge: &[u8; 32]) -> [u8; 32] {
     Keccak256::new()
         .chain_update(challenge)
@@ -417,9 +373,7 @@ fn generate_gamma_challenge(challenge: &[u8; 32]) -> [u8; 32] {
         .into()
 }
 
-/**
- * Generate alpha challenge
- */
+// Generate alpha challenge
 fn generate_alpha_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]) -> [u8; 32] {
     Keccak256::new()
         .chain_update(challenge)
@@ -431,9 +385,7 @@ fn generate_alpha_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32
         .into()
 }
 
-/**
- * Generate zeta challenge
- */
+// Generate zeta challenge
 fn generate_zeta_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]) -> [u8; 32] {
     Keccak256::new()
         .chain_update(challenge)
@@ -449,6 +401,8 @@ fn generate_zeta_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]
         .into()
 }
 
+// Compute Public Input Delta:
+// ΔPI = ∏ᵢ∈ℓ(wᵢ + β σ(i) + γ) / ∏ᵢ∈ℓ(wᵢ + β σ'(i) + γ)
 fn compute_public_input_delta(
     public_inputs: &[U256],
     work_root: &Fr,
@@ -861,7 +815,7 @@ fn compute_aux_ram_consistency_evaluation<H: CurveHooks>(
     let adjacent_values_match_if_adjacent_indices_match_and_next_access_is_a_read_operation =
         (Fr::ONE - index_delta) * value_delta * (Fr::ONE - next_gate_access_type);
 
-    // AUX_RAM_CONSISTENCY_EVALUATION
+    // AUX_RAM_CONSISTENCY_EVALUATION:
 
     let access_type = proof.w4_eval.into_fr() - partial_record_check;
 
@@ -999,10 +953,6 @@ fn perform_final_checks<H: CurveHooks>(
     nu_challenges: &NuChallenges,
     quotient_eval: &Fr,
 ) -> bool {
-    /*
-     * VALIDATIONS AND ACCUMULATIONS
-     */
-
     // Note: Validations already took place back when we parsed the proof.
     let u_plus_one = nu_challenges.c_u + Fr::ONE;
     let zeta_pow_2n = challenges.zeta_pow_n.square();
@@ -1098,9 +1048,7 @@ fn perform_final_checks<H: CurveHooks>(
     let mut pairing_lhs = H::bn254_msm_g1(&bases, &scalars).unwrap();
     pairing_lhs.y = -pairing_lhs.y;
 
-    /*
-     * PERFORM PAIRING
-     */
+    // Perform Pairing:
 
     // rhs paired with [1]_2
     // lhs paired with [x]_2
@@ -1117,13 +1065,10 @@ fn perform_final_checks<H: CurveHooks>(
 
     let product = Bn254::<H>::multi_pairing(g1_points, g2_points);
 
-    // Product of pairings must equal 1
     product.0.is_one()
 }
 
-/*
- * COMPUTE BATCH EVALUATION SCALAR MULTIPLIER
- */
+// Compute Batch Evaluation Scalar Multiplier
 fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
     proof: &Proof<H>,
     nu_challenges: &NuChallenges,

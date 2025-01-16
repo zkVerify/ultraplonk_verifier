@@ -13,8 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::io::Write;
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 use ultraplonk_no_std::{
     key::{CommitmentField, VerificationKey},
     testhooks::TestHooks,

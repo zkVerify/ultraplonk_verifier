@@ -40,10 +40,7 @@ impl IntoFq for u64 {
 
 impl IntoFq for Fr {
     fn into_fq(self) -> Fq {
-        // Convert the `Fr` field element into a `BigInteger256`
         let big_int = self.into_bigint();
-
-        // Use the `from_bigint` method of `Fq` to convert it into a base field element
         Fq::from_bigint(big_int).expect("Fr value is always a valid Fq element")
     }
 }
@@ -191,9 +188,7 @@ pub(crate) fn read_fq_util(data: &[u8]) -> Result<Fq, FieldError> {
         limbs[3 - i] = u64::from_be_bytes(chunk.try_into().unwrap());
     }
 
-    // Create a U256
     let bigint = U256::new(limbs);
 
-    // Try to construct an Fq element
     Ok(bigint.into_fq())
 }
