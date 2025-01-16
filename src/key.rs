@@ -30,7 +30,6 @@ use ark_bn254_ext::CurveHooks;
 use ark_ff::{FftField, Field};
 use snafu::Snafu;
 
-#[allow(unused)]
 #[derive(Debug, Snafu)]
 pub enum VerificationKeyError {
     #[snafu(display("Buffer too short"))]
@@ -106,7 +105,6 @@ pub enum CommitmentField {
     ID_4,
 }
 
-#[allow(unused)]
 impl CommitmentField {
     pub fn str(&self) -> &'static str {
         match self {
@@ -133,62 +131,6 @@ impl CommitmentField {
             CommitmentField::ID_2 => "ID_2",
             CommitmentField::ID_3 => "ID_3",
             CommitmentField::ID_4 => "ID_4",
-        }
-    }
-
-    fn x_str(&self) -> &'static str {
-        match self {
-            CommitmentField::Q_1 => "Q_1.x",
-            CommitmentField::Q_2 => "Q_2.x",
-            CommitmentField::Q_3 => "Q_3.x",
-            CommitmentField::Q_4 => "Q_4.x",
-            CommitmentField::Q_M => "Q_M.x",
-            CommitmentField::Q_C => "Q_C.x",
-            CommitmentField::Q_ARITHMETIC => "Q_ARITHMETIC.x",
-            CommitmentField::Q_SORT => "Q_SORT.x",
-            CommitmentField::Q_ELLIPTIC => "Q_ELLIPTIC.x",
-            CommitmentField::Q_AUX => "Q_AUX.x",
-            CommitmentField::SIGMA_1 => "SIGMA_1.x",
-            CommitmentField::SIGMA_2 => "SIGMA_2.x",
-            CommitmentField::SIGMA_3 => "SIGMA_3.x",
-            CommitmentField::SIGMA_4 => "SIGMA_4.x",
-            CommitmentField::TABLE_1 => "TABLE_1.x",
-            CommitmentField::TABLE_2 => "TABLE_2.x",
-            CommitmentField::TABLE_3 => "TABLE_3.x",
-            CommitmentField::TABLE_4 => "TABLE_4.x",
-            CommitmentField::TABLE_TYPE => "TABLE_TYPE.x",
-            CommitmentField::ID_1 => "ID_1.x",
-            CommitmentField::ID_2 => "ID_2.x",
-            CommitmentField::ID_3 => "ID_3.x",
-            CommitmentField::ID_4 => "ID_4.x",
-        }
-    }
-
-    fn y_str(&self) -> &'static str {
-        match self {
-            CommitmentField::Q_1 => "Q_1.y",
-            CommitmentField::Q_2 => "Q_2.y",
-            CommitmentField::Q_3 => "Q_3.y",
-            CommitmentField::Q_4 => "Q_4.y",
-            CommitmentField::Q_M => "Q_M.y",
-            CommitmentField::Q_C => "Q_C.y",
-            CommitmentField::Q_ARITHMETIC => "Q_ARITHMETIC.y",
-            CommitmentField::Q_SORT => "Q_SORT.y",
-            CommitmentField::Q_ELLIPTIC => "Q_ELLIPTIC.y",
-            CommitmentField::Q_AUX => "Q_AUX.y",
-            CommitmentField::SIGMA_1 => "SIGMA_1.y",
-            CommitmentField::SIGMA_2 => "SIGMA_2.y",
-            CommitmentField::SIGMA_3 => "SIGMA_3.y",
-            CommitmentField::SIGMA_4 => "SIGMA_4.y",
-            CommitmentField::TABLE_1 => "TABLE_1.y",
-            CommitmentField::TABLE_2 => "TABLE_2.y",
-            CommitmentField::TABLE_3 => "TABLE_3.y",
-            CommitmentField::TABLE_4 => "TABLE_4.y",
-            CommitmentField::TABLE_TYPE => "TABLE_TYPE.y",
-            CommitmentField::ID_1 => "ID_1.y",
-            CommitmentField::ID_2 => "ID_2.y",
-            CommitmentField::ID_3 => "ID_3.y",
-            CommitmentField::ID_4 => "ID_4.y",
         }
     }
 
@@ -257,7 +199,6 @@ pub struct VerificationKey<H: CurveHooks> {
     pub recursive_proof_indices: u32,
 }
 
-#[allow(unused)]
 impl<H: CurveHooks> VerificationKey<H> {
     pub fn as_bytes(&self) -> Vec<u8> {
         let mut data = Vec::new();
@@ -516,7 +457,6 @@ pub(crate) fn read_g1<H: CurveHooks>(
     })
 }
 
-#[allow(unused)]
 fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut Vec<u8>) {
     // Helper to convert a field to bytes
     let field_to_bytes = |field: &CommitmentField| -> Vec<u8> {

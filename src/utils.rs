@@ -82,7 +82,6 @@ impl IntoFr for Fq {
     }
 }
 
-#[allow(unused)]
 pub(crate) trait IntoU256 {
     fn into_u256(self) -> U256;
 }

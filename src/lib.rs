@@ -46,11 +46,12 @@ use alloc::vec::Vec;
 
 pub const PROOF_SIZE: usize = 2144; // = 67 * 32
 pub const PUBS_SIZE: usize = 32;
-pub const VK_SIZE: usize = 1779; // TODO: Revise if necessary once recursive proofs are supported
+pub const VK_SIZE: usize = 1779;
 
 const NEGATIVE_INVERSE_OF_2_MODULO_R: Fr =
     MontFp!("10944121435919637611123202872628637544274182200208017171849102093287904247808");
 const LIMB_SIZE: Fr = MontFp!("295147905179352825856"); // = 2 << 68
+const SUBLIMB_SHIFT: Fr = MontFp!("16384"); // 1 << 14 = 0x4000 = 16384
 
 /// The public input.
 pub type PublicInput = [u8; PUBS_SIZE];
@@ -209,67 +210,34 @@ pub fn verify<H: CurveHooks>(
     raw_proof: &[u8],
     pubs: &[PublicInput],
 ) -> Result<(), VerifyError> {
-    /*
-     * PARSE VERIFICATION KEY
-     */
     let vk =
         VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::InvalidVerificationKey)?;
-
-    /*
-     * PARSE PROOF
-     */
     let proof = Proof::<H>::try_from(raw_proof).map_err(|_| VerifyError::InvalidProofData)?;
 
     // TODO: PARSE RECURSIVE PROOF
 
-    /*
-     * PARSE PUBLIC INPUTS
-     */
     let public_inputs = &pubs
         .iter()
         .map(|pi_bytes| pi_bytes.into_u256())
         .collect::<Vec<U256>>();
 
-    /*
-     * GENERATE CHALLENGES
-     */
-
-    // Initial Challenge
+    // Generate Challenges
     let mut challenge = generate_initial_challenge(vk.circuit_size, vk.num_public_inputs);
-
-    // Eta Challenge
     challenge = generate_eta_challenge::<H>(&proof, public_inputs, &challenge);
-
     let eta = challenge.into_fr();
-
-    // Beta challenge
     challenge = generate_beta_challenge::<H>(&proof, &challenge);
-
     let beta = challenge.into_fr();
-
-    // Gamma challenge
     challenge = generate_gamma_challenge(&challenge);
-
     let gamma = challenge.into_fr();
-
-    // Alpha challenge
     challenge = generate_alpha_challenge::<H>(&proof, &challenge);
-
     let alpha = challenge.into_fr();
-
     let alpha_base = alpha;
-
-    // Zeta challenge
     challenge = generate_zeta_challenge::<H>(&proof, &challenge);
     let zeta = challenge.into_fr();
-
     let c_current = challenge;
-
     let challenges = Challenges::new(alpha, beta, gamma, zeta, eta, vk.circuit_size);
 
-    /*
-     *   EVALUATE FIELD OPERATIONS
-     */
+    // Evaluate Field Operations
 
     /*
      *   COMPUTE PUBLIC INPUT DELTA
@@ -849,26 +817,24 @@ fn compute_aux_non_native_field_evaluation<H: CurveHooks>(proof: &Proof<H>) -> F
 }
 
 fn compute_aux_limb_accumulator_evaluation<H: CurveHooks>(proof: &Proof<H>) -> Fr {
-    let sublimb_shift: Fr = MontFp!("16384"); // 1 << 14 = 0x4000 = 16384
-
-    let mut limb_accumulator_1 = proof.w2_omega_eval.into_fr() * sublimb_shift;
+    let mut limb_accumulator_1 = proof.w2_omega_eval.into_fr() * SUBLIMB_SHIFT;
     limb_accumulator_1 += proof.w1_omega_eval.into_fr();
-    limb_accumulator_1 *= sublimb_shift;
+    limb_accumulator_1 *= SUBLIMB_SHIFT;
     limb_accumulator_1 += proof.w3_eval.into_fr();
-    limb_accumulator_1 *= sublimb_shift;
+    limb_accumulator_1 *= SUBLIMB_SHIFT;
     limb_accumulator_1 += proof.w2_eval.into_fr();
-    limb_accumulator_1 *= sublimb_shift;
+    limb_accumulator_1 *= SUBLIMB_SHIFT;
     limb_accumulator_1 += proof.w1_eval.into_fr();
     limb_accumulator_1 += -proof.w4_eval.into_fr();
     limb_accumulator_1 *= proof.q4_eval.into_fr();
 
-    let mut limb_accumulator_2 = proof.w3_omega_eval.into_fr() * sublimb_shift;
+    let mut limb_accumulator_2 = proof.w3_omega_eval.into_fr() * SUBLIMB_SHIFT;
     limb_accumulator_2 += proof.w2_omega_eval.into_fr();
-    limb_accumulator_2 *= sublimb_shift;
+    limb_accumulator_2 *= SUBLIMB_SHIFT;
     limb_accumulator_2 += proof.w1_omega_eval.into_fr();
-    limb_accumulator_2 *= sublimb_shift;
+    limb_accumulator_2 *= SUBLIMB_SHIFT;
     limb_accumulator_2 += proof.w4_eval.into_fr();
-    limb_accumulator_2 *= sublimb_shift;
+    limb_accumulator_2 *= SUBLIMB_SHIFT;
     limb_accumulator_2 += proof.w3_eval.into_fr();
     limb_accumulator_2 += -proof.w4_omega_eval.into_fr();
     limb_accumulator_2 *= proof.qm_eval.into_fr();
