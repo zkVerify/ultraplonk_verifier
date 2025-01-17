@@ -214,6 +214,8 @@ pub fn verify<H: CurveHooks>(
         VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::InvalidVerificationKey)?;
     let proof = Proof::<H>::try_from(raw_proof).map_err(|_| VerifyError::InvalidProofData)?;
 
+    check_public_input_number(&vk, pubs)?;
+
     // TODO: PARSE RECURSIVE PROOF
 
     let public_inputs = &pubs
@@ -242,7 +244,7 @@ pub fn verify<H: CurveHooks>(
     // Compute Public Input Delta
     let (delta_numerator, delta_denominator) =
         compute_public_input_delta(public_inputs, &vk.work_root, &challenges)
-            .map_err(|_| VerifyError::InvalidInput)?;
+            .map_err(|_| VerifyError::PublicInputError)?;
 
     // Compute Plookup delta factor [γ(1 + β)]^{n-k},
     // where: k = num roots cut out of Z_H = 4
@@ -318,6 +320,17 @@ pub fn verify<H: CurveHooks>(
         Ok(())
     } else {
         Err(VerifyError::VerificationError)
+    }
+}
+
+fn check_public_input_number<H: CurveHooks>(
+    vk: &VerificationKey<H>,
+    pubs: &[PublicInput],
+) -> Result<(), VerifyError> {
+    if vk.num_public_inputs != pubs.len() as u32 {
+        Err(VerifyError::PublicInputError)
+    } else {
+        Ok(())
     }
 }
 
@@ -429,7 +442,7 @@ fn compute_public_input_delta(
     }
 
     if !valid_inputs {
-        return Err(VerifyError::InvalidInput);
+        return Err(VerifyError::PublicInputError);
     }
 
     Ok((numerator_value, denominator_value))

@@ -20,7 +20,7 @@ pub enum VerifyError {
     /// Failure due to another reason.
     OtherError,
     /// Provided data has not valid public inputs.
-    InvalidInput,
+    PublicInputError,
     /// Provided data has not valid proof.
     InvalidProofData,
     /// Verify proof failed.

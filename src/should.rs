@@ -191,7 +191,7 @@ mod reject {
 
         assert_eq!(
             verify::<TestHooks>(&valid_vk, &valid_proof, &invalid_pub),
-            Err(VerifyError::InvalidInput)
+            Err(VerifyError::PublicInputError)
         );
     }
 
@@ -204,7 +204,7 @@ mod reject {
 
         assert_eq!(
             verify::<TestHooks>(&valid_vk, &valid_proof, &invalid_pubs),
-            Err(VerifyError::InvalidInput)
+            Err(VerifyError::PublicInputError)
         );
     }
 }
