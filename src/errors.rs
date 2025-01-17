@@ -29,14 +29,14 @@ pub enum VerifyError {
     InvalidVerificationKey,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum GroupError {
     InvalidSliceLength,
     NotOnCurve,
     NotInSubgroup,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum FieldError {
     InvalidSliceLength,
     InvalidU512Encoding,
