@@ -19,7 +19,7 @@
 pub mod errors;
 pub mod key;
 pub mod proof;
-mod resources;
+// mod resources;
 mod srs;
 pub mod testhooks;
 mod types;
@@ -53,8 +53,9 @@ const NEGATIVE_INVERSE_OF_2_MODULO_R: Fr =
 const LIMB_SIZE: Fr = MontFp!("295147905179352825856"); // = 2 << 68
 const SUBLIMB_SHIFT: Fr = MontFp!("16384"); // 1 << 14 = 0x4000 = 16384
 
-/// The public input.
+/// A single public input.
 pub type PublicInput = [u8; PUBS_SIZE];
+pub type Public = [PublicInput];
 
 #[derive(Debug)]
 pub struct Challenges {
@@ -208,7 +209,7 @@ struct AuxiliaryEvaluations {
 pub fn verify<H: CurveHooks>(
     raw_vk: &[u8],
     raw_proof: &[u8],
-    pubs: &[PublicInput],
+    pubs: &Public,
 ) -> Result<(), VerifyError> {
     let vk =
         VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::InvalidVerificationKey)?;
@@ -1133,70 +1134,4 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::resources::{VALID_PI, VALID_PROOF, VALID_VK};
-    use testhooks::TestHooks;
-
-    #[test]
-    fn test_verify() {
-        let raw_proof = resources::VALID_PROOF;
-        let raw_vk = VALID_VK.as_ref();
-        let pubs = resources::VALID_PI;
-
-        assert_eq!(verify::<TestHooks>(&raw_vk, &raw_proof, &pubs).unwrap(), ());
-    }
-
-    #[test]
-    fn test_verify_invalid_vk() {
-        let raw_proof = VALID_PROOF;
-        let pubs = VALID_PI;
-        let invalid_vk = [0u8; VK_SIZE];
-
-        assert_eq!(
-            verify::<TestHooks>(&invalid_vk, &raw_proof, &pubs),
-            Err(VerifyError::InvalidVerificationKey)
-        );
-    }
-
-    #[test]
-    fn test_verify_invalid_proof() {
-        let invalid_proof = [0u8; PROOF_SIZE];
-        let raw_vk = VALID_VK.as_ref();
-        let pubs = VALID_PI;
-
-        assert_eq!(
-            verify::<TestHooks>(&raw_vk, &invalid_proof, &pubs),
-            Err(VerifyError::InvalidProofData)
-        );
-    }
-
-    #[test]
-    fn test_verify_invalid_pub_input() {
-        let raw_proof = resources::VALID_PROOF;
-        let raw_vk = VALID_VK.as_ref();
-        let invalid_pubs = [hex_literal::hex!(
-            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-        )];
-
-        assert_eq!(
-            verify::<TestHooks>(&raw_vk, &raw_proof, &invalid_pubs),
-            Err(VerifyError::InvalidInput)
-        );
-    }
-
-    #[test]
-    fn test_verify_invalid_pub_input_length() {
-        let raw_proof = resources::VALID_PROOF;
-        let raw_vk = VALID_VK.as_ref();
-        let invalid_pubs = [
-            hex_literal::hex!("000000000000000000000000000000000000000000000000000000000000000a"),
-            hex_literal::hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-        ];
-
-        assert_eq!(
-            verify::<TestHooks>(&raw_vk, &raw_proof, &invalid_pubs),
-            Err(VerifyError::InvalidInput)
-        );
-    }
-}
+mod should;

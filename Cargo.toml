@@ -32,6 +32,9 @@ serde = { version = "1.0.197", default-features = false, features = [
 serde_json = { version = "1.0.114", optional = true }
 thiserror = { version = "1.0.61", default-features = false, optional = true }
 
+[dev-dependencies]
+rstest = { version = "0.19.0", default-features = false }
+
 [[bin]]
 name = "noir-cli"
 path = "src/bin/noir_cli/main.rs"
