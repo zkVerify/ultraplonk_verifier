@@ -19,7 +19,6 @@
 pub mod errors;
 pub mod key;
 pub mod proof;
-// mod resources;
 mod srs;
 pub mod testhooks;
 mod types;

@@ -164,7 +164,7 @@ mod reject {
     use super::*;
 
     #[rstest]
-    fn test_verify_invalid_vk(valid_proof: [u8; PROOF_SIZE], valid_pub: [PublicInput; 1]) {
+    fn an_invalid_vk(valid_proof: [u8; PROOF_SIZE], valid_pub: [PublicInput; 1]) {
         let invalid_vk = [0u8; VK_SIZE];
 
         assert_eq!(
@@ -174,7 +174,7 @@ mod reject {
     }
 
     #[rstest]
-    fn test_verify_invalid_proof(valid_vk: [u8; VK_SIZE], valid_pub: [PublicInput; 1]) {
+    fn an_invalid_proof(valid_vk: [u8; VK_SIZE], valid_pub: [PublicInput; 1]) {
         let invalid_proof = [0u8; PROOF_SIZE];
 
         assert_eq!(
@@ -184,7 +184,7 @@ mod reject {
     }
 
     #[rstest]
-    fn test_verify_invalid_pub_input(valid_proof: [u8; PROOF_SIZE], valid_vk: [u8; VK_SIZE]) {
+    fn an_invalid_pub_input(valid_proof: [u8; PROOF_SIZE], valid_vk: [u8; VK_SIZE]) {
         let invalid_pub = [hex_literal::hex!(
             "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         )];
@@ -196,10 +196,7 @@ mod reject {
     }
 
     #[rstest]
-    fn test_verify_invalid_pub_input_length(
-        valid_proof: [u8; PROOF_SIZE],
-        valid_vk: [u8; VK_SIZE],
-    ) {
+    fn a_public_inputwith_invalid_length(valid_proof: [u8; PROOF_SIZE], valid_vk: [u8; VK_SIZE]) {
         let invalid_pubs = [
             hex_literal::hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
             hex_literal::hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),

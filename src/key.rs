@@ -17,7 +17,7 @@
 #![allow(non_camel_case_types)]
 
 use crate::{
-    errors::{FieldError, GroupError},
+    errors::GroupError,
     utils::{read_fq_util, read_g1_util, IntoBytes},
     Fq2, Fr, G1, G2, VK_SIZE,
 };
@@ -35,24 +35,29 @@ pub enum VerificationKeyError {
     #[snafu(display("Buffer too short"))]
     BufferTooShort,
 
-    #[snafu(display("Buffer size is incorrect"))]
-    IncorrectBufferSize,
-
-    #[snafu(display("Invalid field '{}': {:?}", field, error))]
-    InvalidField {
-        field: &'static str,
-        error: FieldError,
+    #[snafu(display(
+        "Slice length is incorrect. Expected: {}, got: {}",
+        expected_length,
+        actual_length
+    ))]
+    InvalidSliceLength {
+        expected_length: usize,
+        actual_length: usize,
     },
 
+    // #[snafu(display("Invalid field '{}': {:?}", field, error))]
+    // InvalidField {
+    //     field: &'static str,
+    //     error: FieldError,
+    // },
     #[snafu(display("Point for field '{}' is not on curve", field))]
     PointNotOnCurve { field: &'static str },
 
     #[snafu(display("Point for field '{}' is not in the correct subgroup", field))]
     PointNotInCorrectSubgroup { field: &'static str },
 
-    #[snafu(display("Invalid value '{}'", value))]
-    InvalidValue { value: String },
-
+    // #[snafu(display("Invalid value '{}'", value))]
+    // InvalidValue { value: String },
     #[snafu(display("Non-invertible element {}", value))]
     NonInvertibleElement { value: String },
 
@@ -453,7 +458,13 @@ pub(crate) fn read_g1<H: CurveHooks>(
         GroupError::NotInSubgroup => {
             VerificationKeyError::PointNotInCorrectSubgroup { field: field.str() }
         }
-        GroupError::InvalidSliceLength => VerificationKeyError::IncorrectBufferSize,
+        GroupError::InvalidSliceLength {
+            expected_length,
+            actual_length,
+        } => VerificationKeyError::InvalidSliceLength {
+            expected_length,
+            actual_length,
+        },
     })
 }
 
@@ -486,10 +497,10 @@ pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, ()> {
         return Err(());
     }
 
-    let x_c0 = read_fq_util(&data[0..32]).unwrap();
-    let x_c1 = read_fq_util(&data[32..64]).unwrap();
-    let y_c0 = read_fq_util(&data[64..96]).unwrap();
-    let y_c1 = read_fq_util(&data[96..128]).unwrap();
+    let x_c0 = read_fq_util(&data[0..32]).expect("Parsing the SRS should always succeed!");
+    let x_c1 = read_fq_util(&data[32..64]).expect("Parsing the SRS should always succeed!");
+    let y_c0 = read_fq_util(&data[64..96]).expect("Parsing the SRS should always succeed!");
+    let y_c1 = read_fq_util(&data[96..128]).expect("Parsing the SRS should always succeed!");
 
     let x = Fq2::new(x_c0, x_c1);
     let y = Fq2::new(y_c0, y_c1);
@@ -568,65 +579,118 @@ mod should {
         )
     }
 
-    #[rstest]
-    fn parse_vk_with_invalid_circuit_type(valid_vk: [u8; VK_SIZE]) {
-        let mut invalid_vk = [0u8; VK_SIZE];
-        invalid_vk.copy_from_slice(&valid_vk);
-        invalid_vk[3] = 3;
+    mod reject {
+        use super::*;
 
-        assert_eq!(
-            VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
-            VerificationKeyError::InvalidCircuitType
-        );
-    }
+        #[rstest]
+        fn a_vk_with_invalid_circuit_type(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[3] = 3;
 
-    #[rstest]
-    fn parse_vk_with_invalid_commitments_number(valid_vk: [u8; VK_SIZE]) {
-        let mut invalid_vk = [0u8; VK_SIZE];
-        invalid_vk.copy_from_slice(&valid_vk);
-        invalid_vk[15] = 0;
+            assert_eq!(
+                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::InvalidCircuitType
+            );
+        }
 
-        assert_eq!(
-            VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
-            VerificationKeyError::InvalidCommitmentsNumber
-        );
-    }
+        #[rstest]
+        fn a_vk_with_invalid_commitments_number(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[15] = 0;
 
-    #[rstest]
-    fn parse_vk_containing_recursive_proof(valid_vk: [u8; VK_SIZE]) {
-        let mut invalid_vk = [0u8; VK_SIZE];
-        invalid_vk.copy_from_slice(&valid_vk);
-        invalid_vk[1714] = 1;
+            assert_eq!(
+                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::InvalidCommitmentsNumber
+            );
+        }
 
-        assert_eq!(
-            VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
-            VerificationKeyError::RecursionNotSupported
-        );
-    }
+        #[rstest]
+        fn a_vk_containing_a_recursive_proof(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[1714] = 1;
 
-    #[rstest]
-    fn parse_vk_with_invalid_field(valid_vk: [u8; VK_SIZE]) {
-        let mut invalid_vk = [0u8; VK_SIZE];
-        invalid_vk.copy_from_slice(&valid_vk);
-        invalid_vk[20..=23].fill(0);
+            assert_eq!(
+                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::RecursionNotSupported
+            );
+        }
 
-        assert_eq!(
-            VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
-            VerificationKeyError::InvalidCommitmentField {
-                value: "\0\0\0\0".to_string()
-            }
-        );
-    }
+        #[rstest]
+        fn a_vk_with_an_invalid_field(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[20..=23].fill(0);
 
-    #[rstest]
-    fn parse_vk_with_point_not_on_curve(valid_vk: [u8; VK_SIZE]) {
-        let mut invalid_vk = [0u8; VK_SIZE];
-        invalid_vk.copy_from_slice(&valid_vk);
-        invalid_vk[24..88].fill(0);
+            assert_eq!(
+                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::InvalidCommitmentField {
+                    value: "\0\0\0\0".to_string()
+                }
+            );
+        }
 
-        assert_eq!(
-            VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
-            VerificationKeyError::PointNotOnCurve { field: "ID_1" }
-        );
+        #[rstest]
+        fn a_vk_with_a_point_not_on_curve(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[24..88].fill(0);
+
+            assert_eq!(
+                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::PointNotOnCurve { field: "ID_1" }
+            );
+        }
+
+        #[rstest]
+        fn a_vk_with_an_invalid_commitment_key(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[19] = 100;
+
+            assert_eq!(
+                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::InvalidCommitmentKey { offset: 20 }
+            );
+        }
+
+        #[rstest]
+        fn a_vk_with_an_invalid_commitment_key_v2(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[20..=23].fill(255);
+
+            assert_eq!(
+                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::InvalidCommitmentKey { offset: 20 }
+            );
+        }
+
+        #[rstest]
+        fn a_vk_with_unexpected_commitment_key(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[23] = 50;
+
+            assert_eq!(
+                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::UnexpectedCommitmentKey {
+                    key: "ID_2".to_string(),
+                    expected: "ID_1".to_string()
+                }
+            );
+        }
+
+        #[rstest]
+        fn a_vk_from_a_short_buffer() {
+            let invalid_vk = [0u8; 10];
+
+            assert_eq!(
+                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::BufferTooShort
+            );
+        }
     }
 }

@@ -24,8 +24,25 @@ use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
 pub enum ProofError {
-    #[snafu(display("Buffer size is incorrect"))]
-    IncorrectBufferSize,
+    #[snafu(display(
+        "Incorrect buffer size. Expected: {}, got: {}",
+        expected_size,
+        actual_size
+    ))]
+    IncorrectBufferSize {
+        expected_size: usize,
+        actual_size: usize,
+    },
+
+    #[snafu(display(
+        "Invalid slice size. Expected: {}, got: {}",
+        expected_length,
+        actual_length
+    ))]
+    InvalidSliceLength {
+        expected_length: usize,
+        actual_length: usize,
+    },
 
     #[snafu(display("Point for field is not on curve"))]
     PointNotOnCurve,
@@ -103,7 +120,13 @@ fn read_proof_g1<H: CurveHooks>(data: &[u8], offset: &mut usize) -> Result<G1<H>
         .map_err(|e| match e {
             GroupError::NotOnCurve => ProofError::PointNotOnCurve,
             GroupError::NotInSubgroup => ProofError::PointNotInCorrectSubgroup,
-            GroupError::InvalidSliceLength => ProofError::IncorrectBufferSize,
+            GroupError::InvalidSliceLength {
+                expected_length,
+                actual_length,
+            } => ProofError::InvalidSliceLength {
+                expected_length,
+                actual_length,
+            },
         })
         .inspect(|_| {
             *offset += 64;
@@ -114,8 +137,13 @@ fn read_proof_fq(data: &[u8], offset: &mut usize) -> Result<Fq, ProofError> {
     read_fq_util(&data[*offset..*offset + 32])
         .map_err(|e| match e {
             FieldError::NotMember => ProofError::NotMember,
-            FieldError::InvalidSliceLength => ProofError::IncorrectBufferSize,
-            _ => ProofError::OtherError,
+            FieldError::InvalidSliceLength {
+                expected_length,
+                actual_length,
+            } => ProofError::InvalidSliceLength {
+                expected_length,
+                actual_length,
+            },
         })
         .inspect(|_| {
             *offset += 32;
@@ -127,7 +155,10 @@ impl<H: CurveHooks> TryFrom<&[u8]> for Proof<H> {
 
     fn try_from(proof: &[u8]) -> Result<Self, ProofError> {
         if proof.len() != PROOF_SIZE {
-            return Err(ProofError::IncorrectBufferSize);
+            return Err(ProofError::IncorrectBufferSize {
+                expected_size: PROOF_SIZE,
+                actual_size: proof.len(),
+            });
         }
 
         let mut offset = 0;

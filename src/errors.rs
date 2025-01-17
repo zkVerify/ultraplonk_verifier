@@ -31,14 +31,19 @@ pub enum VerifyError {
 
 #[derive(Debug, PartialEq)]
 pub enum GroupError {
-    InvalidSliceLength,
+    InvalidSliceLength {
+        actual_length: usize,
+        expected_length: usize,
+    },
     NotOnCurve,
     NotInSubgroup,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum FieldError {
-    InvalidSliceLength,
-    InvalidU512Encoding,
+    InvalidSliceLength {
+        actual_length: usize,
+        expected_length: usize,
+    },
     NotMember,
 }

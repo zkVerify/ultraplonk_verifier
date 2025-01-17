@@ -149,18 +149,21 @@ impl IntoBytes for Fq {
 // Parsing utility for points in G1
 pub(crate) fn read_g1_util<H: CurveHooks>(data: &[u8], reverse: bool) -> Result<G1<H>, GroupError> {
     if data.len() != 64 {
-        return Err(GroupError::InvalidSliceLength);
+        return Err(GroupError::InvalidSliceLength {
+            expected_length: 64,
+            actual_length: data.len(),
+        });
     }
 
     let x: Fq;
     let y: Fq;
 
     if reverse {
-        y = read_fq_util(&data[0..32]).unwrap();
-        x = read_fq_util(&data[32..64]).unwrap();
+        y = read_fq_util(&data[0..32]).expect("Should always succeed");
+        x = read_fq_util(&data[32..64]).expect("Should always succeed");
     } else {
-        x = read_fq_util(&data[0..32]).unwrap();
-        y = read_fq_util(&data[32..64]).unwrap();
+        x = read_fq_util(&data[0..32]).expect("Should always succeed");
+        y = read_fq_util(&data[32..64]).expect("Should always succeed");
     }
 
     let point = G1::new_unchecked(x, y);
@@ -179,7 +182,10 @@ pub(crate) fn read_g1_util<H: CurveHooks>(data: &[u8], reverse: bool) -> Result<
 // Utility function for parsing points in G2
 pub(crate) fn read_fq_util(data: &[u8]) -> Result<Fq, FieldError> {
     if data.len() != 32 {
-        return Err(FieldError::InvalidSliceLength);
+        return Err(FieldError::InvalidSliceLength {
+            expected_length: 32,
+            actual_length: data.len(),
+        });
     }
 
     // Convert bytes to limbs manually
