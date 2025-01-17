@@ -41,7 +41,7 @@ pub use types::*;
 
 extern crate alloc;
 extern crate core;
-use alloc::vec::Vec;
+use alloc::{format, string::ToString, vec::Vec};
 
 pub const PROOF_SIZE: usize = 2144; // = 67 * 32 bytes
 pub const PUBS_SIZE: usize = 32;
@@ -242,8 +242,7 @@ pub fn verify<H: CurveHooks>(
 
     // Compute Public Input Delta
     let (delta_numerator, delta_denominator) =
-        compute_public_input_delta(public_inputs, &vk.work_root, &challenges)
-            .map_err(|_| VerifyError::PublicInputError)?;
+        compute_public_input_delta(public_inputs, &vk.work_root, &challenges)?;
 
     // Compute Plookup delta factor [γ(1 + β)]^{n-k},
     // where: k = num roots cut out of Z_H = 4
@@ -327,7 +326,13 @@ fn check_public_input_number<H: CurveHooks>(
     pubs: &[PublicInput],
 ) -> Result<(), VerifyError> {
     if vk.num_public_inputs != pubs.len() as u32 {
-        Err(VerifyError::PublicInputError)
+        Err(VerifyError::PublicInputError {
+            message: format!(
+                "Provided public inputs length does not match. Expected: {}; Got: {}",
+                vk.num_public_inputs,
+                pubs.len()
+            ),
+        })
     } else {
         Ok(())
     }
@@ -441,7 +446,9 @@ fn compute_public_input_delta(
     }
 
     if !valid_inputs {
-        return Err(VerifyError::PublicInputError);
+        return Err(VerifyError::PublicInputError {
+            message: "Found public input greater than scalar field modulus".to_string(),
+        });
     }
 
     Ok((numerator_value, denominator_value))

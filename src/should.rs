@@ -161,6 +161,8 @@ fn verify_valid_proof(
 }
 
 mod reject {
+    use alloc::string::ToString;
+
     use super::*;
 
     #[rstest]
@@ -191,7 +193,9 @@ mod reject {
 
         assert_eq!(
             verify::<TestHooks>(&valid_vk, &valid_proof, &invalid_pub),
-            Err(VerifyError::PublicInputError)
+            Err(VerifyError::PublicInputError {
+                message: "Found public input greater than scalar field modulus".to_string()
+            })
         );
     }
 
@@ -204,7 +208,10 @@ mod reject {
 
         assert_eq!(
             verify::<TestHooks>(&valid_vk, &valid_proof, &invalid_pubs),
-            Err(VerifyError::PublicInputError)
+            Err(VerifyError::PublicInputError {
+                message: "Provided public inputs length does not match. Expected: 1; Got: 2"
+                    .to_string()
+            })
         );
     }
 }
