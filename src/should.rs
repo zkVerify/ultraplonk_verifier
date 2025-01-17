@@ -169,7 +169,7 @@ mod reject {
 
         assert_eq!(
             verify::<TestHooks>(&invalid_vk, &valid_proof, &valid_pub),
-            Err(VerifyError::InvalidVerificationKey)
+            Err(VerifyError::KeyError)
         );
     }
 
@@ -179,7 +179,7 @@ mod reject {
 
         assert_eq!(
             verify::<TestHooks>(&valid_vk, &invalid_proof, &valid_pub),
-            Err(VerifyError::InvalidProofData)
+            Err(VerifyError::InvalidProofError)
         );
     }
 

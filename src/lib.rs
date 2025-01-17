@@ -210,9 +210,8 @@ pub fn verify<H: CurveHooks>(
     raw_proof: &[u8],
     pubs: &Public,
 ) -> Result<(), VerifyError> {
-    let vk =
-        VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::InvalidVerificationKey)?;
-    let proof = Proof::<H>::try_from(raw_proof).map_err(|_| VerifyError::InvalidProofData)?;
+    let vk = VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::KeyError)?;
+    let proof = Proof::<H>::try_from(raw_proof).map_err(|_| VerifyError::InvalidProofError)?;
 
     check_public_input_number(&vk, pubs)?;
 

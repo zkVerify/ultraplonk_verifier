@@ -22,11 +22,11 @@ pub enum VerifyError {
     /// Provided data has not valid public inputs.
     PublicInputError,
     /// Provided data has not valid proof.
-    InvalidProofData,
+    InvalidProofError,
     /// Verify proof failed.
     VerificationError,
     /// Provided an invalid verification key.
-    InvalidVerificationKey,
+    KeyError,
 }
 
 #[derive(Debug, PartialEq)]
