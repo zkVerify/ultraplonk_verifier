@@ -216,7 +216,7 @@ mod reject {
     }
 
     #[rstest]
-    fn a_public_inputwith_invalid_length(valid_proof: [u8; PROOF_SIZE], valid_vk: [u8; VK_SIZE]) {
+    fn a_public_input_with_invalid_length(valid_proof: [u8; PROOF_SIZE], valid_vk: [u8; VK_SIZE]) {
         let invalid_pubs = [
             hex_literal::hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
             hex_literal::hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
