@@ -25,7 +25,7 @@ jobs:
         run: rm target/doc/.lock
 
       - name: Add redirect
-        run: echo '<meta http-equiv="refresh" content="0;url=zksync_era_verifier/index.html">' > target/doc/index.html
+        run: echo '<meta http-equiv="refresh" content="0;url=ultraplonk_verifier/index.html">' > target/doc/index.html
 
       - name: Upload documentation
         uses: actions/upload-pages-artifact@v3
