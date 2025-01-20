@@ -21,7 +21,6 @@ use alloc::{
     string::{String, ToString},
     vec::Vec,
 };
-use core::u32;
 
 use crate::{
     constants::{self, MAX_LOG2_CIRCUIT_SIZE},
@@ -212,65 +211,57 @@ impl<H: CurveHooks + Default> VerificationKey<H> {
     pub fn as_solidity_bytes(&self) -> Vec<u8> {
         let mut out = Vec::new();
         const CIRCUIT_TYPE: U256 = BigInt!("2");
-        out.extend(CIRCUIT_TYPE.into_bytes().into_iter());
-        out.extend(U256::from(self.circuit_size).into_bytes().into_iter());
-        out.extend(U256::from(self.num_public_inputs).into_bytes().into_iter());
-        out.extend(U256::from(self.id_1.x).into_bytes().into_iter());
-        out.extend(U256::from(self.id_1.y).into_bytes().into_iter());
-        out.extend(U256::from(self.id_2.x).into_bytes().into_iter());
-        out.extend(U256::from(self.id_2.y).into_bytes().into_iter());
-        out.extend(U256::from(self.id_3.x).into_bytes().into_iter());
-        out.extend(U256::from(self.id_3.y).into_bytes().into_iter());
-        out.extend(U256::from(self.id_4.x).into_bytes().into_iter());
-        out.extend(U256::from(self.id_4.y).into_bytes().into_iter());
-        out.extend(U256::from(self.q_1.x).into_bytes().into_iter());
-        out.extend(U256::from(self.q_1.y).into_bytes().into_iter());
-        out.extend(U256::from(self.q_2.x).into_bytes().into_iter());
-        out.extend(U256::from(self.q_2.y).into_bytes().into_iter());
-        out.extend(U256::from(self.q_3.x).into_bytes().into_iter());
-        out.extend(U256::from(self.q_3.y).into_bytes().into_iter());
-        out.extend(U256::from(self.q_4.x).into_bytes().into_iter());
-        out.extend(U256::from(self.q_4.y).into_bytes().into_iter());
-        out.extend(U256::from(self.q_arithmetic.x).into_bytes().into_iter());
-        out.extend(U256::from(self.q_arithmetic.y).into_bytes().into_iter());
-        out.extend(U256::from(self.q_aux.x).into_bytes().into_iter());
-        out.extend(U256::from(self.q_aux.y).into_bytes().into_iter());
-        out.extend(U256::from(self.q_c.x).into_bytes().into_iter());
-        out.extend(U256::from(self.q_c.y).into_bytes().into_iter());
-        out.extend(U256::from(self.q_elliptic.x).into_bytes().into_iter());
-        out.extend(U256::from(self.q_elliptic.y).into_bytes().into_iter());
-        out.extend(U256::from(self.q_m.x).into_bytes().into_iter());
-        out.extend(U256::from(self.q_m.y).into_bytes().into_iter());
-        out.extend(U256::from(self.q_sort.x).into_bytes().into_iter());
-        out.extend(U256::from(self.q_sort.y).into_bytes().into_iter());
-        out.extend(U256::from(self.sigma_1.x).into_bytes().into_iter());
-        out.extend(U256::from(self.sigma_1.y).into_bytes().into_iter());
-        out.extend(U256::from(self.sigma_2.x).into_bytes().into_iter());
-        out.extend(U256::from(self.sigma_2.y).into_bytes().into_iter());
-        out.extend(U256::from(self.sigma_3.x).into_bytes().into_iter());
-        out.extend(U256::from(self.sigma_3.y).into_bytes().into_iter());
-        out.extend(U256::from(self.sigma_4.x).into_bytes().into_iter());
-        out.extend(U256::from(self.sigma_4.y).into_bytes().into_iter());
-        out.extend(U256::from(self.table_1.x).into_bytes().into_iter());
-        out.extend(U256::from(self.table_1.y).into_bytes().into_iter());
-        out.extend(U256::from(self.table_2.x).into_bytes().into_iter());
-        out.extend(U256::from(self.table_2.y).into_bytes().into_iter());
-        out.extend(U256::from(self.table_3.x).into_bytes().into_iter());
-        out.extend(U256::from(self.table_3.y).into_bytes().into_iter());
-        out.extend(U256::from(self.table_4.x).into_bytes().into_iter());
-        out.extend(U256::from(self.table_4.y).into_bytes().into_iter());
-        out.extend(U256::from(self.table_type.x).into_bytes().into_iter());
-        out.extend(U256::from(self.table_type.y).into_bytes().into_iter());
-        out.extend(
-            U256::from(self.contains_recursive_proof as u32)
-                .into_bytes()
-                .into_iter(),
-        );
-        out.extend(
-            U256::from(self.recursive_proof_indices as u32)
-                .into_bytes()
-                .into_iter(),
-        );
+        out.extend(CIRCUIT_TYPE.into_bytes());
+        out.extend(U256::from(self.circuit_size).into_bytes());
+        out.extend(U256::from(self.num_public_inputs).into_bytes());
+        out.extend(U256::from(self.id_1.x).into_bytes());
+        out.extend(U256::from(self.id_1.y).into_bytes());
+        out.extend(U256::from(self.id_2.x).into_bytes());
+        out.extend(U256::from(self.id_2.y).into_bytes());
+        out.extend(U256::from(self.id_3.x).into_bytes());
+        out.extend(U256::from(self.id_3.y).into_bytes());
+        out.extend(U256::from(self.id_4.x).into_bytes());
+        out.extend(U256::from(self.id_4.y).into_bytes());
+        out.extend(U256::from(self.q_1.x).into_bytes());
+        out.extend(U256::from(self.q_1.y).into_bytes());
+        out.extend(U256::from(self.q_2.x).into_bytes());
+        out.extend(U256::from(self.q_2.y).into_bytes());
+        out.extend(U256::from(self.q_3.x).into_bytes());
+        out.extend(U256::from(self.q_3.y).into_bytes());
+        out.extend(U256::from(self.q_4.x).into_bytes());
+        out.extend(U256::from(self.q_4.y).into_bytes());
+        out.extend(U256::from(self.q_arithmetic.x).into_bytes());
+        out.extend(U256::from(self.q_arithmetic.y).into_bytes());
+        out.extend(U256::from(self.q_aux.x).into_bytes());
+        out.extend(U256::from(self.q_aux.y).into_bytes());
+        out.extend(U256::from(self.q_c.x).into_bytes());
+        out.extend(U256::from(self.q_c.y).into_bytes());
+        out.extend(U256::from(self.q_elliptic.x).into_bytes());
+        out.extend(U256::from(self.q_elliptic.y).into_bytes());
+        out.extend(U256::from(self.q_m.x).into_bytes());
+        out.extend(U256::from(self.q_m.y).into_bytes());
+        out.extend(U256::from(self.q_sort.x).into_bytes());
+        out.extend(U256::from(self.q_sort.y).into_bytes());
+        out.extend(U256::from(self.sigma_1.x).into_bytes());
+        out.extend(U256::from(self.sigma_1.y).into_bytes());
+        out.extend(U256::from(self.sigma_2.x).into_bytes());
+        out.extend(U256::from(self.sigma_2.y).into_bytes());
+        out.extend(U256::from(self.sigma_3.x).into_bytes());
+        out.extend(U256::from(self.sigma_3.y).into_bytes());
+        out.extend(U256::from(self.sigma_4.x).into_bytes());
+        out.extend(U256::from(self.sigma_4.y).into_bytes());
+        out.extend(U256::from(self.table_1.x).into_bytes());
+        out.extend(U256::from(self.table_1.y).into_bytes());
+        out.extend(U256::from(self.table_2.x).into_bytes());
+        out.extend(U256::from(self.table_2.y).into_bytes());
+        out.extend(U256::from(self.table_3.x).into_bytes());
+        out.extend(U256::from(self.table_3.y).into_bytes());
+        out.extend(U256::from(self.table_4.x).into_bytes());
+        out.extend(U256::from(self.table_4.y).into_bytes());
+        out.extend(U256::from(self.table_type.x).into_bytes());
+        out.extend(U256::from(self.table_type.y).into_bytes());
+        out.extend(U256::from(self.contains_recursive_proof as u32).into_bytes());
+        out.extend(U256::from(self.recursive_proof_indices).into_bytes());
         out
     }
 
@@ -416,15 +407,14 @@ impl<H: CurveHooks + Default> VerificationKey<H> {
                 field: CommitmentField::TABLE_TYPE.str(),
             }))?;
         pos += 2;
-        out.contains_recursive_proof = if get_bool(&bytes[indices(pos)])
-            .or(Err(VerificationKeyError::RecursionNotSupported))?
-            == false
-        {
-            false
-        } else {
-            Err(VerificationKeyError::RecursionNotSupported)?
-        };
+        let contains_recursive_proof =
+            get_bool(&bytes[indices(pos)]).or(Err(VerificationKeyError::RecursionNotSupported))?;
         pos += 1;
+        if contains_recursive_proof {
+            Err(VerificationKeyError::RecursionNotSupported)?
+        }
+        out.contains_recursive_proof = false;
+
         out.recursive_proof_indices =
             get_u32(&bytes[indices(pos)]).or(Err(VerificationKeyError::RecursionNotSupported))?;
         Ok(out)

@@ -230,16 +230,16 @@ fn verify_with_prepared_vk<H: CurveHooks>(
 ) -> Result<(), VerifyError> {
     // Generate Challenges
     let mut challenge = generate_initial_challenge(vk.circuit_size, vk.num_public_inputs);
-    challenge = generate_eta_challenge::<H>(&proof, public_inputs, &challenge);
+    challenge = generate_eta_challenge::<H>(proof, public_inputs, &challenge);
     let eta = challenge.into_fr();
-    challenge = generate_beta_challenge::<H>(&proof, &challenge);
+    challenge = generate_beta_challenge::<H>(proof, &challenge);
     let beta = challenge.into_fr();
     challenge = generate_gamma_challenge(&challenge);
     let gamma = challenge.into_fr();
-    challenge = generate_alpha_challenge::<H>(&proof, &challenge);
+    challenge = generate_alpha_challenge::<H>(proof, &challenge);
     let alpha = challenge.into_fr();
     let alpha_base = alpha;
-    challenge = generate_zeta_challenge::<H>(&proof, &challenge);
+    challenge = generate_zeta_challenge::<H>(proof, &challenge);
     let zeta = challenge.into_fr();
     let c_current = challenge;
     let challenges = Challenges::new(alpha, beta, gamma, zeta, eta, vk.circuit_size);
@@ -259,7 +259,7 @@ fn verify_with_prepared_vk<H: CurveHooks>(
     let [public_input_delta, _zero_poly, zero_poly_inverse, plookup_delta, l_start, l_end] =
         compute_lagrange_and_vanishing_poly::<H>(
             &challenges,
-            &vk,
+            vk,
             &delta_numerator,
             &delta_denominator,
             &plookup_delta_numerator,
@@ -270,7 +270,7 @@ fn verify_with_prepared_vk<H: CurveHooks>(
 
     // 1. Permutation Widget Evaluation
     let (permutation_identity, alpha_base) = compute_permutation_widget_evaluation::<H>(
-        &proof,
+        proof,
         &challenges,
         alpha_base,
         &l_start,
@@ -280,7 +280,7 @@ fn verify_with_prepared_vk<H: CurveHooks>(
 
     // 2. Plookup Widget Evaluation
     let (plookup_identity, alpha_base) = compute_plookup_widget_evaluation::<H>(
-        &proof,
+        proof,
         &challenges,
         alpha_base,
         &l_start,
@@ -290,19 +290,19 @@ fn verify_with_prepared_vk<H: CurveHooks>(
 
     // 3. Arithmetic Widget Evaluation
     let (arithmetic_identity, alpha_base) =
-        compute_arithmetic_widget_evaluation::<H>(&proof, &challenges, alpha_base);
+        compute_arithmetic_widget_evaluation::<H>(proof, &challenges, alpha_base);
 
     // 4. Genpermsort Widget Evaluation
     let (sort_identity, alpha_base) =
-        compute_genpermsort_widget_evaluation::<H>(&proof, &challenges, alpha_base);
+        compute_genpermsort_widget_evaluation::<H>(proof, &challenges, alpha_base);
 
     // 5. Elliptic Widget Evaluation
     let (elliptic_identity, alpha_base) =
-        compute_elliptic_widget_evaluation::<H>(&proof, &challenges, alpha_base);
+        compute_elliptic_widget_evaluation::<H>(proof, &challenges, alpha_base);
 
     // 6. Auxiliary Widget Evaluation
     let (aux_identity, _alpha_base) =
-        compute_auxiliary_widget_evaluation::<H>(&proof, &challenges, alpha_base);
+        compute_auxiliary_widget_evaluation::<H>(proof, &challenges, alpha_base);
 
     // Quotient Evaluation
     let quotient_eval = quotient_evaluation(
@@ -316,11 +316,11 @@ fn verify_with_prepared_vk<H: CurveHooks>(
     );
 
     // Generate Nu and Separator Challenges
-    let nu_challenges = NuChallenges::new(&proof, &c_current, &quotient_eval)
+    let nu_challenges = NuChallenges::new(proof, &c_current, &quotient_eval)
         .map_err(|_| VerifyError::OtherError)?;
 
     // Check pairing relation
-    if perform_final_checks::<H>(&proof, &vk, &challenges, &nu_challenges, &quotient_eval) {
+    if perform_final_checks::<H>(proof, vk, &challenges, &nu_challenges, &quotient_eval) {
         Ok(())
     } else {
         Err(VerifyError::VerificationError)
