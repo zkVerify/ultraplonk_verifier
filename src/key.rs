@@ -16,18 +16,21 @@
 
 #![allow(non_camel_case_types)]
 
-use crate::{
-    errors::GroupError,
-    utils::{read_fq_util, read_g1_util, IntoBytes},
-    Fq2, Fr, G1, G2, VK_SIZE,
-};
 use alloc::{
     format,
     string::{String, ToString},
     vec::Vec,
 };
+
+use crate::{
+    constants::{self, MAX_LOG2_CIRCUIT_SIZE},
+    errors::GroupError,
+    utils::{read_fq_util, read_g1_util, IntoBytes, IntoU256},
+    Fq2, Fr, G1, G2, U256, VK_SIZE,
+};
+use ark_bn254::Fq;
 use ark_bn254_ext::CurveHooks;
-use ark_ff::{FftField, Field};
+use ark_ff::BigInt;
 use snafu::Snafu;
 
 #[derive(Debug, PartialEq, Snafu)]
@@ -66,6 +69,9 @@ pub enum VerificationKeyError {
 
     #[snafu(display("Invalid circuit type, expected 2"))]
     InvalidCircuitType,
+
+    #[snafu(display("Invalid circuit size"))]
+    InvalidCircuitSize,
 
     #[snafu(display("Invalid commitment field: {:?}", value))]
     InvalidCommitmentField { value: String },
@@ -169,14 +175,11 @@ impl CommitmentField {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Default)]
 pub struct VerificationKey<H: CurveHooks> {
     pub circuit_type: u32,
     pub circuit_size: u32,
     pub num_public_inputs: u32,
-    pub work_root: Fr,
-    pub work_root_inverse: Fr,
-    pub domain_inverse: Fr,
     pub q_1: G1<H>,
     pub q_2: G1<H>,
     pub q_3: G1<H>,
@@ -204,6 +207,348 @@ pub struct VerificationKey<H: CurveHooks> {
     pub recursive_proof_indices: u32,
 }
 
+impl<H: CurveHooks + Default> VerificationKey<H> {
+    pub fn as_solidity_bytes(&self) -> Vec<u8> {
+        let mut out = Vec::new();
+        const CIRCUIT_TYPE: U256 = BigInt!("2");
+        out.extend(CIRCUIT_TYPE.into_bytes());
+        out.extend(U256::from(self.circuit_size).into_bytes());
+        out.extend(U256::from(self.num_public_inputs).into_bytes());
+        out.extend(U256::from(self.id_1.x).into_bytes());
+        out.extend(U256::from(self.id_1.y).into_bytes());
+        out.extend(U256::from(self.id_2.x).into_bytes());
+        out.extend(U256::from(self.id_2.y).into_bytes());
+        out.extend(U256::from(self.id_3.x).into_bytes());
+        out.extend(U256::from(self.id_3.y).into_bytes());
+        out.extend(U256::from(self.id_4.x).into_bytes());
+        out.extend(U256::from(self.id_4.y).into_bytes());
+        out.extend(U256::from(self.q_1.x).into_bytes());
+        out.extend(U256::from(self.q_1.y).into_bytes());
+        out.extend(U256::from(self.q_2.x).into_bytes());
+        out.extend(U256::from(self.q_2.y).into_bytes());
+        out.extend(U256::from(self.q_3.x).into_bytes());
+        out.extend(U256::from(self.q_3.y).into_bytes());
+        out.extend(U256::from(self.q_4.x).into_bytes());
+        out.extend(U256::from(self.q_4.y).into_bytes());
+        out.extend(U256::from(self.q_arithmetic.x).into_bytes());
+        out.extend(U256::from(self.q_arithmetic.y).into_bytes());
+        out.extend(U256::from(self.q_aux.x).into_bytes());
+        out.extend(U256::from(self.q_aux.y).into_bytes());
+        out.extend(U256::from(self.q_c.x).into_bytes());
+        out.extend(U256::from(self.q_c.y).into_bytes());
+        out.extend(U256::from(self.q_elliptic.x).into_bytes());
+        out.extend(U256::from(self.q_elliptic.y).into_bytes());
+        out.extend(U256::from(self.q_m.x).into_bytes());
+        out.extend(U256::from(self.q_m.y).into_bytes());
+        out.extend(U256::from(self.q_sort.x).into_bytes());
+        out.extend(U256::from(self.q_sort.y).into_bytes());
+        out.extend(U256::from(self.sigma_1.x).into_bytes());
+        out.extend(U256::from(self.sigma_1.y).into_bytes());
+        out.extend(U256::from(self.sigma_2.x).into_bytes());
+        out.extend(U256::from(self.sigma_2.y).into_bytes());
+        out.extend(U256::from(self.sigma_3.x).into_bytes());
+        out.extend(U256::from(self.sigma_3.y).into_bytes());
+        out.extend(U256::from(self.sigma_4.x).into_bytes());
+        out.extend(U256::from(self.sigma_4.y).into_bytes());
+        out.extend(U256::from(self.table_1.x).into_bytes());
+        out.extend(U256::from(self.table_1.y).into_bytes());
+        out.extend(U256::from(self.table_2.x).into_bytes());
+        out.extend(U256::from(self.table_2.y).into_bytes());
+        out.extend(U256::from(self.table_3.x).into_bytes());
+        out.extend(U256::from(self.table_3.y).into_bytes());
+        out.extend(U256::from(self.table_4.x).into_bytes());
+        out.extend(U256::from(self.table_4.y).into_bytes());
+        out.extend(U256::from(self.table_type.x).into_bytes());
+        out.extend(U256::from(self.table_type.y).into_bytes());
+        out.extend(U256::from(self.contains_recursive_proof as u32).into_bytes());
+        out.extend(U256::from(self.recursive_proof_indices).into_bytes());
+        out
+    }
+
+    pub fn try_from_solidity_bytes(bytes: &[u8]) -> Result<Self, VerificationKeyError> {
+        if bytes.len() != VK_SIZE {
+            Err(VerificationKeyError::BufferTooShort)?;
+        }
+        let mut out = Self::default();
+        let mut pos = 0;
+        let indices = |p: usize| p * 32..(p + 1) * 32;
+        let indices_point = |p: usize| p * 32..(p + 2) * 32;
+        out.circuit_type = if get_u32(&bytes[indices(pos)])
+            .or(Err(VerificationKeyError::InvalidCircuitType))?
+            == 2
+        {
+            Ok(2)
+        } else {
+            Err(VerificationKeyError::InvalidCircuitType)
+        }?;
+        pos += 1;
+        let circuit_size =
+            get_u32(&bytes[indices(pos)]).or(Err(VerificationKeyError::InvalidCircuitSize))?;
+        if !circuit_size.is_power_of_two() || circuit_size > 2u32.pow(MAX_LOG2_CIRCUIT_SIZE) {
+            Err(VerificationKeyError::InvalidCircuitSize)?;
+        }
+        out.circuit_size = circuit_size;
+        pos += 1;
+        out.num_public_inputs =
+            get_u32(&bytes[indices(pos)]).or(Err(VerificationKeyError::InvalidCircuitSize))?; // TODO
+        pos += 1;
+        out.id_1 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::ID_1.str(),
+            }))?;
+        pos += 2;
+        out.id_2 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::ID_2.str(),
+            }))?;
+        pos += 2;
+        out.id_3 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::ID_3.str(),
+            }))?;
+        pos += 2;
+        out.id_4 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::ID_4.str(),
+            }))?;
+        pos += 2;
+        out.q_1 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::Q_1.str(),
+            }))?;
+        pos += 2;
+        out.q_2 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::Q_2.str(),
+            }))?;
+        pos += 2;
+        out.q_3 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::Q_3.str(),
+            }))?;
+        pos += 2;
+        out.q_4 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::Q_4.str(),
+            }))?;
+        pos += 2;
+        out.q_arithmetic =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::Q_ARITHMETIC.str(),
+            }))?;
+        pos += 2;
+        out.q_aux =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::Q_AUX.str(),
+            }))?;
+        pos += 2;
+        out.q_c =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::Q_C.str(),
+            }))?;
+        pos += 2;
+        out.q_elliptic =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::Q_ELLIPTIC.str(),
+            }))?;
+        pos += 2;
+        out.q_m =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::Q_M.str(),
+            }))?;
+        pos += 2;
+        out.q_sort =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::Q_SORT.str(),
+            }))?;
+        pos += 2;
+        out.sigma_1 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::SIGMA_1.str(),
+            }))?;
+        pos += 2;
+        out.sigma_2 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::SIGMA_2.str(),
+            }))?;
+        pos += 2;
+        out.sigma_3 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::SIGMA_3.str(),
+            }))?;
+        pos += 2;
+        out.sigma_4 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::SIGMA_4.str(),
+            }))?;
+        pos += 2;
+        out.table_1 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::TABLE_1.str(),
+            }))?;
+        pos += 2;
+        out.table_2 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::TABLE_2.str(),
+            }))?;
+        pos += 2;
+        out.table_3 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::TABLE_3.str(),
+            }))?;
+        pos += 2;
+        out.table_4 =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::TABLE_4.str(),
+            }))?;
+        pos += 2;
+        out.table_type =
+            get_g1(&bytes[indices_point(pos)]).or(Err(VerificationKeyError::PointNotOnCurve {
+                field: CommitmentField::TABLE_TYPE.str(),
+            }))?;
+        pos += 2;
+        let contains_recursive_proof =
+            get_bool(&bytes[indices(pos)]).or(Err(VerificationKeyError::RecursionNotSupported))?;
+        pos += 1;
+        if contains_recursive_proof {
+            Err(VerificationKeyError::RecursionNotSupported)?
+        }
+        out.contains_recursive_proof = false;
+
+        out.recursive_proof_indices =
+            get_u32(&bytes[indices(pos)]).or(Err(VerificationKeyError::RecursionNotSupported))?;
+        Ok(out)
+    }
+}
+
+fn get_u256(bytes: &[u8]) -> Result<U256, ()> {
+    <&[u8; 32]>::try_from(bytes)
+        .map_err(|_| ())
+        .map(IntoU256::into_u256)
+}
+
+fn get_u32(bytes: &[u8]) -> Result<u32, ()> {
+    let out = get_u256(bytes)?;
+    if out < U256::from(u32::MAX) {
+        let mut data = [0u8; 4];
+        data.copy_from_slice(&bytes[28..32]);
+        Ok(u32::from_be_bytes(data))
+    } else {
+        Err(())
+    }
+}
+
+fn get_bool(bytes: &[u8]) -> Result<bool, ()> {
+    let out = get_u256(bytes)?;
+    if out == U256::from(1u32) {
+        Ok(true)
+    } else if out == U256::from(0u32) {
+        Ok(false)
+    } else {
+        Err(())
+    }
+}
+
+fn get_g1<H: CurveHooks>(data: &[u8]) -> Result<G1<H>, ()> {
+    if data.len() != 64 {
+        return Err(());
+    }
+    use ark_ff::PrimeField;
+
+    let x = Fq::from_bigint(get_u256(&data[0..32])?).ok_or(())?;
+    let y = Fq::from_bigint(get_u256(&data[32..64])?).ok_or(())?;
+
+    let point = G1::new_unchecked(x, y);
+
+    // Validate point
+    if !point.is_on_curve() {
+        return Err(());
+    }
+    if !point.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(());
+    }
+
+    Ok(point)
+}
+
+impl<H: CurveHooks> From<&VerificationKey<H>> for PreparedVerificationKey<H> {
+    fn from(vk: &VerificationKey<H>) -> Self {
+        let log2_circuit_size = ark_std::log2(vk.circuit_size as usize);
+        let work_root = constants::root_of_unity(log2_circuit_size).unwrap();
+        let work_root_inverse = constants::inverse_root_of_unity(log2_circuit_size).unwrap();
+        let domain_inverse = constants::domain_inverse(log2_circuit_size).unwrap();
+        PreparedVerificationKey {
+            circuit_type: vk.circuit_type,
+            circuit_size: vk.circuit_size,
+            num_public_inputs: vk.num_public_inputs,
+            q_1: vk.q_1,
+            q_2: vk.q_2,
+            q_3: vk.q_3,
+            q_4: vk.q_4,
+            q_m: vk.q_m,
+            q_c: vk.q_c,
+            q_arithmetic: vk.q_arithmetic,
+            q_aux: vk.q_aux,
+            q_elliptic: vk.q_elliptic,
+            q_sort: vk.q_sort,
+            sigma_1: vk.sigma_1,
+            sigma_2: vk.sigma_2,
+            sigma_3: vk.sigma_3,
+            sigma_4: vk.sigma_4,
+            table_1: vk.table_1,
+            table_2: vk.table_2,
+            table_3: vk.table_3,
+            table_4: vk.table_4,
+            table_type: vk.table_type,
+            id_1: vk.id_1,
+            id_2: vk.id_2,
+            id_3: vk.id_3,
+            id_4: vk.id_4,
+            contains_recursive_proof: vk.contains_recursive_proof,
+            recursive_proof_indices: vk.recursive_proof_indices,
+            work_root,
+            work_root_inverse,
+            domain_inverse,
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub struct PreparedVerificationKey<H: CurveHooks> {
+    pub circuit_type: u32,
+    pub circuit_size: u32,
+    pub num_public_inputs: u32,
+    pub q_1: G1<H>,
+    pub q_2: G1<H>,
+    pub q_3: G1<H>,
+    pub q_4: G1<H>,
+    pub q_m: G1<H>,
+    pub q_c: G1<H>,
+    pub q_arithmetic: G1<H>,
+    pub q_aux: G1<H>,
+    pub q_elliptic: G1<H>,
+    pub q_sort: G1<H>,
+    pub sigma_1: G1<H>,
+    pub sigma_2: G1<H>,
+    pub sigma_3: G1<H>,
+    pub sigma_4: G1<H>,
+    pub table_1: G1<H>,
+    pub table_2: G1<H>,
+    pub table_3: G1<H>,
+    pub table_4: G1<H>,
+    pub table_type: G1<H>,
+    pub id_1: G1<H>,
+    pub id_2: G1<H>,
+    pub id_3: G1<H>,
+    pub id_4: G1<H>,
+    pub contains_recursive_proof: bool,
+    pub recursive_proof_indices: u32,
+    pub work_root: Fr,
+    pub work_root_inverse: Fr,
+    pub domain_inverse: Fr,
+}
+
+#[allow(unused)]
 impl<H: CurveHooks> VerificationKey<H> {
     pub fn as_bytes(&self) -> Vec<u8> {
         let mut data = Vec::new();
@@ -324,31 +669,10 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
 
         let recursive_proof_indices = 0u32;
 
-        // NOTE: The following three fields can actually be computed just from the circuit_size (and r)
-        // Hence, one optimization could be to create a lookup table for each value of 2^i, i = 0, 1, ...
-        // This should prevent having to do inversions everytime we call verify().
-        let domain_inverse = Fr::inverse(&Fr::from(circuit_size)).ok_or(
-            VerificationKeyError::NonInvertibleElement {
-                value: circuit_size.to_string(),
-            },
-        )?;
-        let work_root = Fr::get_root_of_unity(circuit_size.into()).ok_or(
-            VerificationKeyError::NoRootsOfUnity {
-                value: circuit_size.to_string(),
-            },
-        )?;
-        let work_root_inverse =
-            Fr::inverse(&work_root).ok_or(VerificationKeyError::NonInvertibleElement {
-                value: work_root.to_string(),
-            })?;
-
         Ok(VerificationKey::<H> {
             circuit_type,
             circuit_size,
             num_public_inputs,
-            work_root,
-            work_root_inverse,
-            domain_inverse,
             q_1,
             q_2,
             q_3,
@@ -519,64 +843,67 @@ mod should {
     fn valid_vk() -> [u8; VK_SIZE] {
         hex_literal::hex!(
             "
-        000000020000001000000001000000170000000449445f31068ae63477ca649f
-        ffc34e466c212c208b89ff7dfebff7831183169ea0cfd64d0d44dc459b23e94c
-        e13c419e7feeb1d4bb61991ce667557d0ecc1ee6c29b3c3b0000000449445f32
-        093cf3ec6e1328ec2e9963bae3f0769bd8eb45e32cb91e2435d33daf3b336ea9
-        29432aa4a2a667ca8a6781517f689f573e78164764701f7190e07eeb282d7752
-        0000000449445f33211045f9f4618ac7e73d1ba72682487e558f73d6737ff364
-        5a9824352fb90e51012d9c85c11bcc8b2407f4764c4209c06e9027d21764554f
-        5a20e9361d4d94ba0000000449445f342eea648c8732596b1314fe2a4d2f0536
-        3f0c994e91cecad25835338edee2294f0ab49886c2b94bd0bd3f6ed1dbbe2cb2
-        671d2ae51d31c1210433c3972bb6457800000003515f311a8732b002f5686833
-        04140deecc1ca5ce2553c9988950ea13c198f1afe44e132c44ea8c14491b4acc
-        57cc74ead43131d09e58937ae057f69f29b4af8ecc344100000003515f321eeb
-        be1207643a8bd1669b999e82265d340a5ecb1a33c0b7055734ef91200c972f08
-        a6a07ed616c588bcf4e3555c006b27d5d1ffba12754d0718481e1a9a419a0000
-        0003515f332a7e71e447b5645910a429e7f48f1a5deba7f7d446b95a5edd242b
-        55f67993d32b1ea7f7453a8c80a89a675245da0c33db05ba8e95ecea432ab85f
-        6b2d6a1e8600000003515f3402d6fd9e84dbe74b7531e1801405a1c292117b1a
-        17fefe9de0bfd9edf1a84bf9293c6ab3c06a0669af13393a82c60a459a3b2a0b
-        768da45ac7af7f2aec40fc420000000c515f41524954484d4554494318c3e78f
-        81e83b52719158e4ac4c2f4b6c55389300451eb2a2deddf244129e7a0002e9c9
-        02fe5cd49b64563cadf3bb8d7beb75f905a5894e18d27c42c62fd79700000005
-        515f415558155a0f51fec78c33ffceb7364d69d7ac27e570ae50bc180509764e
-        b3fef948151c1c4720bed44a591d97cbc72b6e44b644999713a8d3c66e9054aa
-        5726324c7600000003515f43117d457bfb28869ab380fd6e83133eeb5b6ab48e
-        5df1ae9bc204b608170066552a958a537a99428a1019fd2c8d6b97c48f3e74ad
-        77f0e2c63c9dfb6dccf9a29c0000000a515f454c4c49505449430ad34b5e8db7
-        2a5acf4427546c7294be6ed4f4d252a79059e505f9abc1bdf3ed1e5b26790a26
-        eb340217dd9ad28dbf90a049f42a3852acd45e6f521f24b4900e00000003515f
-        4d0efe5ad29f99fce939416b6638dff26c845044cca9a2d9dbf94039a11d999a
-        aa0a44bf49517a4b66ae6b51eee6ac68587f768022c11ac8e37cd9dce243d01e
-        f200000006515f534f52542cbce7beee3076b78dace04943d69d0d9e28aa6d00
-        e046852781a5f20816645c2bc27ec2e1612ea284b08bcc55b6f2fd915d11bfed
-        bdc0e59de09e5b28952080000000075349474d415f31210fa88bc935d90241f7
-        33cc4f011893a7d349075a0de838001178895da2aa391d270bb763cb26b2438b
-        0760dfc7fb68fc98f87155867a2cf5c4b4ba06f637a6000000075349474d415f
-        32163a9c8b67447afccc64e9ccba9d9e826ba5b1d1ddd8d6bb960f01cd1321a1
-        6919256311d43dbc795f746c63b209667653a773088aba5c6b1337f435188d72
-        c4000000075349474d415f331aa81f5a2a21e5f2ce127892122ad0d3c35ac30e
-        8556f343a85b66bb0207b0552402d1ec00759182e950c3193c439370013802e6
-        819544320a08b8682727f6c6000000075349474d415f342e6367e7e914347a3b
-        b11215add814670b848a66aa5c015faedb4f2cef37454f17609c6252f0214568
-        96ab4c02adc333912c2f58020c8e55fb2e52096185a0bf000000075441424c45
-        5f3102c397073c8abce6d4140c9b961209dd783bff1a1cfc999bb29859cfb16c
-        46fc2b7bba2d1efffce0d033f596b4d030750599be670db593af86e1923fe8a1
-        bb18000000075441424c455f322c71c58b66498f903b3bbbda3d05ce8ffb571a
-        4b3cf83533f3f71b99a04f6e6b039dce37f94d1bbd97ccea32a224fe2afaefbc
-        bd080c84dcea90b54f4e0a858f000000075441424c455f3327dc44977efe6b37
-        46a290706f4f7275783c73cfe56847d848fd93b63bf320830a5366266dd7b71a
-        10b356030226a2de0cbf2edc8f085b16d73652b15eced8f5000000075441424c
-        455f34136097d79e1b0ae373255e8760c49900a7588ec4d6809c90bb451005a3
-        de307713dd7515ccac4095302d204f06f0bff2595d77bdf72e4acdb0b0b43969
-        860d980000000a5441424c455f5459504516ff3501369121d410b445929239ba
-        057fe211dad1b706e49a3b55920fac20ec1e190987ebd9cf480f608b82134a00
-        eb8007673c1ed10b834a695adf0068522a000000000000000000000000000000
-        0000000000000000000000000000000000000000000000000000000000000000
-        00000000000000000000000000000000000000
-        "
+            0000000000000000000000000000000000000000000000000000000000000002
+            0000000000000000000000000000000000000000000000000000000000000010
+            0000000000000000000000000000000000000000000000000000000000000001
+            068ae63477ca649fffc34e466c212c208b89ff7dfebff7831183169ea0cfd64d
+            0d44dc459b23e94ce13c419e7feeb1d4bb61991ce667557d0ecc1ee6c29b3c3b
+            093cf3ec6e1328ec2e9963bae3f0769bd8eb45e32cb91e2435d33daf3b336ea9
+            29432aa4a2a667ca8a6781517f689f573e78164764701f7190e07eeb282d7752
+            211045f9f4618ac7e73d1ba72682487e558f73d6737ff3645a9824352fb90e51
+            012d9c85c11bcc8b2407f4764c4209c06e9027d21764554f5a20e9361d4d94ba
+            2eea648c8732596b1314fe2a4d2f05363f0c994e91cecad25835338edee2294f
+            0ab49886c2b94bd0bd3f6ed1dbbe2cb2671d2ae51d31c1210433c3972bb64578
+            1a8732b002f568683304140deecc1ca5ce2553c9988950ea13c198f1afe44e13
+            2c44ea8c14491b4acc57cc74ead43131d09e58937ae057f69f29b4af8ecc3441
+            1eebbe1207643a8bd1669b999e82265d340a5ecb1a33c0b7055734ef91200c97
+            2f08a6a07ed616c588bcf4e3555c006b27d5d1ffba12754d0718481e1a9a419a
+            2a7e71e447b5645910a429e7f48f1a5deba7f7d446b95a5edd242b55f67993d3
+            2b1ea7f7453a8c80a89a675245da0c33db05ba8e95ecea432ab85f6b2d6a1e86
+            02d6fd9e84dbe74b7531e1801405a1c292117b1a17fefe9de0bfd9edf1a84bf9
+            293c6ab3c06a0669af13393a82c60a459a3b2a0b768da45ac7af7f2aec40fc42
+            18c3e78f81e83b52719158e4ac4c2f4b6c55389300451eb2a2deddf244129e7a
+            0002e9c902fe5cd49b64563cadf3bb8d7beb75f905a5894e18d27c42c62fd797
+            155a0f51fec78c33ffceb7364d69d7ac27e570ae50bc180509764eb3fef94815
+            1c1c4720bed44a591d97cbc72b6e44b644999713a8d3c66e9054aa5726324c76
+            117d457bfb28869ab380fd6e83133eeb5b6ab48e5df1ae9bc204b60817006655
+            2a958a537a99428a1019fd2c8d6b97c48f3e74ad77f0e2c63c9dfb6dccf9a29c
+            0ad34b5e8db72a5acf4427546c7294be6ed4f4d252a79059e505f9abc1bdf3ed
+            1e5b26790a26eb340217dd9ad28dbf90a049f42a3852acd45e6f521f24b4900e
+            0efe5ad29f99fce939416b6638dff26c845044cca9a2d9dbf94039a11d999aaa
+            0a44bf49517a4b66ae6b51eee6ac68587f768022c11ac8e37cd9dce243d01ef2
+            2cbce7beee3076b78dace04943d69d0d9e28aa6d00e046852781a5f20816645c
+            2bc27ec2e1612ea284b08bcc55b6f2fd915d11bfedbdc0e59de09e5b28952080
+            210fa88bc935d90241f733cc4f011893a7d349075a0de838001178895da2aa39
+            1d270bb763cb26b2438b0760dfc7fb68fc98f87155867a2cf5c4b4ba06f637a6
+            163a9c8b67447afccc64e9ccba9d9e826ba5b1d1ddd8d6bb960f01cd1321a169
+            19256311d43dbc795f746c63b209667653a773088aba5c6b1337f435188d72c4
+            1aa81f5a2a21e5f2ce127892122ad0d3c35ac30e8556f343a85b66bb0207b055
+            2402d1ec00759182e950c3193c439370013802e6819544320a08b8682727f6c6
+            2e6367e7e914347a3bb11215add814670b848a66aa5c015faedb4f2cef37454f
+            17609c6252f021456896ab4c02adc333912c2f58020c8e55fb2e52096185a0bf
+            02c397073c8abce6d4140c9b961209dd783bff1a1cfc999bb29859cfb16c46fc
+            2b7bba2d1efffce0d033f596b4d030750599be670db593af86e1923fe8a1bb18
+            2c71c58b66498f903b3bbbda3d05ce8ffb571a4b3cf83533f3f71b99a04f6e6b
+            039dce37f94d1bbd97ccea32a224fe2afaefbcbd080c84dcea90b54f4e0a858f
+            27dc44977efe6b3746a290706f4f7275783c73cfe56847d848fd93b63bf32083
+            0a5366266dd7b71a10b356030226a2de0cbf2edc8f085b16d73652b15eced8f5
+            136097d79e1b0ae373255e8760c49900a7588ec4d6809c90bb451005a3de3077
+            13dd7515ccac4095302d204f06f0bff2595d77bdf72e4acdb0b0b43969860d98
+            16ff3501369121d410b445929239ba057fe211dad1b706e49a3b55920fac20ec
+            1e190987ebd9cf480f608b82134a00eb8007673c1ed10b834a695adf0068522a
+            0000000000000000000000000000000000000000000000000000000000000000
+            0000000000000000000000000000000000000000000000000000000000000000
+            "
         )
+    }
+
+    #[rstest]
+    fn deserialize_serialize_solidity_vk(valid_vk: [u8; VK_SIZE]) {
+        let deserialized_vk =
+            VerificationKey::<TestHooks>::try_from_solidity_bytes(&valid_vk).unwrap();
+        let vk = deserialized_vk.as_solidity_bytes();
+        pretty_assertions::assert_eq!(valid_vk, vk.as_slice())
     }
 
     mod reject {
@@ -589,20 +916,8 @@ mod should {
             invalid_vk[3] = 3;
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<TestHooks>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCircuitType
-            );
-        }
-
-        #[rstest]
-        fn a_vk_with_invalid_commitments_number(valid_vk: [u8; VK_SIZE]) {
-            let mut invalid_vk = [0u8; VK_SIZE];
-            invalid_vk.copy_from_slice(&valid_vk);
-            invalid_vk[15] = 0;
-
-            assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
-                VerificationKeyError::InvalidCommitmentsNumber
             );
         }
 
@@ -610,25 +925,11 @@ mod should {
         fn a_vk_containing_a_recursive_proof(valid_vk: [u8; VK_SIZE]) {
             let mut invalid_vk = [0u8; VK_SIZE];
             invalid_vk.copy_from_slice(&valid_vk);
-            invalid_vk[1714] = 1;
+            invalid_vk[VK_SIZE - 33] = 1;
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<TestHooks>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::RecursionNotSupported
-            );
-        }
-
-        #[rstest]
-        fn a_vk_with_an_invalid_field(valid_vk: [u8; VK_SIZE]) {
-            let mut invalid_vk = [0u8; VK_SIZE];
-            invalid_vk.copy_from_slice(&valid_vk);
-            invalid_vk[20..=23].fill(0);
-
-            assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
-                VerificationKeyError::InvalidCommitmentField {
-                    value: "\0\0\0\0".to_string()
-                }
             );
         }
 
@@ -636,50 +937,11 @@ mod should {
         fn a_vk_with_a_point_not_on_curve(valid_vk: [u8; VK_SIZE]) {
             let mut invalid_vk = [0u8; VK_SIZE];
             invalid_vk.copy_from_slice(&valid_vk);
-            invalid_vk[24..88].fill(0);
+            invalid_vk[32 * 4..32 * 5].fill(0);
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<TestHooks>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::PointNotOnCurve { field: "ID_1" }
-            );
-        }
-
-        #[rstest]
-        fn a_vk_with_an_invalid_commitment_key(valid_vk: [u8; VK_SIZE]) {
-            let mut invalid_vk = [0u8; VK_SIZE];
-            invalid_vk.copy_from_slice(&valid_vk);
-            invalid_vk[19] = 100;
-
-            assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
-                VerificationKeyError::InvalidCommitmentKey { offset: 20 }
-            );
-        }
-
-        #[rstest]
-        fn a_vk_with_an_invalid_commitment_key_v2(valid_vk: [u8; VK_SIZE]) {
-            let mut invalid_vk = [0u8; VK_SIZE];
-            invalid_vk.copy_from_slice(&valid_vk);
-            invalid_vk[20..=23].fill(255);
-
-            assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
-                VerificationKeyError::InvalidCommitmentKey { offset: 20 }
-            );
-        }
-
-        #[rstest]
-        fn a_vk_with_unexpected_commitment_key(valid_vk: [u8; VK_SIZE]) {
-            let mut invalid_vk = [0u8; VK_SIZE];
-            invalid_vk.copy_from_slice(&valid_vk);
-            invalid_vk[23] = 50;
-
-            assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
-                VerificationKeyError::UnexpectedCommitmentKey {
-                    key: "ID_2".to_string(),
-                    expected: "ID_1".to_string()
-                }
             );
         }
 
@@ -688,7 +950,7 @@ mod should {
             let invalid_vk = [0u8; 10];
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<TestHooks>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::BufferTooShort
             );
         }

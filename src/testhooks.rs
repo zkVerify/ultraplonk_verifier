@@ -18,7 +18,7 @@ use crate::CurveHooks;
 use ark_bn254::{g1::Config as ArkG1Config, g2::Config as ArkG2Config, Bn254 as ArkBn254};
 use ark_models_ext::{pairing::Pairing, CurveConfig};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct TestHooks;
 
 type Bn254 = ark_bn254_ext::Bn254<TestHooks>;

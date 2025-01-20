@@ -1,5 +1,5 @@
 [package]
-version = "0.1.0"
+version = "0.2.0"
 name = "ultraplonk-no-std"
 authors = ["Horizen Labs <admin@horizenlabs.io>"]
 repository = "https://github.com/zkVerify/ultraplonk_verifier"
@@ -17,6 +17,7 @@ test-utils = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.gi
 ark-bn254 = { version = "0.4.0", default-features = false }
 ark-ec = { version = "0.4.0", default-features = false }
 ark-ff = { version = "0.4.0", default-features = false }
+ark-std = { version = "0.4.0", default-features = false }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"], optional = true }
 hex-literal = { version = "0.4.1", default-features = false }
 sha3 = { version = "0.10.8", default-features = false }
@@ -33,6 +34,7 @@ serde_json = { version = "1.0.114", optional = true }
 thiserror = { version = "1.0.61", default-features = false, optional = true }
 
 [dev-dependencies]
+pretty_assertions = "1.4.1"
 rstest = { version = "0.19.0", default-features = false }
 
 [[bin]]
