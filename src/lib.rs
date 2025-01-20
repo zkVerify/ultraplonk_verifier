@@ -16,11 +16,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod curvehooks_impl;
 pub mod errors;
 pub mod key;
 pub mod proof;
 mod srs;
-pub mod testhooks;
 mod types;
 mod utils;
 
@@ -115,15 +115,16 @@ pub struct NuChallenges {
 }
 
 impl NuChallenges {
-    fn new<H: CurveHooks>(
+    fn new(c_v: [Fr; 30], c_u: Fr) -> Self {
+        NuChallenges { c_v, c_u }
+    }
+
+    fn challenge<H: CurveHooks>(
         proof: &Proof<H>,
         c_current: &[u8],
         quotient_eval: &Fr,
-    ) -> Result<Self, ()> {
-        if c_current.len() != 32 {
-            return Err(());
-        }
-        let challenge: [u8; 32] = Keccak256::new()
+    ) -> [u8; 32] {
+        Keccak256::new()
             .chain_update(c_current)
             .chain_update(quotient_eval.into_bytes())
             .chain_update(proof.w1_eval.into_bytes())
@@ -168,9 +169,11 @@ impl NuChallenges {
             .chain_update(proof.table3_omega_eval.into_bytes())
             .chain_update(proof.table4_omega_eval.into_bytes())
             .finalize()
-            .into();
+            .into()
+    }
 
-        let c_v: [Fr; 30] = core::array::from_fn(|i| {
+    fn c_v(&challenge: &[u8; 32]) -> [Fr; 30] {
+        core::array::from_fn(|i| {
             if i == 0 {
                 challenge.into_fr()
             } else {
@@ -181,19 +184,36 @@ impl NuChallenges {
                     .into();
                 hash.into_fr()
             }
-        });
+        })
+    }
 
+    fn c_u<H: CurveHooks>(challenge: &[u8; 32], pi_z: &G1<H>, pi_z_omega: &G1<H>) -> Fr {
         let hash: [u8; 32] = Keccak256::new()
             .chain_update(challenge)
-            .chain_update(proof.pi_z.y.into_bytes())
-            .chain_update(proof.pi_z.x.into_bytes())
-            .chain_update(proof.pi_z_omega.y.into_bytes())
-            .chain_update(proof.pi_z_omega.x.into_bytes())
+            .chain_update(pi_z.y.into_bytes())
+            .chain_update(pi_z.x.into_bytes())
+            .chain_update(pi_z_omega.y.into_bytes())
+            .chain_update(pi_z_omega.x.into_bytes())
             .finalize()
             .into();
-        let c_u = hash.into_fr();
 
-        Ok(Self { c_v, c_u })
+        hash.into_fr()
+    }
+
+    fn compute_challenges<H: CurveHooks>(
+        proof: &Proof<H>,
+        c_current: &[u8],
+        quotient_eval: &Fr,
+    ) -> Result<Self, ()> {
+        if c_current.len() != 32 {
+            return Err(());
+        }
+
+        let challenge = Self::challenge(proof, c_current, quotient_eval);
+        let c_v = Self::c_v(&challenge);
+        let c_u = Self::c_u(&challenge, &proof.pi_z, &proof.pi_z_omega);
+
+        Ok(Self::new(c_v, c_u))
     }
 }
 
@@ -222,7 +242,7 @@ pub fn verify<H: CurveHooks>(
         .map(|pi_bytes| pi_bytes.into_u256())
         .collect::<Vec<U256>>();
 
-    // Generate Challenges
+    // Generate Challenges:
     let mut challenge = generate_initial_challenge(vk.circuit_size, vk.num_public_inputs);
     challenge = generate_eta_challenge::<H>(&proof, public_inputs, &challenge);
     let eta = challenge.into_fr();
@@ -240,16 +260,15 @@ pub fn verify<H: CurveHooks>(
 
     // Evaluate Field Operations:
 
-    // Compute Public Input Delta
+    // Public Input Delta
     let (delta_numerator, delta_denominator) =
         compute_public_input_delta(public_inputs, &vk.work_root, &challenges)?;
 
-    // Compute Plookup delta factor [γ(1 + β)]^{n-k},
-    // where: k = num roots cut out of Z_H = 4
+    // Plookup delta factor
     let (plookup_delta_numerator, plookup_delta_denominator) =
         compute_plookup_delta_factor(vk.circuit_size, &challenges);
 
-    // Compute lagrange poly and vanishing poly fractions
+    // Lagrange poly and vanishing poly fractions
     let [public_input_delta, _zero_poly, zero_poly_inverse, plookup_delta, l_start, l_end] =
         compute_lagrange_and_vanishing_poly::<H>(
             &challenges,
@@ -310,7 +329,7 @@ pub fn verify<H: CurveHooks>(
     );
 
     // Generate Nu and Separator Challenges
-    let nu_challenges = NuChallenges::new(&proof, &c_current, &quotient_eval)
+    let nu_challenges = NuChallenges::compute_challenges(&proof, &c_current, &quotient_eval)
         .map_err(|_| VerifyError::OtherError)?;
 
     // Check pairing relation
@@ -418,8 +437,8 @@ fn generate_zeta_challenge<H: CurveHooks>(proof: &Proof<H>, challenge: &[u8; 32]
         .into()
 }
 
-// Compute Public Input Delta:
-// ΔPI = ∏ᵢ∈ℓ(wᵢ + β σ(i) + γ) / ∏ᵢ∈ℓ(wᵢ + β σ'(i) + γ)
+/// Compute Public Input Delta:
+/// ΔPI = ∏ᵢ∈ℓ(wᵢ + β σ(i) + γ) / ∏ᵢ∈ℓ(wᵢ + β σ'(i) + γ)
 fn compute_public_input_delta(
     public_inputs: &[U256],
     work_root: &Fr,
@@ -454,6 +473,8 @@ fn compute_public_input_delta(
     Ok((numerator_value, denominator_value))
 }
 
+/// Compute Plookup delta factor [γ(1 + β)]^{n-k},
+/// where: k = num roots cut out of Z_H = 4
 fn compute_plookup_delta_factor(circuit_size: u32, challenges: &Challenges) -> (Fr, Fr) {
     let delta_base = challenges.gamma * (challenges.beta + Fr::ONE);
     let mut delta_numerator = delta_base;

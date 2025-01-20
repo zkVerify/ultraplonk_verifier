@@ -15,8 +15,8 @@
 // limitations under the License.
 
 use crate::*;
+use curvehooks_impl::CurveHooksImpl;
 use rstest::{fixture, rstest};
-use testhooks::TestHooks;
 
 #[fixture]
 fn valid_proof() -> [u8; PROOF_SIZE] {
@@ -171,7 +171,7 @@ fn verify_valid_proof(
     valid_pub: [PublicInput; 1],
 ) {
     assert_eq!(
-        verify::<TestHooks>(&valid_vk, &valid_proof, &valid_pub).unwrap(),
+        verify::<CurveHooksImpl>(&valid_vk, &valid_proof, &valid_pub).unwrap(),
         ()
     );
 }
@@ -186,7 +186,7 @@ mod reject {
         let invalid_vk = [0u8; VK_SIZE];
 
         assert_eq!(
-            verify::<TestHooks>(&invalid_vk, &valid_proof, &valid_pub),
+            verify::<CurveHooksImpl>(&invalid_vk, &valid_proof, &valid_pub),
             Err(VerifyError::KeyError)
         );
     }
@@ -196,7 +196,7 @@ mod reject {
         let invalid_proof = [0u8; PROOF_SIZE];
 
         assert_eq!(
-            verify::<TestHooks>(&valid_vk, &invalid_proof, &valid_pub),
+            verify::<CurveHooksImpl>(&valid_vk, &invalid_proof, &valid_pub),
             Err(VerifyError::InvalidProofError)
         );
     }
@@ -208,7 +208,7 @@ mod reject {
         )];
 
         assert_eq!(
-            verify::<TestHooks>(&valid_vk, &valid_proof, &invalid_pub),
+            verify::<CurveHooksImpl>(&valid_vk, &valid_proof, &invalid_pub),
             Err(VerifyError::PublicInputError {
                 message: "Found public input greater than scalar field modulus".to_string()
             })
@@ -223,7 +223,7 @@ mod reject {
         ];
 
         assert_eq!(
-            verify::<TestHooks>(&valid_vk, &valid_proof, &invalid_pubs),
+            verify::<CurveHooksImpl>(&valid_vk, &valid_proof, &invalid_pubs),
             Err(VerifyError::PublicInputError {
                 message: "Provided public inputs length does not match. Expected: 1; Got: 2"
                     .to_string()

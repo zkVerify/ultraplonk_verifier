@@ -45,19 +45,12 @@ pub enum VerificationKeyError {
         actual_length: usize,
     },
 
-    // #[snafu(display("Invalid field '{}': {:?}", field, error))]
-    // InvalidField {
-    //     field: &'static str,
-    //     error: FieldError,
-    // },
     #[snafu(display("Point for field '{}' is not on curve", field))]
     PointNotOnCurve { field: &'static str },
 
     #[snafu(display("Point for field '{}' is not in the correct subgroup", field))]
     PointNotInCorrectSubgroup { field: &'static str },
 
-    // #[snafu(display("Invalid value '{}'", value))]
-    // InvalidValue { value: String },
     #[snafu(display("Non-invertible element {}", value))]
     NonInvertibleElement { value: String },
 
@@ -305,13 +298,6 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
             VerificationKeyError::RecursionNotSupported,
         )?;
 
-        // let recursive_proof_indices = read_u32_and_check(
-        //     raw_vk,
-        //     &mut offset,
-        //     0,
-        //     VerificationKeyError::RecursionNotSupported,
-        // )?;
-
         // this is merely a workaround
         while offset < VK_SIZE {
             let _ = read_bool_and_check(
@@ -449,7 +435,7 @@ fn read_commitment<H: CurveHooks>(
     })
 }
 
-pub(crate) fn read_g1<H: CurveHooks>(
+fn read_g1<H: CurveHooks>(
     field: &CommitmentField,
     data: &[u8],
 ) -> Result<G1<H>, VerificationKeyError> {
@@ -468,7 +454,7 @@ pub(crate) fn read_g1<H: CurveHooks>(
     })
 }
 
-fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut Vec<u8>) {
+fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut [u8]) {
     // Helper to convert a field to bytes
     let field_to_bytes = |field: &CommitmentField| -> Vec<u8> {
         let mut bytes = Vec::new();
@@ -486,9 +472,9 @@ fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut Vec<u8
         bytes
     };
 
-    // Use the helpers to append bytes to the data vector
-    data.extend_from_slice(&field_to_bytes(field));
-    data.extend_from_slice(&g1_to_bytes(g1));
+    // Use helpers to write bytes to the output slice
+    let combined = [field_to_bytes(field), g1_to_bytes(g1)].concat();
+    data[..combined.len()].copy_from_slice(&combined);
 }
 
 // Parse point on G2
@@ -510,7 +496,7 @@ pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, ()> {
 
 #[cfg(test)]
 mod should {
-    use crate::testhooks::TestHooks;
+    use crate::curvehooks_impl::CurveHooksImpl;
 
     use super::*;
     use rstest::{fixture, rstest};
@@ -589,7 +575,7 @@ mod should {
             invalid_vk[3] = 3;
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCircuitType
             );
         }
@@ -601,7 +587,7 @@ mod should {
             invalid_vk[15] = 0;
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCommitmentsNumber
             );
         }
@@ -613,7 +599,7 @@ mod should {
             invalid_vk[1714] = 1;
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::RecursionNotSupported
             );
         }
@@ -625,7 +611,7 @@ mod should {
             invalid_vk[20..=23].fill(0);
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCommitmentField {
                     value: "\0\0\0\0".to_string()
                 }
@@ -639,7 +625,7 @@ mod should {
             invalid_vk[24..88].fill(0);
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::PointNotOnCurve { field: "ID_1" }
             );
         }
@@ -651,7 +637,7 @@ mod should {
             invalid_vk[19] = 100;
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCommitmentKey { offset: 20 }
             );
         }
@@ -663,7 +649,7 @@ mod should {
             invalid_vk[20..=23].fill(255);
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCommitmentKey { offset: 20 }
             );
         }
@@ -675,7 +661,7 @@ mod should {
             invalid_vk[23] = 50;
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::UnexpectedCommitmentKey {
                     key: "ID_2".to_string(),
                     expected: "ID_1".to_string()
@@ -688,7 +674,7 @@ mod should {
             let invalid_vk = [0u8; 10];
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::BufferTooShort
             );
         }
