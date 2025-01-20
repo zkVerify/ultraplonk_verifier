@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod constants;
 pub mod errors;
 pub mod key;
 pub mod proof;
@@ -25,7 +26,7 @@ mod types;
 mod utils;
 
 use crate::{
-    key::{read_g2, VerificationKey},
+    key::{read_g2, PreparedVerificationKey, VerificationKey},
     proof::Proof,
     srs::SRS_G2,
 };
@@ -45,10 +46,7 @@ use alloc::{format, string::ToString, vec::Vec};
 
 pub const PROOF_SIZE: usize = 2144; // = 67 * 32 bytes
 pub const PUBS_SIZE: usize = 32;
-pub const VK_SIZE: usize = 1779;
-
-const NEGATIVE_INVERSE_OF_2_MODULO_R: Fr =
-    MontFp!("10944121435919637611123202872628637544274182200208017171849102093287904247808");
+pub const VK_SIZE: usize = 1632;
 const LIMB_SIZE: Fr = MontFp!("295147905179352825856"); // = 2 << 68
 const SUBLIMB_SHIFT: Fr = MontFp!("16384"); // 1 << 14 = 0x4000 = 16384
 
@@ -205,23 +203,31 @@ struct AuxiliaryEvaluations {
     aux_limb_accumulator_evaluation: Fr,
 }
 
-pub fn verify<H: CurveHooks>(
+pub fn verify<H: CurveHooks + Default>(
     raw_vk: &[u8],
     raw_proof: &[u8],
     pubs: &Public,
 ) -> Result<(), VerifyError> {
-    let vk = VerificationKey::<H>::try_from(raw_vk).map_err(|_| VerifyError::KeyError)?;
+    let vk =
+        VerificationKey::<H>::try_from_solidity_bytes(raw_vk).map_err(|_| VerifyError::KeyError)?;
+    let prepared_vk = PreparedVerificationKey::<H>::from(&vk);
+
     let proof = Proof::<H>::try_from(raw_proof).map_err(|_| VerifyError::InvalidProofError)?;
 
     check_public_input_number(&vk, pubs)?;
-
-    // TODO: PARSE RECURSIVE PROOF
-
     let public_inputs = &pubs
         .iter()
         .map(|pi_bytes| pi_bytes.into_u256())
         .collect::<Vec<U256>>();
 
+    verify_with_prepared_vk(&prepared_vk, &proof, public_inputs)
+}
+
+fn verify_with_prepared_vk<H: CurveHooks>(
+    vk: &PreparedVerificationKey<H>,
+    proof: &Proof<H>,
+    public_inputs: &[U256],
+) -> Result<(), VerifyError> {
     // Generate Challenges
     let mut challenge = generate_initial_challenge(vk.circuit_size, vk.num_public_inputs);
     challenge = generate_eta_challenge::<H>(&proof, public_inputs, &challenge);
@@ -476,7 +482,7 @@ fn compute_plookup_delta_factor(circuit_size: u32, challenges: &Challenges) -> (
 
 fn compute_lagrange_and_vanishing_poly<H: CurveHooks>(
     challenges: &Challenges,
-    vk: &VerificationKey<H>,
+    vk: &PreparedVerificationKey<H>,
     delta_numerator: &Fr,
     delta_denominator: &Fr,
     plookup_delta_numerator: &Fr,
@@ -639,7 +645,7 @@ fn compute_arithmetic_widget_evaluation<H: CurveHooks>(
         * proof.w2_eval.into_fr()
         * proof.qm_eval.into_fr()
         * (proof.q_arith_eval.into_fr() - MontFp!("3"))
-        * NEGATIVE_INVERSE_OF_2_MODULO_R;
+        * constants::NEGATIVE_INVERSE_OF_2;
 
     let identity = w1w2qm + w1q1 + w2q2 + w3q3 + w4q4 + proof.qc_eval.into_fr();
 
@@ -967,7 +973,7 @@ fn quotient_evaluation(
 
 fn perform_final_checks<H: CurveHooks>(
     proof: &Proof<H>,
-    vk: &VerificationKey<H>,
+    vk: &PreparedVerificationKey<H>,
     challenges: &Challenges,
     nu_challenges: &NuChallenges,
     quotient_eval: &Fr,
