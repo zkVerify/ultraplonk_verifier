@@ -119,7 +119,7 @@ fn read_proof_g1<H: CurveHooks>(data: &[u8], offset: &mut usize) -> Result<G1<H>
     read_g1_util::<H>(&data[*offset..*offset + 64], true)
         .map_err(|e| match e {
             GroupError::NotOnCurve => ProofError::PointNotOnCurve,
-            GroupError::NotInSubgroup => ProofError::PointNotInCorrectSubgroup,
+            // GroupError::NotInSubgroup => ProofError::PointNotInCorrectSubgroup,
             GroupError::InvalidSliceLength {
                 expected_length,
                 actual_length,

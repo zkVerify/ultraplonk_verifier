@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use std::path::PathBuf;
-use ultraplonk_no_std::testhooks::TestHooks;
+use ultraplonk_no_std::curvehooks_impl::CurveHooksImpl;
 use ultraplonk_no_std::{verify as verify_proof, PublicInput};
 
 use crate::cli::Commands;
@@ -67,7 +67,7 @@ fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf, verbose: bool) -> Resu
         println!("Verifying proof...");
     }
 
-    match verify_proof::<TestHooks>(&vk, &proof, &pubs) {
+    match verify_proof::<CurveHooksImpl>(&vk, &proof, &pubs) {
         Ok(_) => {
             println!("Proof is valid");
             Ok(())

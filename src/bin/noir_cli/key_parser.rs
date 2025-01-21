@@ -15,8 +15,8 @@
 
 use std::{io::Write, path::PathBuf};
 use ultraplonk_no_std::{
+    curvehooks_impl::CurveHooksImpl,
     key::{CommitmentField, VerificationKey},
-    testhooks::TestHooks,
 };
 
 use crate::cli::Commands;
@@ -63,7 +63,7 @@ fn parse_key_file(input: &PathBuf, output: Option<PathBuf>, verbose: bool) -> Re
     Ok(())
 }
 
-fn parse_solidity_file(vk_file: &str) -> Result<VerificationKey<TestHooks>, CliError> {
+fn parse_solidity_file(vk_file: &str) -> Result<VerificationKey<CurveHooksImpl>, CliError> {
     let mut buf = [0u8; ultraplonk_no_std::VK_SIZE];
     let mut offset = 0;
 

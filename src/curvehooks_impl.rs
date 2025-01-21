@@ -19,17 +19,17 @@ use ark_bn254::{g1::Config as ArkG1Config, g2::Config as ArkG2Config, Bn254 as A
 use ark_models_ext::{pairing::Pairing, CurveConfig};
 
 #[derive(Debug, Default)]
-pub struct TestHooks;
+pub struct CurveHooksImpl;
 
-type Bn254 = ark_bn254_ext::Bn254<TestHooks>;
-type G1Projective = ark_bn254_ext::G1Projective<TestHooks>;
-type G2Projective = ark_bn254_ext::G2Projective<TestHooks>;
-type G1Affine = ark_bn254_ext::G1Affine<TestHooks>;
-type G2Affine = ark_bn254_ext::G2Affine<TestHooks>;
-type G1Config = ark_bn254_ext::g1::Config<TestHooks>;
-type G2Config = ark_bn254_ext::g2::Config<TestHooks>;
+type Bn254 = ark_bn254_ext::Bn254<CurveHooksImpl>;
+type G1Projective = ark_bn254_ext::G1Projective<CurveHooksImpl>;
+type G2Projective = ark_bn254_ext::G2Projective<CurveHooksImpl>;
+type G1Affine = ark_bn254_ext::G1Affine<CurveHooksImpl>;
+type G2Affine = ark_bn254_ext::G2Affine<CurveHooksImpl>;
+type G1Config = ark_bn254_ext::g1::Config<CurveHooksImpl>;
+type G2Config = ark_bn254_ext::g2::Config<CurveHooksImpl>;
 
-impl CurveHooks for TestHooks {
+impl CurveHooks for CurveHooksImpl {
     fn bn254_multi_miller_loop(
         g1: impl Iterator<Item = <Bn254 as Pairing>::G1Prepared>,
         g2: impl Iterator<Item = <Bn254 as Pairing>::G2Prepared>,
