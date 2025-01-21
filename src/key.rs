@@ -164,7 +164,7 @@ impl CommitmentField {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Default)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct VerificationKey<H: CurveHooks> {
     pub circuit_type: u32,
     pub circuit_size: u32,
@@ -196,7 +196,7 @@ pub struct VerificationKey<H: CurveHooks> {
     pub recursive_proof_indices: u32,
 }
 
-impl<H: CurveHooks + Default> VerificationKey<H> {
+impl<H: CurveHooks> VerificationKey<H> {
     pub fn as_solidity_bytes(&self) -> Vec<u8> {
         let mut out = Vec::new();
         const CIRCUIT_TYPE: U256 = BigInt!("2");
