@@ -33,17 +33,32 @@ fn main() -> Result<()> {
     }
 
     match args.command {
-        cli::Commands::Key { .. } => {
-            vk_parser::process_verification_key(&args.command, args.verbose)?
+        cli::Commands::Key { input, output } => {
+            vk_parser::parse_verification_key(&input, &output, args.verbose)?
         }
         cli::Commands::KeyToHex { input, output } => vk_parser::dump_key_hex(&input, &output)?,
-        cli::Commands::ProofData { .. } => {
-            proof_parser::process_proof_data(&args.command, args.verbose)?
+        cli::Commands::ProofData {
+            input_json,
+            output_proof,
+            output_pubs,
+        } => {
+            proof_parser::parse_proof_data(&input_json, &output_proof, &output_pubs, args.verbose)?
         }
-        cli::Commands::ProofDatav2 { .. } => {
-            proof_parser::process_proof_data_v2(&args.command, args.verbose)?
+        cli::Commands::ProofDatav2 {
+            num_inputs,
+            input_proof,
+            output_proof,
+            output_pubs,
+        } => proof_parser::parse_proof_data_v2(
+            &num_inputs,
+            &input_proof,
+            &output_proof,
+            &output_pubs,
+            args.verbose,
+        )?,
+        cli::Commands::Verify { proof, pubs, key } => {
+            verifier::verify(&key, &proof, &pubs, args.verbose)?
         }
-        cli::Commands::Verify { .. } => verifier::process_command(&args.command, args.verbose)?,
     }
 
     Ok(())

@@ -17,7 +17,6 @@ use serde::Deserialize;
 use std::fs::File;
 use std::path::PathBuf;
 
-use crate::cli::Commands;
 use crate::errors::CliError;
 use crate::utils::{self, encode_hex, encode_pub_inputs, out_file};
 
@@ -28,20 +27,7 @@ struct ProofData {
     verify_inputs: Vec<String>,
 }
 
-pub fn process_proof_data(command: &Commands, verbose: bool) -> Result<(), CliError> {
-    if let Commands::ProofData {
-        input_json,
-        output_proof,
-        output_pubs,
-    } = command
-    {
-        parse_proof_data(input_json, output_proof, output_pubs, verbose)
-    } else {
-        return Err(CliError::CliError("Invalid command".to_string()));
-    }
-}
-
-fn parse_proof_data(
+pub fn parse_proof_data(
     input_json: &PathBuf,
     output_proof: &Option<PathBuf>,
     output_pubs: &Option<PathBuf>,
@@ -93,21 +79,7 @@ fn read_json_file(path: &std::path::PathBuf) -> Result<ProofData, CliError> {
     Ok(proof_data)
 }
 
-pub fn process_proof_data_v2(command: &Commands, verbose: bool) -> Result<(), CliError> {
-    if let Commands::ProofDatav2 {
-        num_inputs,
-        input_proof,
-        output_proof,
-        output_pubs,
-    } = command
-    {
-        parse_proof_data_v2(num_inputs, input_proof, output_proof, output_pubs, verbose)
-    } else {
-        return Err(CliError::CliError("Invalid command".to_string()));
-    }
-}
-
-fn parse_proof_data_v2(
+pub fn parse_proof_data_v2(
     num_inputs: &usize,
     input_proof: &PathBuf,
     output_proof: &Option<PathBuf>,

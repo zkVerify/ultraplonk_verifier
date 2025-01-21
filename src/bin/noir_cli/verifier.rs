@@ -17,18 +17,14 @@ use std::path::PathBuf;
 use ultraplonk_no_std::testhooks::TestHooks;
 use ultraplonk_no_std::{verify as verify_proof, PublicInput};
 
-use crate::cli::Commands;
 use crate::errors::CliError;
 
-pub fn process_command(command: &Commands, verbose: bool) -> Result<(), CliError> {
-    if let Commands::Verify { proof, pubs, key } = command {
-        verify(key, proof, pubs, verbose)
-    } else {
-        Err(CliError::CliError("Invalid command".to_string()))
-    }
-}
-
-fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf, verbose: bool) -> Result<(), CliError> {
+pub fn verify(
+    key: &PathBuf,
+    proof: &PathBuf,
+    pubs: &PathBuf,
+    verbose: bool,
+) -> Result<(), CliError> {
     if verbose {
         println!("Reading key file: {:?}", key);
         println!("Reading proof file: {:?}", proof);

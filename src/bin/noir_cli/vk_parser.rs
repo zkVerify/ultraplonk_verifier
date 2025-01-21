@@ -3,19 +3,14 @@ use std::path::PathBuf;
 use ultraplonk_no_std::key::VerificationKey;
 use ultraplonk_no_std::testhooks::TestHooks;
 
-use crate::cli::Commands;
 use crate::errors::CliError;
 use crate::utils::{self, out_file};
 
-pub fn process_verification_key(command: &Commands, verbose: bool) -> Result<(), CliError> {
-    if let Commands::Key { input, output } = command {
-        parse_verification_key(input, output)
-    } else {
-        return Err(CliError::CliError("Invalid command".to_string()));
-    }
-}
-
-fn parse_verification_key(input: &PathBuf, output: &Option<PathBuf>) -> Result<(), CliError> {
+pub fn parse_verification_key(
+    input: &PathBuf,
+    output: &Option<PathBuf>,
+    verbose: bool,
+) -> Result<(), CliError> {
     let bb_vk = std::fs::read(input).map_err(|e| {
         CliError::CliError(format!("Failed to read file: {:?}. Reason :{:?}", input, e))
     })?;
