@@ -39,7 +39,7 @@ pub enum VerificationKeyError {
     BufferTooShort,
 
     #[snafu(display(
-        "Slice length is incorrect. Expected: {}, got: {}",
+        "Slice length is incorrect. Expected: {}; Got: {}",
         expected_length,
         actual_length
     ))]
@@ -48,25 +48,15 @@ pub enum VerificationKeyError {
         actual_length: usize,
     },
 
-    // #[snafu(display("Invalid field '{}': {:?}", field, error))]
-    // InvalidField {
-    //     field: &'static str,
-    //     error: FieldError,
-    // },
     #[snafu(display("Point for field '{}' is not on curve", field))]
     PointNotOnCurve { field: &'static str },
 
-    #[snafu(display("Point for field '{}' is not in the correct subgroup", field))]
-    PointNotInCorrectSubgroup { field: &'static str },
-
-    // #[snafu(display("Invalid value '{}'", value))]
-    // InvalidValue { value: String },
-    #[snafu(display("Non-invertible element {}", value))]
-    NonInvertibleElement { value: String },
-
-    #[snafu(display("No roots of unity for {}", value))]
-    NoRootsOfUnity { value: String },
-
+    // #[snafu(display("Point for field '{}' is not in the correct subgroup", field))]
+    // PointNotInCorrectSubgroup { field: &'static str },
+    // #[snafu(display("Non-invertible element {}", value))]
+    // NonInvertibleElement { value: String },
+    // #[snafu(display("No roots of unity for {}", value))]
+    // NoRootsOfUnity { value: String },
     #[snafu(display("Invalid circuit type, expected 2"))]
     InvalidCircuitType,
 
@@ -464,9 +454,10 @@ fn get_g1<H: CurveHooks>(data: &[u8]) -> Result<G1<H>, ()> {
     if !point.is_on_curve() {
         return Err(());
     }
-    if !point.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(());
-    }
+    // This cannot happen for G1 with the BN254 curve.
+    // if !point.is_in_correct_subgroup_assuming_on_curve() {
+    //     return Err(());
+    // }
 
     Ok(point)
 }
@@ -548,7 +539,6 @@ pub struct PreparedVerificationKey<H: CurveHooks> {
     pub domain_inverse: Fr,
 }
 
-#[allow(unused)]
 impl<H: CurveHooks> VerificationKey<H> {
     pub fn as_bytes(&self) -> Vec<u8> {
         let mut data = Vec::new();
@@ -767,15 +757,15 @@ fn read_commitment<H: CurveHooks>(
     })
 }
 
-pub(crate) fn read_g1<H: CurveHooks>(
+pub fn read_g1<H: CurveHooks>(
     field: &CommitmentField,
     data: &[u8],
 ) -> Result<G1<H>, VerificationKeyError> {
     read_g1_util::<H>(data, false).map_err(|e| match e {
         GroupError::NotOnCurve => VerificationKeyError::PointNotOnCurve { field: field.str() },
-        GroupError::NotInSubgroup => {
-            VerificationKeyError::PointNotInCorrectSubgroup { field: field.str() }
-        }
+        // GroupError::NotInSubgroup => {
+        //     VerificationKeyError::PointNotInCorrectSubgroup { field: field.str() }
+        // }
         GroupError::InvalidSliceLength {
             expected_length,
             actual_length,
@@ -786,7 +776,7 @@ pub(crate) fn read_g1<H: CurveHooks>(
     })
 }
 
-fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut Vec<u8>) {
+fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut [u8]) {
     // Helper to convert a field to bytes
     let field_to_bytes = |field: &CommitmentField| -> Vec<u8> {
         let mut bytes = Vec::new();
@@ -804,9 +794,9 @@ fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut Vec<u8
         bytes
     };
 
-    // Use the helpers to append bytes to the data vector
-    data.extend_from_slice(&field_to_bytes(field));
-    data.extend_from_slice(&g1_to_bytes(g1));
+    // Use helpers to write bytes to the output slice
+    let combined = [field_to_bytes(field), g1_to_bytes(g1)].concat();
+    data[..combined.len()].copy_from_slice(&combined);
 }
 
 // Parse point on G2
@@ -828,7 +818,7 @@ pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, ()> {
 
 #[cfg(test)]
 mod should {
-    use crate::testhooks::TestHooks;
+    use crate::curvehooks_impl::CurveHooksImpl;
 
     use super::*;
     use rstest::{fixture, rstest};
@@ -895,7 +885,7 @@ mod should {
     #[rstest]
     fn deserialize_serialize_solidity_vk(valid_vk: [u8; VK_SIZE]) {
         let deserialized_vk =
-            VerificationKey::<TestHooks>::try_from_solidity_bytes(&valid_vk).unwrap();
+            VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&valid_vk).unwrap();
         let vk = deserialized_vk.as_solidity_bytes();
         pretty_assertions::assert_eq!(valid_vk, vk.as_slice())
     }
@@ -910,10 +900,23 @@ mod should {
             invalid_vk[3] = 3;
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
                 VerificationKeyError::InvalidCircuitType
             );
         }
+
+        // #[rstest]
+        // fn a_vk_with_invalid_commitments_number(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[15] = 0;
+
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+        //         VerificationKeyError::InvalidCommitmentsNumber
+        //     );
+        // }
 
         #[rstest]
         fn a_vk_containing_a_recursive_proof(valid_vk: [u8; VK_SIZE]) {
@@ -922,10 +925,64 @@ mod should {
             invalid_vk[VK_SIZE - 33] = 1;
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
                 VerificationKeyError::RecursionNotSupported
             );
         }
+
+        // #[rstest]
+        // fn a_vk_with_an_invalid_field(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[20..=23].fill(0);
+
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+        //         VerificationKeyError::InvalidCommitmentField {
+        //             value: "\0\0\0\0".to_string()
+        //         }
+        //     );
+        // }
+
+        // #[rstest]
+        // fn a_vk_with_an_invalid_commitment_key(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[19] = 100;
+
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+        //         VerificationKeyError::InvalidCommitmentKey { offset: 20 }
+        //     );
+        // }
+
+        // #[rstest]
+        // fn a_vk_with_an_invalid_commitment_key_v2(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[20..=23].fill(255);
+
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+        //         VerificationKeyError::InvalidCommitmentKey { offset: 20 }
+        //     );
+        // }
+
+        // #[rstest]
+        // fn a_vk_with_unexpected_commitment_key(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[23] = 50;
+
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+        //         VerificationKeyError::UnexpectedCommitmentKey {
+        //             key: "ID_2".to_string(),
+        //             expected: "ID_1".to_string()
+        //         }
+        //     );
+        // }
 
         #[rstest]
         fn a_vk_with_a_point_not_on_curve(valid_vk: [u8; VK_SIZE]) {
@@ -934,7 +991,8 @@ mod should {
             invalid_vk[32 * 4..32 * 5].fill(0);
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
                 VerificationKeyError::PointNotOnCurve { field: "ID_1" }
             );
         }
@@ -944,7 +1002,8 @@ mod should {
             let invalid_vk = [0u8; 10];
 
             assert_eq!(
-                VerificationKey::<TestHooks>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
                 VerificationKeyError::BufferTooShort
             );
         }

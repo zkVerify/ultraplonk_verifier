@@ -16,7 +16,7 @@
 use anyhow::{anyhow, Context, Result};
 use log::info;
 use std::path::PathBuf;
-use ultraplonk_no_std::testhooks::TestHooks;
+use ultraplonk_no_std::curvehooks_impl::CurveHooksImpl;
 use ultraplonk_no_std::{verify as verify_proof, PublicInput};
 
 pub fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf) -> Result<()> {
