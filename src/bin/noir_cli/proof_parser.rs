@@ -18,7 +18,7 @@ use std::path::PathBuf;
 use crate::errors::CliError;
 use crate::utils::{self, out_file};
 
-pub fn parse_proof_data_v2(
+pub fn parse_proof_data(
     num_inputs: &usize,
     input_proof: &PathBuf,
     output_proof: &Option<PathBuf>,

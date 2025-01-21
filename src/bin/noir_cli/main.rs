@@ -38,12 +38,12 @@ fn main() -> Result<()> {
             vk_parser::parse_verification_key(&input, &output, args.verbose)?
         }
         cli::Commands::Hexdump { input, output } => hexdump::hexdump(&input, &output)?,
-        cli::Commands::ProofDatav2 {
+        cli::Commands::ProofData {
             num_inputs,
             input_proof,
             output_proof,
             output_pubs,
-        } => proof_parser::parse_proof_data_v2(
+        } => proof_parser::parse_proof_data(
             &num_inputs,
             &input_proof,
             &output_proof,
