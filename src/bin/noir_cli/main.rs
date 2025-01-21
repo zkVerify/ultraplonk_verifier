@@ -20,10 +20,10 @@ use clap::Parser;
 
 mod cli;
 mod errors;
-mod key_parser;
 mod proof_parser;
 mod utils;
 mod verifier;
+mod vk_parser;
 
 fn main() -> Result<()> {
     let args = cli::Cli::parse();
@@ -34,9 +34,9 @@ fn main() -> Result<()> {
 
     match args.command {
         cli::Commands::Key { .. } => {
-            key_parser::process_verification_key(&args.command, args.verbose)?
+            vk_parser::process_verification_key(&args.command, args.verbose)?
         }
-        cli::Commands::KeyToHex { input, output } => key_parser::dump_key_hex(&input, &output)?,
+        cli::Commands::KeyToHex { input, output } => vk_parser::dump_key_hex(&input, &output)?,
         cli::Commands::ProofData { .. } => {
             proof_parser::process_proof_data(&args.command, args.verbose)?
         }

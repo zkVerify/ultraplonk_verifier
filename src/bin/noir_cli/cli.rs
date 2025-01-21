@@ -33,7 +33,7 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// Convert Solidity verification key to binary format
+    /// Convert Barretenberg verification key to zkVerify format
     Key {
         /// Input file for verification key
         #[arg(long)]
