@@ -20,6 +20,7 @@ use clap::Parser;
 
 mod cli;
 mod errors;
+mod hexdump;
 mod proof_parser;
 mod utils;
 mod verifier;
@@ -36,7 +37,7 @@ fn main() -> Result<()> {
         cli::Commands::Key { input, output } => {
             vk_parser::parse_verification_key(&input, &output, args.verbose)?
         }
-        cli::Commands::KeyToHex { input, output } => vk_parser::dump_key_hex(&input, &output)?,
+        cli::Commands::Hexdump { input, output } => hexdump::hexdump(&input, &output)?,
         cli::Commands::ProofDatav2 {
             num_inputs,
             input_proof,

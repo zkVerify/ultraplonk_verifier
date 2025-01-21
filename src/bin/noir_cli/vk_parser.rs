@@ -33,18 +33,3 @@ pub fn parse_verification_key(
         .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
     Ok(())
 }
-
-pub fn dump_key_hex(input_vk: &PathBuf, output_vk: &Option<PathBuf>) -> Result<(), CliError> {
-    let vk = std::fs::read(input_vk).map_err(|e| {
-        CliError::CliError(format!(
-            "Failed to read file: {:?}. Reason :{:?}",
-            input_vk, e
-        ))
-    })?;
-
-    let mut w = out_file(output_vk.as_ref())?;
-    utils::dump_data_hex(&mut w, &vk)
-        .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
-
-    Ok(())
-}
