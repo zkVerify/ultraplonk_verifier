@@ -37,13 +37,6 @@ fn main() -> Result<()> {
             vk_parser::parse_verification_key(&input, &output, args.verbose)?
         }
         cli::Commands::KeyToHex { input, output } => vk_parser::dump_key_hex(&input, &output)?,
-        cli::Commands::ProofData {
-            input_json,
-            output_proof,
-            output_pubs,
-        } => {
-            proof_parser::parse_proof_data(&input_json, &output_proof, &output_pubs, args.verbose)?
-        }
         cli::Commands::ProofDatav2 {
             num_inputs,
             input_proof,
