@@ -45,7 +45,7 @@ pub fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf, verbose: bool) -> 
         println!("Verifying proof...");
     }
 
-    match verify_proof::<TestHooks>(vk, &proof, pubs) {
+    match verify_proof::<TestHooks>(vk, &proof, &pubs) {
         Ok(_) => {
             println!("Proof is valid");
             Ok(())
@@ -54,15 +54,15 @@ pub fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf, verbose: bool) -> 
     }
 }
 
-pub(crate) fn convert_to_pub_inputs(data: &[u8]) -> Result<&[PublicInput]> {
+pub(crate) fn convert_to_pub_inputs(data: &[u8]) -> Result<Vec<PublicInput>> {
     if data.len() % 32 != 0 {
         Err(anyhow!("Invalid public inputs length: {:?}", data.len()))?;
     }
 
-    let pub_inputs =
-        unsafe { std::slice::from_raw_parts(data.as_ptr() as *const PublicInput, data.len() / 32) };
-
-    Ok(pub_inputs)
+    Ok(data
+        .chunks_exact(32)
+        .map(|v| v.try_into().unwrap())
+        .collect())
 }
 
 fn read_proof_file(path: &PathBuf) -> Result<[u8; ultraplonk_no_std::PROOF_SIZE]> {

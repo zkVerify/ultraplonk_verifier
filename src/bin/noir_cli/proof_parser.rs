@@ -78,7 +78,7 @@ pub fn parse_proof_data(
     let pubs_vec = crate::verifier::convert_to_pub_inputs(&proof)?;
 
     for ins in pubs_vec {
-        utils::dump_data_hex(&mut w, ins)
+        utils::dump_data_hex(&mut w, &ins)
             .with_context(|| format!("Failed to write output file: {output_pubs_hex:?}"))?;
     }
 
