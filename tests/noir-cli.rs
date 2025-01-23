@@ -69,9 +69,6 @@ fn convert_proof_and_vk_and_verify(
         .arg("--key")
         .arg(zkv_vk.path());
 
-    cmd_verify
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Proof is valid"));
+    cmd_verify.assert().success();
     Ok(())
 }

@@ -14,40 +14,32 @@
 // limitations under the License.
 
 use anyhow::{anyhow, Context, Result};
+use log::info;
 use std::path::PathBuf;
 use ultraplonk_no_std::testhooks::TestHooks;
 use ultraplonk_no_std::{verify as verify_proof, PublicInput};
 
-pub fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf, verbose: bool) -> Result<()> {
-    if verbose {
-        println!("Reading key file: {key:?}");
-        println!("Reading proof file: {proof:?}");
-        println!("Reading pubs file: {pubs:?}");
-    }
-
-    // Read and process the proof file
+pub fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf) -> Result<()> {
+    info!("Reading key file: {key:?}");
     let key_data = std::fs::read(key)
         .with_context(|| format!("Failed to read verification key file: {key:?}"))?;
 
     let vk = &key_data;
 
-    // Read and process the proof file
+    info!("Reading proof file: {proof:?}");
     let proof =
         read_proof_file(proof).with_context(|| format!("Failed to read proof file: {proof:?}"))?;
 
-    // Read and process the key file
-    let pubs = std::fs::read(pubs).with_context(|| format!("Failed to read key file: {pubs:?}"))?;
+    info!("Reading pubs file: {pubs:?}");
+    let pubs = std::fs::read(pubs)
+        .with_context(|| format!("Failed to read public input file: {pubs:?}"))?;
 
-    // Convert input data into a slice of [PublicInput]
     let pubs = convert_to_pub_inputs(&pubs)?;
 
-    if verbose {
-        println!("Verifying proof...");
-    }
-
+    info!("Verifying proof...");
     match verify_proof::<TestHooks>(vk, &proof, &pubs) {
         Ok(_) => {
-            println!("Proof is valid");
+            info!("Proof is valid");
             Ok(())
         }
         Err(e) => Err(anyhow!("Verification failed with error: {:?}", e)),

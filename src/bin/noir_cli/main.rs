@@ -15,6 +15,7 @@
 
 use anyhow::Result;
 use clap::Parser;
+use log::LevelFilter;
 
 mod cli;
 mod hexdump;
@@ -26,30 +27,25 @@ mod vk_parser;
 fn main() -> Result<()> {
     let args = cli::Cli::parse();
 
-    if args.verbose {
-        println!("Running in verbose mode");
-    }
+    let log_level = if args.verbose {
+        LevelFilter::max()
+    } else {
+        LevelFilter::Error
+    };
+    env_logger::Builder::new().filter_level(log_level).init();
 
     match args.command {
-        cli::Commands::Key { input, output } => {
-            vk_parser::parse_verification_key(&input, &output, args.verbose)?
-        }
+        cli::Commands::Key { input, output } => vk_parser::parse_verification_key(&input, &output)?,
         cli::Commands::Hexdump { input, output } => hexdump::hexdump(&input, &output)?,
         cli::Commands::ProofData {
             num_inputs,
             input_proof,
             output_proof,
             output_pubs,
-        } => proof_parser::parse_proof_data(
-            &num_inputs,
-            &input_proof,
-            &output_proof,
-            &output_pubs,
-            args.verbose,
-        )?,
-        cli::Commands::Verify { proof, pubs, key } => {
-            verifier::verify(&key, &proof, &pubs, args.verbose)?
+        } => {
+            proof_parser::parse_proof_data(&num_inputs, &input_proof, &output_proof, &output_pubs)?
         }
+        cli::Commands::Verify { proof, pubs, key } => verifier::verify(&key, &proof, &pubs)?,
     }
 
     Ok(())

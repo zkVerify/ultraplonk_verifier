@@ -27,11 +27,8 @@ snafu = { version = "0.8.3", default-features = false }
 anyhow = { version = "1.0.86", default-features = false, optional = true }
 clap = { version = "4.5.4", features = ["derive"], optional = true }
 regex = { version = "1", default-features = false, optional = true }
-serde = { version = "1.0.197", default-features = false, features = [
-    "derive",
-], optional = true }
-serde_json = { version = "1.0.114", optional = true }
-thiserror = { version = "1.0.61", default-features = false, optional = true }
+log = { version = "0.4.25", optional = true }
+env_logger = { version = "0.11.6", optional = true }
 
 [dev-dependencies]
 assert_cmd = "2.0.16"
@@ -46,15 +43,15 @@ path = "src/bin/noir_cli/main.rs"
 required-features = ["bins"]
 
 [features]
+default = ["std", "bins"]
 std = []
 bins = [
     "dep:clap",
     "dep:hex",
     "dep:anyhow",
-    "dep:thiserror",
     "dep:regex",
-    "dep:serde_json",
-    "dep:serde",
+    "dep:log",
+    "dep:env_logger"
 ]
 
 [package.metadata.cargo-udeps.ignore]
