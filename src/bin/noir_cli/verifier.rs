@@ -68,15 +68,11 @@ pub(crate) fn convert_to_pub_inputs(data: &[u8]) -> Result<Vec<PublicInput>> {
 fn read_proof_file(path: &PathBuf) -> Result<[u8; ultraplonk_no_std::PROOF_SIZE]> {
     let data = std::fs::read(path).with_context(|| format!("Failed to read file: {path:?}"))?;
 
-    if data.len() != ultraplonk_no_std::PROOF_SIZE {
-        Err(anyhow!(
+    data.as_slice().try_into().map_err(|_| {
+        anyhow!(
             "File size is not correct: expected {:?}, got {:?}",
             ultraplonk_no_std::PROOF_SIZE,
             data.len()
-        ))?;
-    }
-
-    let mut array = [0u8; ultraplonk_no_std::PROOF_SIZE];
-    array.copy_from_slice(&data);
-    Ok(array)
+        )
+    })
 }
