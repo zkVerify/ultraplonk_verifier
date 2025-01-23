@@ -13,8 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// NOTE: This utility program is for Noir v.0.36.0.
-
 use anyhow::Result;
 use clap::Parser;
 
