@@ -30,7 +30,7 @@ pub fn parse_proof_data(
     }
     // Parse proof and strip it from the pub ins
     let mut proof = std::fs::read(input_proof)
-        .with_context(|| format!("Failed to read file: {:?}", input_proof))?;
+        .with_context(|| format!("Failed to read file: {input_proof:?}"))?;
 
     let expected_len = ultraplonk_no_std::PROOF_SIZE + 32 * num_inputs;
     if proof.len() != expected_len {
@@ -54,7 +54,7 @@ pub fn parse_proof_data(
     // Write output proof in binary format
     out_file(output_proof.as_ref())?
         .write_all(&proof_without_pubs)
-        .with_context(|| format!("Failed to write output file: {:?}", output_proof))?;
+        .with_context(|| format!("Failed to write output file: {output_proof:?}"))?;
 
     let output_proof_hex = output_proof
         .as_ref()
@@ -62,12 +62,12 @@ pub fn parse_proof_data(
     // Write proof in hex format
     let mut w = out_file(output_proof_hex.as_ref())?;
     utils::dump_data_hex(&mut w, &proof_without_pubs)
-        .with_context(|| format!("Failed to write output file: {:?}", output_proof_hex))?;
+        .with_context(|| format!("Failed to write output file: {output_proof_hex:?}"))?;
 
     // Write output pub ins
     out_file(output_pubs.as_ref())?
         .write_all(&proof)
-        .with_context(|| format!("Failed to write output file: {:?}", output_pubs))?;
+        .with_context(|| format!("Failed to write output file: {output_pubs:?}"))?;
 
     let output_pubs_hex = output_pubs
         .as_ref()
@@ -79,7 +79,7 @@ pub fn parse_proof_data(
 
     for ins in pubs_vec {
         utils::dump_data_hex(&mut w, ins)
-            .with_context(|| format!("Failed to write output file: {:?}", output_pubs_hex))?;
+            .with_context(|| format!("Failed to write output file: {output_pubs_hex:?}"))?;
     }
 
     Ok(())

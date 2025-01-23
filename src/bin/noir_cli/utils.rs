@@ -22,7 +22,7 @@ pub fn out_file(output: Option<&std::path::PathBuf>) -> Result<Box<dyn std::io::
     let from_path = output
         .map(|p| {
             // Try to create the file and add context to any error that occurs
-            File::create(p).with_context(|| format!("Failed to create output file {:?}", &p))
+            File::create(p).with_context(|| format!("Failed to create output file {p:?}"))
         })
         .transpose()? // Convert Option<Result<File>> to Result<Option<File>>
         .map(|f| Box::new(f) as Box<dyn Write>); // Box the file writer
