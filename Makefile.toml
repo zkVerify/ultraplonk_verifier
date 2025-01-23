@@ -79,11 +79,18 @@ command = "cargo"
 toolchain = "nightly"
 args = ["install", "cargo-udeps", "--locked"]
 
-[tasks.udeps]
+[tasks.udeps_minimal]
+[tasks.udeps-minimal]
 dependencies = ["udeps-inst"]
 toolchain = "nightly"
 command = "cargo"
-args = ["udeps", "--all-targets"]
+args = ["udeps", "--no-default-features"]
+
+[tasks.udeps]
+dependencies = ["udeps-inst", "udeps-minimal"]
+toolchain = "nightly"
+command = "cargo"
+args = ["udeps", "--all-targets", "--all-features"]
 
 [tasks.ci-common]
 dependencies = ["build", "build-bare-metal", "cli", "test", "clippy", "audit", "udeps"]

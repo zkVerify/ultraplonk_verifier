@@ -53,6 +53,3 @@ bins = [
     "dep:log",
     "dep:env_logger"
 ]
-
-[package.metadata.cargo-udeps.ignore]
-development = ["assert_cmd", "assert_fs", "predicates"]
