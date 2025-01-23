@@ -45,7 +45,7 @@ install_crate = { crate_name = "clippy", rustup_component_name = "clippy", binar
 [tasks.clippy]
 dependencies = ["clippy-inst"]
 command = "cargo"
-args = ["clippy", "--", "--deny", "warnings"]
+args = ["clippy", "--all-targets", "--all-features", "--", "--deny", "warnings"]
 
 [tasks.audit-inst]
 command = "cargo"
