@@ -29,7 +29,7 @@ fn convert_proof_and_vk_and_verify(
     let zkv_pubs = assert_fs::NamedTempFile::new("zkv_pubs.bin")?;
     let zkv_vk = assert_fs::NamedTempFile::new("zkv_vk.bin")?;
 
-    let mut proof_path = version.to_path_buf();
+    let mut proof_path = version.clone();
     proof_path.push("proof.bin");
 
     let mut cmd_proof_data = Command::cargo_bin("noir-cli")?;
@@ -46,7 +46,7 @@ fn convert_proof_and_vk_and_verify(
 
     cmd_proof_data.assert().success();
 
-    let mut vk_path = version.to_path_buf();
+    let mut vk_path = version.clone();
     vk_path.push("vk.bin");
 
     let mut cmd_key = Command::cargo_bin("noir-cli")?;
