@@ -1,3 +1,5 @@
+# Generating test data
+
 The [`generate_test_data.sh`](generate_test_data.sh) script is provided for generating sample proofs and verification keys for a specific version of the noir toolchain.
 The script relies on docker, so a working docker installation is required.
 
