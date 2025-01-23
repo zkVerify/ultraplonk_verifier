@@ -15,8 +15,8 @@
 
 use std::path::PathBuf;
 
-use crate::errors::CliError;
 use crate::utils::{self, out_file};
+use anyhow::{anyhow, Context, Result};
 
 pub fn parse_proof_data(
     num_inputs: &usize,
@@ -24,25 +24,21 @@ pub fn parse_proof_data(
     output_proof: &Option<PathBuf>,
     output_pubs: &Option<PathBuf>,
     verbose: bool,
-) -> Result<(), CliError> {
+) -> Result<()> {
     if verbose {
         println!("Parsing proof");
     }
     // Parse proof and strip it from the pub ins
-    let mut proof = std::fs::read(input_proof).map_err(|e| {
-        CliError::CliError(format!(
-            "Failed to read file: {:?}. Reason :{:?}",
-            input_proof, e
-        ))
-    })?;
+    let mut proof = std::fs::read(input_proof)
+        .with_context(|| format!("Failed to read file: {:?}", input_proof))?;
 
     let expected_len = ultraplonk_no_std::PROOF_SIZE + 32 * num_inputs;
     if proof.len() != expected_len {
-        return Err(CliError::CliError(format!(
+        Err(anyhow!(
             "File size is not as expected. Expected {:?}, Actual: {:?}",
             expected_len,
             proof.len()
-        )));
+        ))?;
     }
 
     if verbose {
@@ -58,36 +54,32 @@ pub fn parse_proof_data(
     // Write output proof in binary format
     out_file(output_proof.as_ref())?
         .write_all(&proof_without_pubs)
-        .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
+        .with_context(|| format!("Failed to write output file: {:?}", output_proof))?;
 
+    let output_proof_hex = output_proof
+        .as_ref()
+        .map(|out_path| out_path.with_extension("hex"));
     // Write proof in hex format
-    let mut w = out_file(
-        output_proof
-            .as_ref()
-            .map(|out_path| out_path.with_extension("hex"))
-            .as_ref(),
-    )?;
+    let mut w = out_file(output_proof_hex.as_ref())?;
     utils::dump_data_hex(&mut w, &proof_without_pubs)
-        .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
+        .with_context(|| format!("Failed to write output file: {:?}", output_proof_hex))?;
 
     // Write output pub ins
     out_file(output_pubs.as_ref())?
         .write_all(&proof)
-        .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
+        .with_context(|| format!("Failed to write output file: {:?}", output_pubs))?;
 
+    let output_pubs_hex = output_pubs
+        .as_ref()
+        .map(|out_path| out_path.with_extension("hex"));
     // Write pub ins in hex format
-    let mut w = out_file(
-        output_pubs
-            .as_ref()
-            .map(|out_path| out_path.with_extension("hex"))
-            .as_ref(),
-    )?;
+    let mut w = out_file(output_pubs_hex.as_ref())?;
 
     let pubs_vec = crate::verifier::convert_to_pub_inputs(&proof)?;
 
     for ins in pubs_vec {
         utils::dump_data_hex(&mut w, ins)
-            .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
+            .with_context(|| format!("Failed to write output file: {:?}", output_pubs_hex))?;
     }
 
     Ok(())

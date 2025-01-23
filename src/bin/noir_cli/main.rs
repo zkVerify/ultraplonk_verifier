@@ -19,7 +19,6 @@ use anyhow::Result;
 use clap::Parser;
 
 mod cli;
-mod errors;
 mod hexdump;
 mod proof_parser;
 mod utils;
