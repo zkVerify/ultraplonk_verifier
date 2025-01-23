@@ -644,7 +644,7 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
         let table_4 = read_commitment(&CommitmentField::TABLE_4, raw_vk, &mut offset)?;
         let table_type = read_commitment(&CommitmentField::TABLE_TYPE, raw_vk, &mut offset)?;
 
-        assert_eq!(offset, OFFSET_AFTER_COMMITMENTS);
+        debug_assert_eq!(offset, OFFSET_AFTER_COMMITMENTS);
 
         let contains_recursive_proof = read_bool_and_check(
             raw_vk,
