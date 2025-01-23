@@ -165,10 +165,7 @@ fn verify_valid_proof(
     valid_proof: [u8; PROOF_SIZE],
     valid_pub: [PublicInput; 1],
 ) {
-    assert_eq!(
-        verify::<TestHooks>(&valid_vk, &valid_proof, &valid_pub).unwrap(),
-        ()
-    );
+    assert!(verify::<TestHooks>(&valid_vk, &valid_proof, &valid_pub).is_ok());
 }
 
 mod reject {

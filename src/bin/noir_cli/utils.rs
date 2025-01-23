@@ -22,7 +22,7 @@ pub fn out_file(output: Option<&std::path::PathBuf>) -> Result<Box<dyn std::io::
     let from_path = output
         .map(|p| {
             // Try to create the file and add context to any error that occurs
-            File::create(&p)
+            File::create(p)
                 .map_err(|_| CliError::CliError(format!("Failed to create output file {:?}", &p)))
         })
         .transpose()? // Convert Option<Result<File>> to Result<Option<File>>
@@ -33,7 +33,7 @@ pub fn out_file(output: Option<&std::path::PathBuf>) -> Result<Box<dyn std::io::
 }
 
 pub(crate) fn dump_data_hex<W: Write>(w: &mut W, data: &[u8]) -> Result<(), std::io::Error> {
-    w.write(b"0x")?;
+    w.write_all(b"0x")?;
     w.write_all(hex::encode(data).as_bytes())?;
     writeln!(w)
 }

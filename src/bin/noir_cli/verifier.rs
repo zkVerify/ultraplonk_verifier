@@ -63,7 +63,7 @@ pub fn verify(
         println!("Verifying proof...");
     }
 
-    match verify_proof::<TestHooks>(&vk, &proof, &pubs) {
+    match verify_proof::<TestHooks>(vk, &proof, pubs) {
         Ok(_) => {
             println!("Proof is valid");
             Ok(())
