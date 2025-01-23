@@ -56,3 +56,6 @@ bins = [
     "dep:serde_json",
     "dep:serde",
 ]
+
+[package.metadata.cargo-udeps.ignore]
+development = ["assert_cmd", "assert_fs", "predicates"]
