@@ -31,7 +31,7 @@ pub fn out_file(output: Option<&std::path::PathBuf>) -> Result<Box<dyn std::io::
     Ok(from_path.unwrap_or_else(|| Box::new(std::io::stdout()) as Box<dyn Write>))
 }
 
-pub(crate) fn dump_data_hex<W: Write>(w: &mut W, data: &[u8]) -> Result<()> {
+pub(crate) fn dump_data_hex<W: Write>(mut w: W, data: &[u8]) -> Result<()> {
     w.write_all(b"0x")?;
     w.write_all(hex::encode(data).as_bytes())?;
     writeln!(w)?;
