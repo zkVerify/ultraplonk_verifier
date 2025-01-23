@@ -11,6 +11,9 @@ pub fn parse_verification_key(
     output: &Option<PathBuf>,
     verbose: bool,
 ) -> Result<(), CliError> {
+    if verbose {
+        println!("Parsing proof");
+    }
     let bb_vk = std::fs::read(input).map_err(|e| {
         CliError::CliError(format!("Failed to read file: {:?}. Reason :{:?}", input, e))
     })?;
@@ -19,6 +22,9 @@ pub fn parse_verification_key(
         .map(|vk| vk.as_solidity_bytes())
         .map_err(|e| CliError::CliError(e.to_string()))?;
 
+    if verbose {
+        println!("Writing output files");
+    }
     out_file(output.as_ref())?
         .write_all(&zkv_vk)
         .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
