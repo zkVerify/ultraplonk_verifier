@@ -655,7 +655,7 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
 
         let recursive_proof_indices = 0;
 
-        offset = raw_vk.len() - 2;
+        offset = raw_vk.len() - 1;
         let _is_recursive_circuit = read_bool_and_check(
             raw_vk,
             &mut offset,
