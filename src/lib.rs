@@ -31,7 +31,9 @@ use crate::{
     srs::SRS_G2,
 };
 use ark_bn254_ext::{Config, CurveHooks};
-use ark_ec::{pairing::Pairing, short_weierstrass::SWCurveConfig, AffineRepr, CurveGroup};
+use ark_ec::{
+    pairing::Pairing, short_weierstrass::SWCurveConfig, AdditiveGroup, AffineRepr, CurveGroup,
+};
 use ark_ff::{Field, MontConfig, MontFp, One};
 use ark_models_ext::bn::{BnConfig, G1Prepared, G2Prepared};
 use errors::VerifyError;

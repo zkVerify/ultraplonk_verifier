@@ -53,8 +53,6 @@ pub enum VerificationKeyError {
 
     // #[snafu(display("Point for field '{}' is not in the correct subgroup", field))]
     // PointNotInCorrectSubgroup { field: &'static str },
-    // #[snafu(display("Point for field '{}' is not in the correct subgroup", field))]
-    // PointNotInCorrectSubgroup { field: &'static str },
     #[snafu(display("Invalid circuit type, expected 2"))]
     InvalidCircuitType,
 
