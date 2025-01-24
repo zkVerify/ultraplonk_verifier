@@ -13,37 +13,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// NOTE: This utility program is for Noir v.0.36.0.
-
 use anyhow::Result;
 use clap::Parser;
+use log::LevelFilter;
 
 mod cli;
-mod errors;
-mod key_parser;
+mod hexdump;
 mod proof_parser;
 mod utils;
 mod verifier;
+mod vk_parser;
 
 fn main() -> Result<()> {
     let args = cli::Cli::parse();
 
-    if args.verbose {
-        println!("Running in verbose mode");
-    }
+    let log_level = if args.verbose {
+        LevelFilter::max()
+    } else {
+        LevelFilter::Error
+    };
+    env_logger::Builder::new().filter_level(log_level).init();
 
     match args.command {
-        cli::Commands::Key { .. } => {
-            key_parser::process_verification_key(&args.command, args.verbose)?
+        cli::Commands::Key { input, output } => vk_parser::parse_verification_key(&input, &output)?,
+        cli::Commands::Hexdump { input, output } => hexdump::hexdump(&input, &output)?,
+        cli::Commands::ProofData {
+            num_inputs,
+            input_proof,
+            output_proof,
+            output_pubs,
+        } => {
+            proof_parser::parse_proof_data(&num_inputs, &input_proof, &output_proof, &output_pubs)?
         }
-        cli::Commands::KeyToHex { input, output } => key_parser::dump_key_hex(&input, &output)?,
-        cli::Commands::ProofData { .. } => {
-            proof_parser::process_proof_data(&args.command, args.verbose)?
-        }
-        cli::Commands::ProofDatav2 { .. } => {
-            proof_parser::process_proof_data_v2(&args.command, args.verbose)?
-        }
-        cli::Commands::Verify { .. } => verifier::process_command(&args.command, args.verbose)?,
+        cli::Commands::Verify { proof, pubs, key } => verifier::verify(&key, &proof, &pubs)?,
     }
 
     Ok(())

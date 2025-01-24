@@ -13,10 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use thiserror::Error;
+use std::path::PathBuf;
 
-#[derive(Error, Debug)]
-pub enum CliError {
-    #[error("CLI Error: {0}")]
-    CliError(String),
+use crate::utils::{self, out_file};
+use anyhow::{Context, Result};
+
+pub fn hexdump(input: &PathBuf, output: &Option<PathBuf>) -> Result<()> {
+    let binary_input =
+        std::fs::read(input).with_context(|| format!("Failed to read file: {input:?}"))?;
+
+    let mut w = out_file(output.as_ref())?;
+    utils::dump_data_hex(&mut w, &binary_input)
+        .with_context(|| format!("Failed to write output file: {output:?}"))?;
+
+    Ok(())
 }

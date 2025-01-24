@@ -597,7 +597,8 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
     type Error = VerificationKeyError;
 
     fn try_from(raw_vk: &[u8]) -> Result<Self, Self::Error> {
-        if raw_vk.len() < VK_SIZE {
+        const OFFSET_AFTER_COMMITMENTS: usize = 1713;
+        if raw_vk.len() < OFFSET_AFTER_COMMITMENTS + 2 {
             return Err(VerificationKeyError::BufferTooShort);
         }
 
@@ -643,6 +644,8 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
         let table_4 = read_commitment(&CommitmentField::TABLE_4, raw_vk, &mut offset)?;
         let table_type = read_commitment(&CommitmentField::TABLE_TYPE, raw_vk, &mut offset)?;
 
+        debug_assert_eq!(offset, OFFSET_AFTER_COMMITMENTS);
+
         let contains_recursive_proof = read_bool_and_check(
             raw_vk,
             &mut offset,
@@ -650,24 +653,15 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
             VerificationKeyError::RecursionNotSupported,
         )?;
 
-        // let recursive_proof_indices = read_u32_and_check(
-        //     raw_vk,
-        //     &mut offset,
-        //     0,
-        //     VerificationKeyError::RecursionNotSupported,
-        // )?;
+        let recursive_proof_indices = 0;
 
-        // this is merely a workaround
-        while offset < VK_SIZE {
-            let _ = read_bool_and_check(
-                raw_vk,
-                &mut offset,
-                false,
-                VerificationKeyError::RecursionNotSupported,
-            )?;
-        }
-
-        let recursive_proof_indices = 0u32;
+        offset = raw_vk.len() - 1;
+        let _is_recursive_circuit = read_bool_and_check(
+            raw_vk,
+            &mut offset,
+            false,
+            VerificationKeyError::RecursionNotSupported,
+        )?;
 
         Ok(VerificationKey::<H> {
             circuit_type,

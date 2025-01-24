@@ -13,170 +13,64 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde::Deserialize;
-use std::fs::File;
+use crate::utils::{self, out_file};
+use anyhow::{anyhow, Context, Result};
+use log::info;
 use std::path::PathBuf;
 
-use crate::cli::Commands;
-use crate::errors::CliError;
-use crate::utils::{self, encode_hex, encode_pub_inputs, out_file};
-
-#[derive(Deserialize, Debug)]
-struct ProofData {
-    proof: String,
-    #[serde(rename = "verifyInputs")]
-    verify_inputs: Vec<String>,
-}
-
-pub fn process_proof_data(command: &Commands, verbose: bool) -> Result<(), CliError> {
-    if let Commands::ProofData {
-        input_json,
-        output_proof,
-        output_pubs,
-    } = command
-    {
-        parse_proof_data(input_json, output_proof, output_pubs, verbose)
-    } else {
-        return Err(CliError::CliError("Invalid command".to_string()));
-    }
-}
-
-fn parse_proof_data(
-    input_json: &PathBuf,
-    output_proof: &Option<PathBuf>,
-    output_pubs: &Option<PathBuf>,
-    verbose: bool,
-) -> Result<(), CliError> {
-    if verbose {
-        println!("Reading input JSON file: {:?}", input_json);
-    }
-
-    let json_path = input_json;
-    let proof_data = read_json_file(json_path)?;
-
-    let mut proof_buf = vec![];
-    let mut pub_inputs_buf = vec![];
-
-    if verbose {
-        println!("Encoding proof");
-    }
-
-    encode_hex(&proof_data.proof, &mut proof_buf)?;
-
-    if verbose {
-        println!("Encoding public inputs");
-    }
-
-    encode_pub_inputs(&proof_data.verify_inputs, &mut pub_inputs_buf)?;
-
-    if verbose {
-        println!("Writing output files");
-    }
-
-    out_file(output_proof.as_ref())?
-        .write_all(&proof_buf)
-        .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
-
-    out_file(output_pubs.as_ref())?
-        .write_all(&pub_inputs_buf)
-        .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
-
-    return Ok(());
-}
-
-fn read_json_file(path: &std::path::PathBuf) -> Result<ProofData, CliError> {
-    let file = File::open(path)
-        .map_err(|_| CliError::CliError(format!("Failed to open JSON file: {:?}", path)))?;
-    let reader = std::io::BufReader::new(file);
-    let proof_data: ProofData = serde_json::from_reader(reader)
-        .map_err(|_| CliError::CliError("Failed to parse JSON file".to_string()))?;
-    Ok(proof_data)
-}
-
-pub fn process_proof_data_v2(command: &Commands, verbose: bool) -> Result<(), CliError> {
-    if let Commands::ProofDatav2 {
-        num_inputs,
-        input_proof,
-        output_proof,
-        output_pubs,
-    } = command
-    {
-        parse_proof_data_v2(num_inputs, input_proof, output_proof, output_pubs, verbose)
-    } else {
-        return Err(CliError::CliError("Invalid command".to_string()));
-    }
-}
-
-fn parse_proof_data_v2(
+pub fn parse_proof_data(
     num_inputs: &usize,
     input_proof: &PathBuf,
     output_proof: &Option<PathBuf>,
     output_pubs: &Option<PathBuf>,
-    verbose: bool,
-) -> Result<(), CliError> {
-    if verbose {
-        println!("Parsing proof");
-    }
+) -> Result<()> {
+    info!("Parsing proof");
     // Parse proof and strip it from the pub ins
-    let mut proof = std::fs::read(input_proof).map_err(|e| {
-        CliError::CliError(format!(
-            "Failed to read file: {:?}. Reason :{:?}",
-            input_proof, e
-        ))
-    })?;
+    let mut proof = std::fs::read(input_proof)
+        .with_context(|| format!("Failed to read file: {input_proof:?}"))?;
 
     let expected_len = ultraplonk_no_std::PROOF_SIZE + 32 * num_inputs;
     if proof.len() != expected_len {
-        return Err(CliError::CliError(format!(
+        Err(anyhow!(
             "File size is not as expected. Expected {:?}, Actual: {:?}",
             expected_len,
             proof.len()
-        )));
+        ))?;
     }
 
-    if verbose {
-        println!("Parsing public inputs");
-    }
-
+    info!("Parsing public inputs");
     let proof_without_pubs = proof.split_off(32 * num_inputs);
 
-    if verbose {
-        println!("Writing output files");
-    }
-
+    info!("Writing output files");
     // Write output proof in binary format
     out_file(output_proof.as_ref())?
         .write_all(&proof_without_pubs)
-        .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
+        .with_context(|| format!("Failed to write output file: {output_proof:?}"))?;
 
+    let output_proof_hex = output_proof
+        .as_ref()
+        .map(|out_path| out_path.with_extension("hex"));
     // Write proof in hex format
-    let mut w = out_file(
-        output_proof
-            .as_ref()
-            .map(|out_path| out_path.with_extension("hex"))
-            .as_ref(),
-    )?;
+    let mut w = out_file(output_proof_hex.as_ref())?;
     utils::dump_data_hex(&mut w, &proof_without_pubs)
-        .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
+        .with_context(|| format!("Failed to write output file: {output_proof_hex:?}"))?;
 
     // Write output pub ins
     out_file(output_pubs.as_ref())?
         .write_all(&proof)
-        .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
+        .with_context(|| format!("Failed to write output file: {output_pubs:?}"))?;
 
+    let output_pubs_hex = output_pubs
+        .as_ref()
+        .map(|out_path| out_path.with_extension("hex"));
     // Write pub ins in hex format
-    let mut w = out_file(
-        output_pubs
-            .as_ref()
-            .map(|out_path| out_path.with_extension("hex"))
-            .as_ref(),
-    )?;
+    let mut w = out_file(output_pubs_hex.as_ref())?;
 
     let pubs_vec = crate::verifier::convert_to_pub_inputs(&proof)?;
 
     for ins in pubs_vec {
-        utils::dump_data_hex(&mut w, ins)
-            .map_err(|_| CliError::CliError("Failed to write output file".to_string()))?;
+        utils::dump_data_hex(&mut w, &ins)
+            .with_context(|| format!("Failed to write output file: {output_pubs_hex:?}"))?;
     }
 
     Ok(())

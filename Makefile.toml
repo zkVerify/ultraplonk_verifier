@@ -21,9 +21,23 @@ args = ["build", "--no-default-features", "--target", "thumbv7em-none-eabi"]
 command = "cargo"
 args = ["build", "--release"]
 
-[tasks.test]
+[tasks.cli]
 command = "cargo"
-args = ["test", "--release"]
+args = ["build", "--release", "--bins", "--features", "bins"]
+
+[tasks.test_lib]
+[tasks.test-lib]
+command = "cargo"
+args = ["test", "--release", "--no-default-features", "--lib"]
+
+[tasks.test_bins]
+[tasks.test-bins]
+command = "cargo"
+args = ["test", "--release", "--test", "*", "--features", "bins"]
+
+[tasks.test]
+dependencies = ["test-lib", "test-bins"]
+# It also performs cargo test --all-features
 
 [tasks.format_inst]
 [tasks.format-inst]
@@ -45,7 +59,7 @@ install_crate = { crate_name = "clippy", rustup_component_name = "clippy", binar
 [tasks.clippy]
 dependencies = ["clippy-inst"]
 command = "cargo"
-args = ["clippy", "--", "--deny", "warnings"]
+args = ["clippy", "--all-targets", "--all-features", "--", "--deny", "warnings"]
 
 [tasks.audit-inst]
 command = "cargo"
@@ -65,14 +79,21 @@ command = "cargo"
 toolchain = "nightly"
 args = ["install", "cargo-udeps", "--locked"]
 
-[tasks.udeps]
+[tasks.udeps_minimal]
+[tasks.udeps-minimal]
 dependencies = ["udeps-inst"]
 toolchain = "nightly"
 command = "cargo"
-args = ["udeps", "--all-targets"]
+args = ["udeps", "--no-default-features"]
+
+[tasks.udeps]
+dependencies = ["udeps-inst", "udeps-minimal"]
+toolchain = "nightly"
+command = "cargo"
+args = ["udeps", "--all-targets", "--all-features"]
 
 [tasks.ci-common]
-dependencies = ["build", "build-bare-metal", "test", "clippy", "audit", "udeps"]
+dependencies = ["build", "build-bare-metal", "cli", "test", "clippy", "audit", "udeps"]
 
 [tasks.ci]
 dependencies = ["format", "ci-common"]
