@@ -31,6 +31,7 @@ use crate::{
 use ark_bn254::Fq;
 use ark_bn254_ext::CurveHooks;
 use ark_ff::{BigInt, PrimeField};
+use ark_ff::{BigInt, PrimeField};
 use snafu::Snafu;
 
 #[derive(Debug, PartialEq, Snafu)]
@@ -39,6 +40,7 @@ pub enum VerificationKeyError {
     BufferTooShort,
 
     #[snafu(display(
+        "Slice length is incorrect. Expected: {}; Got: {}",
         "Slice length is incorrect. Expected: {}; Got: {}",
         expected_length,
         actual_length
@@ -53,11 +55,16 @@ pub enum VerificationKeyError {
 
     // #[snafu(display("Point for field '{}' is not in the correct subgroup", field))]
     // PointNotInCorrectSubgroup { field: &'static str },
+    // #[snafu(display("Point for field '{}' is not in the correct subgroup", field))]
+    // PointNotInCorrectSubgroup { field: &'static str },
     #[snafu(display("Invalid circuit type, expected 2"))]
     InvalidCircuitType,
 
     #[snafu(display("Invalid circuit size"))]
     InvalidCircuitSize,
+
+    #[snafu(display("Invalid number of public inputs"))]
+    InvalidNumberOfPublicInputs,
 
     #[snafu(display("Invalid number of public inputs"))]
     InvalidNumberOfPublicInputs,
@@ -280,7 +287,32 @@ impl<H: CurveHooks> VerificationKey<H> {
             get_u32(bytes).map_err(|_| VerificationKeyError::InvalidNumberOfPublicInputs)?; // TODO
         let (id_1, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+
+        let (circuit_type, bytes) = match get_u32(bytes) {
+            Ok((2, bytes)) => (2, bytes),
+            _ => Err(VerificationKeyError::InvalidCircuitType)?,
+        };
+
+        let (circuit_size, bytes) = match get_u32(bytes) {
+            Ok((circuit_size, bytes)) => {
+                if !circuit_size.is_power_of_two() || circuit_size > 2u32.pow(MAX_LOG2_CIRCUIT_SIZE)
+                {
+                    Err(VerificationKeyError::InvalidCircuitSize)?
+                } else {
+                    (circuit_size, bytes)
+                }
+            }
+            _ => Err(VerificationKeyError::InvalidCircuitSize)?,
+        };
+
+        let (num_public_inputs, bytes) =
+            get_u32(bytes).map_err(|_| VerificationKeyError::InvalidNumberOfPublicInputs)?; // TODO
+        let (id_1, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::ID_1.str(),
+            })?;
+        let (id_2, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (id_2, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -288,7 +320,13 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (id_3, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (id_3, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::ID_3.str(),
+            })?;
+        let (id_4, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (id_4, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -296,7 +334,13 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (q_1, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (q_1, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_1.str(),
+            })?;
+        let (q_2, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (q_2, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -304,7 +348,13 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (q_3, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (q_3, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_3.str(),
+            })?;
+        let (q_4, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (q_4, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -312,7 +362,13 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (q_arithmetic, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (q_arithmetic, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_ARITHMETIC.str(),
+            })?;
+        let (q_aux, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (q_aux, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -320,7 +376,13 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (q_c, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (q_c, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_C.str(),
+            })?;
+        let (q_elliptic, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (q_elliptic, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -328,7 +390,13 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (q_m, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (q_m, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_M.str(),
+            })?;
+        let (q_sort, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (q_sort, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -336,7 +404,13 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (sigma_1, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (sigma_1, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::SIGMA_1.str(),
+            })?;
+        let (sigma_2, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (sigma_2, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -344,7 +418,13 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (sigma_3, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (sigma_3, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::SIGMA_3.str(),
+            })?;
+        let (sigma_4, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (sigma_4, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -352,7 +432,13 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (table_1, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (table_1, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::TABLE_1.str(),
+            })?;
+        let (table_2, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (table_2, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -360,7 +446,13 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (table_3, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (table_3, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::TABLE_3.str(),
+            })?;
+        let (table_4, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
             })?;
         let (table_4, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
@@ -368,7 +460,15 @@ impl<H: CurveHooks> VerificationKey<H> {
             })?;
         let (table_type, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
+            })?;
+        let (table_type, bytes) =
+            get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::TABLE_TYPE.str(),
+            })?;
+
+        let (contains_recursive_proof, bytes) =
+            get_bool(bytes).map_err(|_| VerificationKeyError::RecursionNotSupported)?;
+
             })?;
 
         let (contains_recursive_proof, bytes) =
@@ -381,6 +481,43 @@ impl<H: CurveHooks> VerificationKey<H> {
         let (recursive_proof_indices, _) =
             get_u32(bytes).map_err(|_| VerificationKeyError::RecursionNotSupported)?;
 
+        let (recursive_proof_indices, _) =
+            get_u32(bytes).map_err(|_| VerificationKeyError::RecursionNotSupported)?;
+
+        if recursive_proof_indices != 0 {
+            Err(VerificationKeyError::RecursionNotSupported)?
+        }
+
+        Ok(Self {
+            circuit_type,
+            circuit_size,
+            num_public_inputs,
+            q_1,
+            q_2,
+            q_3,
+            q_4,
+            q_m,
+            q_c,
+            q_arithmetic,
+            q_aux,
+            q_elliptic,
+            q_sort,
+            sigma_1,
+            sigma_2,
+            sigma_3,
+            sigma_4,
+            table_1,
+            table_2,
+            table_3,
+            table_4,
+            table_type,
+            id_1,
+            id_2,
+            id_3,
+            id_4,
+            contains_recursive_proof,
+            recursive_proof_indices,
+        })
         if recursive_proof_indices != 0 {
             Err(VerificationKeyError::RecursionNotSupported)?
         }
@@ -426,9 +563,12 @@ fn get_u256(bytes: &[u8]) -> Result<U256, ()> {
 
 fn get_u32(bytes: &[u8]) -> Result<(u32, &[u8]), ()> {
     let out = get_u256(&bytes[..32])?;
+fn get_u32(bytes: &[u8]) -> Result<(u32, &[u8]), ()> {
+    let out = get_u256(&bytes[..32])?;
     if out < U256::from(u32::MAX) {
         let mut data = [0u8; 4];
         data.copy_from_slice(&bytes[28..32]);
+        Ok((u32::from_be_bytes(data), &bytes[32..]))
         Ok((u32::from_be_bytes(data), &bytes[32..]))
     } else {
         Err(())
@@ -437,15 +577,21 @@ fn get_u32(bytes: &[u8]) -> Result<(u32, &[u8]), ()> {
 
 fn get_bool(bytes: &[u8]) -> Result<(bool, &[u8]), ()> {
     let out = get_u256(&bytes[..32])?;
+fn get_bool(bytes: &[u8]) -> Result<(bool, &[u8]), ()> {
+    let out = get_u256(&bytes[..32])?;
     if out == U256::from(1u32) {
         Ok((true, &bytes[32..]))
+        Ok((true, &bytes[32..]))
     } else if out == U256::from(0u32) {
+        Ok((false, &bytes[32..]))
         Ok((false, &bytes[32..]))
     } else {
         Err(())
     }
 }
 
+fn get_g1<H: CurveHooks>(data: &[u8]) -> Result<(G1<H>, &[u8]), ()> {
+    if data.len() < 64 {
 fn get_g1<H: CurveHooks>(data: &[u8]) -> Result<(G1<H>, &[u8]), ()> {
     if data.len() < 64 {
         return Err(());
@@ -464,7 +610,12 @@ fn get_g1<H: CurveHooks>(data: &[u8]) -> Result<(G1<H>, &[u8]), ()> {
     // if !point.is_in_correct_subgroup_assuming_on_curve() {
     //     return Err(());
     // }
+    // This cannot happen for G1 with the BN254 curve.
+    // if !point.is_in_correct_subgroup_assuming_on_curve() {
+    //     return Err(());
+    // }
 
+    Ok((point, &data[64..]))
     Ok((point, &data[64..]))
 }
 
@@ -764,11 +915,15 @@ fn read_commitment<H: CurveHooks>(
 }
 
 pub fn read_g1<H: CurveHooks>(
+pub fn read_g1<H: CurveHooks>(
     field: &CommitmentField,
     data: &[u8],
 ) -> Result<G1<H>, VerificationKeyError> {
     read_g1_util::<H>(data, false).map_err(|e| match e {
         GroupError::NotOnCurve => VerificationKeyError::PointNotOnCurve { field: field.str() },
+        // GroupError::NotInSubgroup => {
+        //     VerificationKeyError::PointNotInCorrectSubgroup { field: field.str() }
+        // }
         // GroupError::NotInSubgroup => {
         //     VerificationKeyError::PointNotInCorrectSubgroup { field: field.str() }
         // }
@@ -782,6 +937,7 @@ pub fn read_g1<H: CurveHooks>(
     })
 }
 
+fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut [u8]) {
 fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut [u8]) {
     // Helper to convert a field to bytes
     let field_to_bytes = |field: &CommitmentField| -> Vec<u8> {
@@ -800,6 +956,9 @@ fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut [u8]) 
         bytes
     };
 
+    // Use helpers to write bytes to the output slice
+    let combined = [field_to_bytes(field), g1_to_bytes(g1)].concat();
+    data[..combined.len()].copy_from_slice(&combined);
     // Use helpers to write bytes to the output slice
     let combined = [field_to_bytes(field), g1_to_bytes(g1)].concat();
     data[..combined.len()].copy_from_slice(&combined);
@@ -824,6 +983,7 @@ pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, ()> {
 
 #[cfg(test)]
 mod should {
+    use crate::curvehooks_impl::CurveHooksImpl;
     use crate::curvehooks_impl::CurveHooksImpl;
 
     use super::*;
@@ -892,6 +1052,7 @@ mod should {
     fn deserialize_serialize_solidity_vk(valid_vk: [u8; VK_SIZE]) {
         let deserialized_vk =
             VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&valid_vk).unwrap();
+            VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&valid_vk).unwrap();
         let vk = deserialized_vk.as_solidity_bytes();
         pretty_assertions::assert_eq!(valid_vk, vk.as_slice())
     }
@@ -908,9 +1069,23 @@ mod should {
             assert_eq!(
                 VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
                     .unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
                 VerificationKeyError::InvalidCircuitType
             );
         }
+
+        // #[rstest]
+        // fn a_vk_with_invalid_commitments_number(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[15] = 0;
+
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+        //         VerificationKeyError::InvalidCommitmentsNumber
+        //     );
+        // }
 
         // #[rstest]
         // fn a_vk_with_invalid_commitments_number(valid_vk: [u8; VK_SIZE]) {
@@ -933,9 +1108,64 @@ mod should {
             assert_eq!(
                 VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
                     .unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
                 VerificationKeyError::RecursionNotSupported
             );
         }
+
+        // #[rstest]
+        // fn a_vk_with_an_invalid_field(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[20..=23].fill(0);
+
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+        //         VerificationKeyError::InvalidCommitmentField {
+        //             value: "\0\0\0\0".to_string()
+        //         }
+        //     );
+        // }
+
+        // #[rstest]
+        // fn a_vk_with_an_invalid_commitment_key(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[19] = 100;
+
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+        //         VerificationKeyError::InvalidCommitmentKey { offset: 20 }
+        //     );
+        // }
+
+        // #[rstest]
+        // fn a_vk_with_an_invalid_commitment_key_v2(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[20..=23].fill(255);
+
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+        //         VerificationKeyError::InvalidCommitmentKey { offset: 20 }
+        //     );
+        // }
+
+        // #[rstest]
+        // fn a_vk_with_unexpected_commitment_key(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[23] = 50;
+
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+        //         VerificationKeyError::UnexpectedCommitmentKey {
+        //             key: "ID_2".to_string(),
+        //             expected: "ID_1".to_string()
+        //         }
+        //     );
+        // }
 
         // #[rstest]
         // fn a_vk_with_an_invalid_field(valid_vk: [u8; VK_SIZE]) {
@@ -999,6 +1229,8 @@ mod should {
             assert_eq!(
                 VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
                     .unwrap_err(),
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
                 VerificationKeyError::PointNotOnCurve { field: "ID_1" }
             );
         }
@@ -1008,6 +1240,8 @@ mod should {
             let invalid_vk = [0u8; 10];
 
             assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
                 VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
                     .unwrap_err(),
                 VerificationKeyError::BufferTooShort
