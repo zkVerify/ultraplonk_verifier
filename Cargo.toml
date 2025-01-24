@@ -1,5 +1,5 @@
 [package]
-version = "0.2.0"
+version = "0.3.0"
 name = "ultraplonk-no-std"
 authors = ["Horizen Labs <admin@horizenlabs.io>"]
 repository = "https://github.com/zkVerify/ultraplonk_verifier"
