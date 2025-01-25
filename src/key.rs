@@ -283,112 +283,90 @@ impl<H: CurveHooks> VerificationKey<H> {
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::ID_1.str(),
             })?;
-
         let (id_2, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::ID_2.str(),
             })?;
-
         let (id_3, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::ID_3.str(),
             })?;
-
         let (id_4, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::ID_4.str(),
             })?;
-
         let (q_1, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_1.str(),
             })?;
-
         let (q_2, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_2.str(),
             })?;
-
         let (q_3, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_3.str(),
             })?;
-
         let (q_4, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_4.str(),
             })?;
-
         let (q_arithmetic, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_ARITHMETIC.str(),
             })?;
-
         let (q_aux, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_AUX.str(),
             })?;
-
         let (q_c, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_C.str(),
             })?;
-
         let (q_elliptic, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_ELLIPTIC.str(),
             })?;
-
         let (q_m, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_M.str(),
             })?;
-
         let (q_sort, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::Q_SORT.str(),
             })?;
-
         let (sigma_1, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::SIGMA_1.str(),
             })?;
-
         let (sigma_2, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::SIGMA_2.str(),
             })?;
-
         let (sigma_3, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::SIGMA_3.str(),
             })?;
-
         let (sigma_4, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::SIGMA_4.str(),
             })?;
-
         let (table_1, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::TABLE_1.str(),
             })?;
-
         let (table_2, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::TABLE_2.str(),
             })?;
-
         let (table_3, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::TABLE_3.str(),
             })?;
-
         let (table_4, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::TABLE_4.str(),
             })?;
-
         let (table_type, bytes) =
             get_g1::<H>(bytes).map_err(|_| VerificationKeyError::PointNotOnCurve {
                 field: CommitmentField::TABLE_TYPE.str(),
@@ -396,14 +374,12 @@ impl<H: CurveHooks> VerificationKey<H> {
 
         let (contains_recursive_proof, bytes) =
             get_bool(bytes).map_err(|_| VerificationKeyError::RecursionNotSupported)?;
-
         if contains_recursive_proof {
             Err(VerificationKeyError::RecursionNotSupported)?
         }
 
         let (recursive_proof_indices, _) =
             get_u32(bytes).map_err(|_| VerificationKeyError::RecursionNotSupported)?;
-
         if recursive_proof_indices != 0 {
             Err(VerificationKeyError::RecursionNotSupported)?
         }
@@ -487,12 +463,43 @@ fn get_g1<H: CurveHooks>(data: &[u8]) -> Result<(G1<H>, &[u8]), ()> {
     // if !point.is_in_correct_subgroup_assuming_on_curve() {
     //     return Err(());
     // }
-    // This cannot happen for G1 with the BN254 curve.
-    // if !point.is_in_correct_subgroup_assuming_on_curve() {
-    //     return Err(());
-    // }
 
     Ok((point, &data[64..]))
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub struct PreparedVerificationKey<H: CurveHooks> {
+    pub circuit_type: u32,
+    pub circuit_size: u32,
+    pub num_public_inputs: u32,
+    pub q_1: G1<H>,
+    pub q_2: G1<H>,
+    pub q_3: G1<H>,
+    pub q_4: G1<H>,
+    pub q_m: G1<H>,
+    pub q_c: G1<H>,
+    pub q_arithmetic: G1<H>,
+    pub q_aux: G1<H>,
+    pub q_elliptic: G1<H>,
+    pub q_sort: G1<H>,
+    pub sigma_1: G1<H>,
+    pub sigma_2: G1<H>,
+    pub sigma_3: G1<H>,
+    pub sigma_4: G1<H>,
+    pub table_1: G1<H>,
+    pub table_2: G1<H>,
+    pub table_3: G1<H>,
+    pub table_4: G1<H>,
+    pub table_type: G1<H>,
+    pub id_1: G1<H>,
+    pub id_2: G1<H>,
+    pub id_3: G1<H>,
+    pub id_4: G1<H>,
+    pub contains_recursive_proof: bool,
+    pub recursive_proof_indices: u32,
+    pub work_root: Fr,
+    pub work_root_inverse: Fr,
+    pub domain_inverse: Fr,
 }
 
 impl<H: CurveHooks> From<&VerificationKey<H>> for PreparedVerificationKey<H> {
@@ -535,41 +542,6 @@ impl<H: CurveHooks> From<&VerificationKey<H>> for PreparedVerificationKey<H> {
             domain_inverse,
         }
     }
-}
-
-#[derive(PartialEq, Eq, Debug)]
-pub struct PreparedVerificationKey<H: CurveHooks> {
-    pub circuit_type: u32,
-    pub circuit_size: u32,
-    pub num_public_inputs: u32,
-    pub q_1: G1<H>,
-    pub q_2: G1<H>,
-    pub q_3: G1<H>,
-    pub q_4: G1<H>,
-    pub q_m: G1<H>,
-    pub q_c: G1<H>,
-    pub q_arithmetic: G1<H>,
-    pub q_aux: G1<H>,
-    pub q_elliptic: G1<H>,
-    pub q_sort: G1<H>,
-    pub sigma_1: G1<H>,
-    pub sigma_2: G1<H>,
-    pub sigma_3: G1<H>,
-    pub sigma_4: G1<H>,
-    pub table_1: G1<H>,
-    pub table_2: G1<H>,
-    pub table_3: G1<H>,
-    pub table_4: G1<H>,
-    pub table_type: G1<H>,
-    pub id_1: G1<H>,
-    pub id_2: G1<H>,
-    pub id_3: G1<H>,
-    pub id_4: G1<H>,
-    pub contains_recursive_proof: bool,
-    pub recursive_proof_indices: u32,
-    pub work_root: Fr,
-    pub work_root_inverse: Fr,
-    pub domain_inverse: Fr,
 }
 
 impl<H: CurveHooks> VerificationKey<H> {
@@ -799,9 +771,6 @@ pub fn read_g1<H: CurveHooks>(
         // GroupError::NotInSubgroup => {
         //     VerificationKeyError::PointNotInCorrectSubgroup { field: field.str() }
         // }
-        // GroupError::NotInSubgroup => {
-        //     VerificationKeyError::PointNotInCorrectSubgroup { field: field.str() }
-        // }
         GroupError::InvalidSliceLength {
             expected_length,
             actual_length,
@@ -830,9 +799,6 @@ fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut [u8]) 
         bytes
     };
 
-    // Use helpers to write bytes to the output slice
-    let combined = [field_to_bytes(field), g1_to_bytes(g1)].concat();
-    data[..combined.len()].copy_from_slice(&combined);
     // Use helpers to write bytes to the output slice
     let combined = [field_to_bytes(field), g1_to_bytes(g1)].concat();
     data[..combined.len()].copy_from_slice(&combined);
@@ -925,7 +891,6 @@ mod should {
     fn deserialize_serialize_solidity_vk(valid_vk: [u8; VK_SIZE]) {
         let deserialized_vk =
             VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&valid_vk).unwrap();
-        VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&valid_vk).unwrap();
         let vk = deserialized_vk.as_solidity_bytes();
         pretty_assertions::assert_eq!(valid_vk, vk.as_slice())
     }

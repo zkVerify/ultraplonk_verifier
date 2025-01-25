@@ -166,10 +166,6 @@ fn verify_valid_proof(
     valid_pub: [PublicInput; 1],
 ) {
     assert!(verify::<CurveHooksImpl>(&valid_vk, &valid_proof, &valid_pub).is_ok());
-    assert_eq!(
-        verify::<CurveHooksImpl>(&valid_vk, &valid_proof, &valid_pub).unwrap(),
-        ()
-    );
 }
 
 mod reject {
