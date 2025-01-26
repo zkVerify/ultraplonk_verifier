@@ -46,12 +46,11 @@ noir-cli verify --key <zkv_vk path> --proof <zkv_proof path> --pubs <zkv_pubs pa
 ## Usage
 
 ```rust
-use ultraplonk_verifier::{verify, VerificationKey, Proof};
-use ultraplonk_verifier::curvehooks_impl::CurveHooksImpl;
+use ultraplonk_no_std::{curvehooks_impl::CurveHooksImpl, verify};
 use hex_literal::hex;
 
 let proof_data = hex!(
-      r#"
+      "
       15d2cb30be54aed04a1356bcabbf6217a20a7b4be770b77286d9b570827055d5
       1e33c5b02a6b10e4e34705620f96db583a46531edb67ed54f5cd8e1ca98bea8b
       1c4e2003c9a844fc7afb84010fc53a773f0b2bacea45345fb2eb4bd9ab638a55
@@ -123,7 +122,7 @@ let proof_data = hex!(
     );
 
 let vk_data = hex!(
-      r#"
+      "
       0000000000000000000000000000000000000000000000000000000000000002
       0000000000000000000000000000000000000000000000000000000000000010
       0000000000000000000000000000000000000000000000000000000000000001
