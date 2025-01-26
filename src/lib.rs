@@ -1124,22 +1124,16 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
 ) -> Fr {
     let mut batch_evaluation = nu_challenges.c_v[0]
         * (proof.w1_omega_eval.into_fr() * nu_challenges.c_u + proof.w1_eval.into_fr());
-
     batch_evaluation += nu_challenges.c_v[1]
         * (proof.w2_omega_eval.into_fr() * nu_challenges.c_u + proof.w2_eval.into_fr());
-
     batch_evaluation += nu_challenges.c_v[2]
         * (proof.w3_omega_eval.into_fr() * nu_challenges.c_u + proof.w3_eval.into_fr());
-
     batch_evaluation += nu_challenges.c_v[3]
         * (proof.w4_omega_eval.into_fr() * nu_challenges.c_u + proof.w4_eval.into_fr());
-
     batch_evaluation += nu_challenges.c_v[4]
         * (proof.s_omega_eval.into_fr() * nu_challenges.c_u + proof.s_eval.into_fr());
-
     batch_evaluation += nu_challenges.c_v[5]
         * (proof.z_omega_eval.into_fr() * nu_challenges.c_u + proof.z_eval.into_fr());
-
     batch_evaluation += nu_challenges.c_v[6]
         * (proof.z_lookup_omega_eval.into_fr() * nu_challenges.c_u + proof.z_lookup_eval.into_fr());
 
@@ -1160,13 +1154,10 @@ fn compute_batch_evaluation_scalar_multiplier<H: CurveHooks>(
 
     batch_evaluation += nu_challenges.c_v[21]
         * (proof.table1_omega_eval.into_fr() * nu_challenges.c_u + proof.table1_eval.into_fr());
-
     batch_evaluation += nu_challenges.c_v[22]
         * (proof.table2_omega_eval.into_fr() * nu_challenges.c_u + proof.table2_eval.into_fr());
-
     batch_evaluation += nu_challenges.c_v[23]
         * (proof.table3_omega_eval.into_fr() * nu_challenges.c_u + proof.table3_eval.into_fr());
-
     batch_evaluation += nu_challenges.c_v[24]
         * (proof.table4_omega_eval.into_fr() * nu_challenges.c_u + proof.table4_eval.into_fr());
 

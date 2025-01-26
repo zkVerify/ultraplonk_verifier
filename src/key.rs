@@ -53,7 +53,7 @@ pub enum VerificationKeyError {
 
     // #[snafu(display("Point for field '{}' is not in the correct subgroup", field))]
     // PointNotInCorrectSubgroup { field: &'static str },
-    #[snafu(display("Invalid circuit type, expected 2"))]
+    #[snafu(display("Invalid circuit type. Expected: 2"))]
     InvalidCircuitType,
 
     #[snafu(display("Invalid circuit size"))]
@@ -65,13 +65,13 @@ pub enum VerificationKeyError {
     #[snafu(display("Invalid commitment field: {:?}", value))]
     InvalidCommitmentField { value: String },
 
-    #[snafu(display("Invalid commitments number, expected 23"))]
+    #[snafu(display("Invalid commitments number. Expected: 23"))]
     InvalidCommitmentsNumber,
 
     #[snafu(display("Invalid commitment key at offset {:?}", offset))]
     InvalidCommitmentKey { offset: usize },
 
-    #[snafu(display("Unexpected commitment key: {:?}, expected {:?}", key, expected))]
+    #[snafu(display("Unexpected commitment key: {:?}. Expected: {:?}", key, expected))]
     UnexpectedCommitmentKey { key: String, expected: String },
 
     #[snafu(display("Recursion is not supported"))]
