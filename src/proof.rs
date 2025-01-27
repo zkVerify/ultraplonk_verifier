@@ -372,7 +372,7 @@ mod should {
     }
 
     #[rstest]
-    fn parse_a_well_formed_proof(valid_proof: [u8; PROOF_SIZE]) {
+    fn successfully_parse_a_well_formed_proof(valid_proof: [u8; PROOF_SIZE]) {
         assert!(Proof::<CurveHooksImpl>::try_from(&valid_proof[..]).is_ok());
     }
 

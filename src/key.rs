@@ -28,8 +28,8 @@ use crate::{
     utils::{read_fq_util, read_g1_util, IntoBytes, IntoU256},
     Fq2, Fr, G1, G2, U256, VK_SIZE,
 };
-use ark_bn254::Fq;
-use ark_bn254_ext::CurveHooks;
+
+use ark_bn254_ext::{CurveHooks, Fq};
 use ark_ff::{BigInt, PrimeField};
 use snafu::Snafu;
 
