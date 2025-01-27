@@ -39,16 +39,14 @@ pub enum VerificationKeyError {
     BufferTooShort,
 
     #[snafu(display(
-        "Slice length is incorrect. Expected: {}; Got: {}",
-        expected_length,
-        actual_length
+        "Slice length is incorrect. Expected: {expected_length:?}; Got: {actual_length:?}",
     ))]
     InvalidSliceLength {
         expected_length: usize,
         actual_length: usize,
     },
 
-    #[snafu(display("Point for field '{}' is not on curve", field))]
+    #[snafu(display("Point for field '{field:?}' is not on curve"))]
     PointNotOnCurve { field: &'static str },
 
     // #[snafu(display("Point for field '{}' is not in the correct subgroup", field))]
@@ -68,8 +66,8 @@ pub enum VerificationKeyError {
     #[snafu(display("Invalid commitments number. Expected: 23"))]
     InvalidCommitmentsNumber,
 
-    #[snafu(display("Invalid commitment key at offset {:?}", offset))]
-    InvalidCommitmentKey { offset: usize },
+    #[snafu(display("Invalid commitment key encountered"))]
+    InvalidCommitmentKey,
 
     #[snafu(display("Unexpected commitment key: {:?}. Expected: {:?}", key, expected))]
     UnexpectedCommitmentKey { key: String, expected: String },
@@ -597,66 +595,75 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
             return Err(VerificationKeyError::BufferTooShort);
         }
 
-        let mut offset = 0;
+        let (circuit_type, raw_vk) = match read_u32(raw_vk) {
+            Ok((2, raw_vk)) => (2, raw_vk),
+            _ => Err(VerificationKeyError::InvalidCircuitType)?,
+        };
 
-        let circuit_type = read_u32_and_check(
-            raw_vk,
-            &mut offset,
-            2,
-            VerificationKeyError::InvalidCircuitType,
-        )?;
-        let circuit_size = read_u32(raw_vk, &mut offset); // Needs to be a power of 2
-        let num_public_inputs = read_u32(raw_vk, &mut offset);
+        // ORIGINAL CODE: let circuit_size = read_u32(raw_vk, &mut offset); // Needs to be a power of 2
 
-        read_u32_and_check(
-            raw_vk,
-            &mut offset,
-            23,
-            VerificationKeyError::InvalidCommitmentsNumber,
-        )?;
+        // Q: Do we do some kind of post-processing of the circuit size that would enable
+        // us to drop the condition of it being a power of 2???
+        let (circuit_size, raw_vk) = match read_u32(raw_vk) {
+            Ok((circuit_size, raw_vk)) => {
+                if !circuit_size.is_power_of_two() || circuit_size > 2u32.pow(MAX_LOG2_CIRCUIT_SIZE)
+                {
+                    Err(VerificationKeyError::InvalidCircuitSize)?
+                } else {
+                    (circuit_size, raw_vk)
+                }
+            }
+            _ => Err(VerificationKeyError::InvalidCircuitSize)?,
+        };
 
-        let id_1 = read_commitment(&CommitmentField::ID_1, raw_vk, &mut offset)?;
-        let id_2 = read_commitment(&CommitmentField::ID_2, raw_vk, &mut offset)?;
-        let id_3 = read_commitment(&CommitmentField::ID_3, raw_vk, &mut offset)?;
-        let id_4 = read_commitment(&CommitmentField::ID_4, raw_vk, &mut offset)?;
-        let q_1 = read_commitment(&CommitmentField::Q_1, raw_vk, &mut offset)?;
-        let q_2 = read_commitment(&CommitmentField::Q_2, raw_vk, &mut offset)?;
-        let q_3 = read_commitment(&CommitmentField::Q_3, raw_vk, &mut offset)?;
-        let q_4 = read_commitment(&CommitmentField::Q_4, raw_vk, &mut offset)?;
-        let q_arithmetic = read_commitment(&CommitmentField::Q_ARITHMETIC, raw_vk, &mut offset)?;
-        let q_aux = read_commitment(&CommitmentField::Q_AUX, raw_vk, &mut offset)?;
-        let q_c = read_commitment(&CommitmentField::Q_C, raw_vk, &mut offset)?;
-        let q_elliptic = read_commitment(&CommitmentField::Q_ELLIPTIC, raw_vk, &mut offset)?;
-        let q_m = read_commitment(&CommitmentField::Q_M, raw_vk, &mut offset)?;
-        let q_sort = read_commitment(&CommitmentField::Q_SORT, raw_vk, &mut offset)?;
-        let sigma_1 = read_commitment(&CommitmentField::SIGMA_1, raw_vk, &mut offset)?;
-        let sigma_2 = read_commitment(&CommitmentField::SIGMA_2, raw_vk, &mut offset)?;
-        let sigma_3 = read_commitment(&CommitmentField::SIGMA_3, raw_vk, &mut offset)?;
-        let sigma_4 = read_commitment(&CommitmentField::SIGMA_4, raw_vk, &mut offset)?;
-        let table_1 = read_commitment(&CommitmentField::TABLE_1, raw_vk, &mut offset)?;
-        let table_2 = read_commitment(&CommitmentField::TABLE_2, raw_vk, &mut offset)?;
-        let table_3 = read_commitment(&CommitmentField::TABLE_3, raw_vk, &mut offset)?;
-        let table_4 = read_commitment(&CommitmentField::TABLE_4, raw_vk, &mut offset)?;
-        let table_type = read_commitment(&CommitmentField::TABLE_TYPE, raw_vk, &mut offset)?;
+        let (num_public_inputs, raw_vk) =
+            read_u32(raw_vk).map_err(|_| VerificationKeyError::InvalidNumberOfPublicInputs)?; // TODO
 
-        debug_assert_eq!(offset, OFFSET_AFTER_COMMITMENTS);
+        let (_num_commitments, raw_vk) = match read_u32(raw_vk) {
+            Ok((23, raw_vk)) => (23, raw_vk),
+            _ => Err(VerificationKeyError::InvalidCommitmentsNumber)?,
+        };
 
-        let contains_recursive_proof = read_bool_and_check(
-            raw_vk,
-            &mut offset,
-            false,
-            VerificationKeyError::RecursionNotSupported,
-        )?;
+        let (id_1, raw_vk) = read_commitment(&CommitmentField::ID_1, raw_vk)?;
+        let (id_2, raw_vk) = read_commitment(&CommitmentField::ID_2, raw_vk)?;
+        let (id_3, raw_vk) = read_commitment(&CommitmentField::ID_3, raw_vk)?;
+        let (id_4, raw_vk) = read_commitment(&CommitmentField::ID_4, raw_vk)?;
+        let (q_1, raw_vk) = read_commitment(&CommitmentField::Q_1, raw_vk)?;
+        let (q_2, raw_vk) = read_commitment(&CommitmentField::Q_2, raw_vk)?;
+        let (q_3, raw_vk) = read_commitment(&CommitmentField::Q_3, raw_vk)?;
+        let (q_4, raw_vk) = read_commitment(&CommitmentField::Q_4, raw_vk)?;
+        let (q_arithmetic, raw_vk) = read_commitment(&CommitmentField::Q_ARITHMETIC, raw_vk)?;
+        let (q_aux, raw_vk) = read_commitment(&CommitmentField::Q_AUX, raw_vk)?;
+        let (q_c, raw_vk) = read_commitment(&CommitmentField::Q_C, raw_vk)?;
+        let (q_elliptic, raw_vk) = read_commitment(&CommitmentField::Q_ELLIPTIC, raw_vk)?;
+        let (q_m, raw_vk) = read_commitment(&CommitmentField::Q_M, raw_vk)?;
+        let (q_sort, raw_vk) = read_commitment(&CommitmentField::Q_SORT, raw_vk)?;
+        let (sigma_1, raw_vk) = read_commitment(&CommitmentField::SIGMA_1, raw_vk)?;
+        let (sigma_2, raw_vk) = read_commitment(&CommitmentField::SIGMA_2, raw_vk)?;
+        let (sigma_3, raw_vk) = read_commitment(&CommitmentField::SIGMA_3, raw_vk)?;
+        let (sigma_4, raw_vk) = read_commitment(&CommitmentField::SIGMA_4, raw_vk)?;
+        let (table_1, raw_vk) = read_commitment(&CommitmentField::TABLE_1, raw_vk)?;
+        let (table_2, raw_vk) = read_commitment(&CommitmentField::TABLE_2, raw_vk)?;
+        let (table_3, raw_vk) = read_commitment(&CommitmentField::TABLE_3, raw_vk)?;
+        let (table_4, raw_vk) = read_commitment(&CommitmentField::TABLE_4, raw_vk)?;
+        let (table_type, raw_vk) = read_commitment(&CommitmentField::TABLE_TYPE, raw_vk)?;
+
+        // debug_assert_eq!(offset, OFFSET_AFTER_COMMITMENTS);
+
+        let (contains_recursive_proof, _raw_vk) = match read_bool(raw_vk) {
+            Ok((false, raw_vk)) => (false, raw_vk),
+            _ => Err(VerificationKeyError::RecursionNotSupported)?,
+        };
 
         let recursive_proof_indices = 0;
 
-        offset = raw_vk.len() - 1;
-        let _is_recursive_circuit = read_bool_and_check(
-            raw_vk,
-            &mut offset,
-            false,
-            VerificationKeyError::RecursionNotSupported,
-        )?;
+        // offset = raw_vk.len() - 1;
+        // let _is_recursive_circuit = read_bool_and_check(
+        //     raw_vk,
+        //     &mut offset,
+        //     false,
+        //     VerificationKeyError::RecursionNotSupported,
+        // )?;
 
         Ok(VerificationKey::<H> {
             circuit_type,
@@ -691,61 +698,33 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
     }
 }
 
-fn read_u32_and_check(
-    data: &[u8],
-    offset: &mut usize,
-    val: u32,
-    raise: VerificationKeyError,
-) -> Result<u32, VerificationKeyError> {
-    let value = read_u32(data, offset);
-    if value != val {
-        return Err(raise);
+fn read_u32(data: &[u8]) -> Result<(u32, &[u8]), ()> {
+    let value = u32::from_be_bytes(data[..4].try_into().map_err(|_| ())?);
+    Ok((value, &data[4..]))
+}
+
+fn read_bool(data: &[u8]) -> Result<(bool, &[u8]), ()> {
+    let value = data[0] == 1;
+    match value {
+        true => Err(()),
+        false => Ok((value, &data[1..])),
     }
-    Ok(value)
 }
 
-fn read_u32(data: &[u8], offset: &mut usize) -> u32 {
-    let value = u32::from_be_bytes(data[*offset..*offset + 4].try_into().unwrap());
-    *offset += 4;
-    value
-}
-
-fn read_bool_and_check(
-    data: &[u8],
-    offset: &mut usize,
-    val: bool,
-    raise: VerificationKeyError,
-) -> Result<bool, VerificationKeyError> {
-    let value = read_bool(data, offset);
-    if value != val {
-        return Err(raise);
-    }
-    Ok(value)
-}
-
-fn read_bool(data: &[u8], offset: &mut usize) -> bool {
-    let value = data[*offset] == 1;
-    *offset += 1;
-    value
-}
-
-fn read_commitment<H: CurveHooks>(
+fn read_commitment<'a, H: CurveHooks>(
     field: &CommitmentField,
-    data: &[u8],
-    offset: &mut usize,
-) -> Result<G1<H>, VerificationKeyError> {
+    data: &'a [u8],
+) -> Result<(G1<H>, &'a [u8]), VerificationKeyError> {
     let expected = field.str();
-    let key_size = read_u32(data, offset) as usize;
+    let (key_size, data) = read_u32(data).unwrap();
+    let key_size = key_size as usize;
 
     if expected.len() != key_size {
-        return Err(VerificationKeyError::InvalidCommitmentKey { offset: *offset });
+        return Err(VerificationKeyError::InvalidCommitmentKey);
     }
 
-    let key = String::from_utf8(data[*offset..*offset + key_size].to_vec())
-        .inspect(|_| {
-            *offset += key_size;
-        })
-        .map_err(|_| VerificationKeyError::InvalidCommitmentKey { offset: *offset })?;
+    let key = String::from_utf8(data[..key_size].to_vec())
+        .map_err(|_| VerificationKeyError::InvalidCommitmentKey)?;
 
     let field = CommitmentField::try_from(&key)
         .map_err(|_| VerificationKeyError::InvalidCommitmentField { value: key.clone() })?;
@@ -757,9 +736,10 @@ fn read_commitment<H: CurveHooks>(
         });
     }
 
-    read_g1::<H>(&field, &data[*offset..*offset + 64]).inspect(|_| {
-        *offset += 64;
-    })
+    Ok((
+        read_g1::<H>(&field, &data[key_size..key_size + 64])?,
+        &data[key_size + 64..],
+    ))
 }
 
 pub fn read_g1<H: CurveHooks>(

@@ -47,9 +47,8 @@ pub enum ProofError {
     #[snafu(display("Point for field is not on curve"))]
     PointNotOnCurve,
 
-    #[snafu(display("Point is not in the correct subgroup"))]
-    PointNotInCorrectSubgroup,
-
+    // #[snafu(display("Point is not in the correct subgroup"))]
+    // PointNotInCorrectSubgroup,
     #[snafu(display("Value is not a member of Fq"))]
     NotMember,
 
