@@ -602,8 +602,8 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
 
         // ORIGINAL CODE: let circuit_size = read_u32(raw_vk, &mut offset); // Needs to be a power of 2
 
-        // Q: Do we do some kind of post-processing of the circuit size that would enable
-        // us to drop the condition of it being a power of 2???
+        // Q: Given that we do post-processing of the circuit size when forming a PreparedVerificationKey,
+        // does that enable us to drop the condition of circuit_size it being a power of 2???
         let (circuit_size, raw_vk) = match read_u32(raw_vk) {
             Ok((circuit_size, raw_vk)) => {
                 if !circuit_size.is_power_of_two() || circuit_size > 2u32.pow(MAX_LOG2_CIRCUIT_SIZE)
@@ -656,6 +656,8 @@ impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
         };
 
         let recursive_proof_indices = 0;
+
+        // Note: Since we originally went back by one, I think we can skip the following:
 
         // offset = raw_vk.len() - 1;
         // let _is_recursive_circuit = read_bool_and_check(
