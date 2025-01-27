@@ -1077,111 +1077,58 @@ mod should {
             );
         }
 
-        // #[rstest]
-        // fn a_vk_with_an_invalid_field(valid_vk: [u8; VK_SIZE]) {
-        //     let mut invalid_vk = [0u8; VK_SIZE];
-        //     invalid_vk.copy_from_slice(&valid_vk);
-        //     invalid_vk[20..=23].fill(0);
+        #[rstest]
+        fn a_raw_vk_with_an_invalid_field(valid_raw_vk: [u8; 1715]) {
+            let mut invalid_vk = [0u8; 1715];
+            invalid_vk.copy_from_slice(&valid_raw_vk);
+            invalid_vk[20..=23].fill(0);
 
-        //     assert_eq!(
-        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
-        //         VerificationKeyError::InvalidCommitmentField {
-        //             value: "\0\0\0\0".to_string()
-        //         }
-        //     );
-        // }
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::InvalidCommitmentField {
+                    value: "\0\0\0\0".to_string()
+                }
+            );
+        }
 
-        // #[rstest]
-        // fn a_vk_with_an_invalid_commitment_key(valid_vk: [u8; VK_SIZE]) {
-        //     let mut invalid_vk = [0u8; VK_SIZE];
-        //     invalid_vk.copy_from_slice(&valid_vk);
-        //     invalid_vk[19] = 100;
+        #[rstest]
+        fn a_raw_vk_with_an_invalid_commitment_key(valid_raw_vk: [u8; 1715]) {
+            let mut invalid_vk = [0u8; 1715];
+            invalid_vk.copy_from_slice(&valid_raw_vk);
+            invalid_vk[19] = 100;
 
-        //     assert_eq!(
-        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
-        //         VerificationKeyError::InvalidCommitmentKey { offset: 20 }
-        //     );
-        // }
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::InvalidCommitmentKey
+            );
+        }
 
-        // #[rstest]
-        // fn a_vk_with_an_invalid_commitment_key_v2(valid_vk: [u8; VK_SIZE]) {
-        //     let mut invalid_vk = [0u8; VK_SIZE];
-        //     invalid_vk.copy_from_slice(&valid_vk);
-        //     invalid_vk[20..=23].fill(255);
+        #[rstest]
+        fn a_raw_vk_with_an_invalid_commitment_key_v2(valid_raw_vk: [u8; 1715]) {
+            let mut invalid_vk = [0u8; 1715];
+            invalid_vk.copy_from_slice(&valid_raw_vk);
+            invalid_vk[20..=23].fill(255);
 
-        //     assert_eq!(
-        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
-        //         VerificationKeyError::InvalidCommitmentKey { offset: 20 }
-        //     );
-        // }
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::InvalidCommitmentKey
+            );
+        }
 
-        // #[rstest]
-        // fn a_vk_with_unexpected_commitment_key(valid_vk: [u8; VK_SIZE]) {
-        //     let mut invalid_vk = [0u8; VK_SIZE];
-        //     invalid_vk.copy_from_slice(&valid_vk);
-        //     invalid_vk[23] = 50;
+        #[rstest]
+        fn a_raw_vk_with_unexpected_commitment_key(valid_raw_vk: [u8; 1715]) {
+            let mut invalid_vk = [0u8; 1715];
+            invalid_vk.copy_from_slice(&valid_raw_vk);
+            invalid_vk[23] = 50;
 
-        //     assert_eq!(
-        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
-        //         VerificationKeyError::UnexpectedCommitmentKey {
-        //             key: "ID_2".to_string(),
-        //             expected: "ID_1".to_string()
-        //         }
-        //     );
-        // }
-
-        // #[rstest]
-        // fn a_vk_with_an_invalid_field(valid_vk: [u8; VK_SIZE]) {
-        //     let mut invalid_vk = [0u8; VK_SIZE];
-        //     invalid_vk.copy_from_slice(&valid_vk);
-        //     invalid_vk[20..=23].fill(0);
-
-        //     assert_eq!(
-        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
-        //         VerificationKeyError::InvalidCommitmentField {
-        //             value: "\0\0\0\0".to_string()
-        //         }
-        //     );
-        // }
-
-        // #[rstest]
-        // fn a_vk_with_an_invalid_commitment_key(valid_vk: [u8; VK_SIZE]) {
-        //     let mut invalid_vk = [0u8; VK_SIZE];
-        //     invalid_vk.copy_from_slice(&valid_vk);
-        //     invalid_vk[19] = 100;
-
-        //     assert_eq!(
-        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
-        //         VerificationKeyError::InvalidCommitmentKey { offset: 20 }
-        //     );
-        // }
-
-        // #[rstest]
-        // fn a_vk_with_an_invalid_commitment_key_v2(valid_vk: [u8; VK_SIZE]) {
-        //     let mut invalid_vk = [0u8; VK_SIZE];
-        //     invalid_vk.copy_from_slice(&valid_vk);
-        //     invalid_vk[20..=23].fill(255);
-
-        //     assert_eq!(
-        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
-        //         VerificationKeyError::InvalidCommitmentKey { offset: 20 }
-        //     );
-        // }
-
-        // #[rstest]
-        // fn a_vk_with_unexpected_commitment_key(valid_vk: [u8; VK_SIZE]) {
-        //     let mut invalid_vk = [0u8; VK_SIZE];
-        //     invalid_vk.copy_from_slice(&valid_vk);
-        //     invalid_vk[23] = 50;
-
-        //     assert_eq!(
-        //         VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
-        //         VerificationKeyError::UnexpectedCommitmentKey {
-        //             key: "ID_2".to_string(),
-        //             expected: "ID_1".to_string()
-        //         }
-        //     );
-        // }
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::UnexpectedCommitmentKey {
+                    key: "ID_2".to_string(),
+                    expected: "ID_1".to_string()
+                }
+            );
+        }
 
         #[rstest]
         fn a_vk_with_a_point_not_on_curve(valid_vk: [u8; VK_SIZE]) {
@@ -1192,6 +1139,18 @@ mod should {
             assert_eq!(
                 VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
                     .unwrap_err(),
+                VerificationKeyError::PointNotOnCurve { field: "ID_1" }
+            );
+        }
+
+        #[rstest]
+        fn a_raw_vk_with_a_point_not_on_curve(valid_raw_vk: [u8; 1715]) {
+            let mut invalid_vk = [0u8; 1715];
+            invalid_vk.copy_from_slice(&valid_raw_vk);
+            invalid_vk[24..24 + 64].fill(0);
+
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::PointNotOnCurve { field: "ID_1" }
             );
         }
