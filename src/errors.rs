@@ -44,7 +44,7 @@ pub enum GroupError {
         expected_length: usize,
     },
     NotOnCurve,
-    NotInSubgroup,
+    //    NotInSubgroup, // see: https://github.com/arkworks-rs/algebra/blob/master/curves/bn254/src/curves/g1.rs#L51-L56
 }
 
 #[derive(Debug, PartialEq)]

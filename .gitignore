@@ -1,6 +1,4 @@
 target
 target/*
 Cargo.lock
-32_proof
-32_pubs
-32_vk
+lcov.info
