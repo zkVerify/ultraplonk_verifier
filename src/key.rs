@@ -1104,17 +1104,57 @@ mod should {
             );
         }
 
-        #[rstest]
-        fn a_vk_with_a_point_not_on_curve(valid_vk: [u8; VK_SIZE]) {
-            let mut invalid_vk = [0u8; VK_SIZE];
-            invalid_vk.copy_from_slice(&valid_vk);
-            invalid_vk[32 * 4..32 * 5].fill(0);
+        // #[rstest]
+        // fn a_vk_with_a_point_not_on_curve(valid_vk: [u8; VK_SIZE]) {
+        //     let mut invalid_vk = [0u8; VK_SIZE];
+        //     invalid_vk.copy_from_slice(&valid_vk);
+        //     invalid_vk[32 * 4..32 * 5].fill(0);
 
-            assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                    .unwrap_err(),
-                VerificationKeyError::PointNotOnCurve { field: "ID_1" }
-            );
+        //     assert_eq!(
+        //         VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+        //             .unwrap_err(),
+        //         VerificationKeyError::PointNotOnCurve { field: "ID_1" }
+        //     );
+        // }
+
+        #[rstest]
+        fn a_vk_with_a_point_not_on_curve_for_any_field(valid_vk: [u8; VK_SIZE]) {
+            let commitment_fields = [
+                CommitmentField::ID_1,
+                CommitmentField::ID_2,
+                CommitmentField::ID_3,
+                CommitmentField::ID_4,
+                CommitmentField::Q_1,
+                CommitmentField::Q_2,
+                CommitmentField::Q_3,
+                CommitmentField::Q_4,
+                CommitmentField::Q_ARITHMETIC,
+                CommitmentField::Q_AUX,
+                CommitmentField::Q_C,
+                CommitmentField::Q_ELLIPTIC,
+                CommitmentField::Q_M,
+                CommitmentField::Q_SORT,
+                CommitmentField::SIGMA_1,
+                CommitmentField::SIGMA_2,
+                CommitmentField::SIGMA_3,
+                CommitmentField::SIGMA_4,
+                CommitmentField::TABLE_1,
+                CommitmentField::TABLE_2,
+                CommitmentField::TABLE_3,
+                CommitmentField::TABLE_4,
+                CommitmentField::TABLE_TYPE,
+            ];
+            for (i, cm) in commitment_fields.iter().enumerate() {
+                let mut invalid_vk = [0u8; VK_SIZE];
+                invalid_vk.copy_from_slice(&valid_vk);
+                invalid_vk[32 * (4 + 2 * i)..32 * (5 + 2 * i)].fill(0);
+
+                assert_eq!(
+                    VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                        .unwrap_err(),
+                    VerificationKeyError::PointNotOnCurve { field: cm.str() }
+                );
+            }
         }
 
         #[rstest]
