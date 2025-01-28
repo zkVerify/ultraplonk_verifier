@@ -60,7 +60,7 @@ pub enum VerificationKeyError {
     #[snafu(display("Invalid number of public inputs"))]
     InvalidNumberOfPublicInputs,
 
-    #[snafu(display("Invalid commitment field: {:?}", value))]
+    #[snafu(display("Invalid commitment field: {value:?}"))]
     InvalidCommitmentField { value: String },
 
     #[snafu(display("Invalid commitments number. Expected: 23"))]
@@ -69,7 +69,7 @@ pub enum VerificationKeyError {
     #[snafu(display("Invalid commitment key encountered"))]
     InvalidCommitmentKey,
 
-    #[snafu(display("Unexpected commitment key: {:?}. Expected: {:?}", key, expected))]
+    #[snafu(display("Unexpected commitment key: {key:?}. Expected: {expected:?}"))]
     UnexpectedCommitmentKey { key: String, expected: String },
 
     #[snafu(display("Recursion is not supported"))]
@@ -542,49 +542,49 @@ impl<H: CurveHooks> From<&VerificationKey<H>> for PreparedVerificationKey<H> {
     }
 }
 
-impl<H: CurveHooks> VerificationKey<H> {
-    pub fn as_bytes(&self) -> Vec<u8> {
-        let mut data = Vec::new();
+// impl<H: CurveHooks> VerificationKey<H> {
+//     pub fn as_bytes(&self) -> Vec<u8> {
+//         let mut data = Vec::new();
 
-        data.extend_from_slice(&self.circuit_type.to_be_bytes());
+//         data.extend_from_slice(&self.circuit_type.to_be_bytes());
 
-        data.extend_from_slice(&self.circuit_size.to_be_bytes());
-        data.extend_from_slice(&self.num_public_inputs.to_be_bytes());
+//         data.extend_from_slice(&self.circuit_size.to_be_bytes());
+//         data.extend_from_slice(&self.num_public_inputs.to_be_bytes());
 
-        // Commitments size
-        data.extend_from_slice(&23u32.to_be_bytes());
+//         // Commitments size
+//         data.extend_from_slice(&23u32.to_be_bytes());
 
-        write_g1(&CommitmentField::ID_1, self.id_1, &mut data);
-        write_g1(&CommitmentField::ID_2, self.id_2, &mut data);
-        write_g1(&CommitmentField::ID_3, self.id_3, &mut data);
-        write_g1(&CommitmentField::ID_4, self.id_4, &mut data);
-        write_g1(&CommitmentField::Q_1, self.q_1, &mut data);
-        write_g1(&CommitmentField::Q_2, self.q_2, &mut data);
-        write_g1(&CommitmentField::Q_3, self.q_3, &mut data);
-        write_g1(&CommitmentField::Q_4, self.q_4, &mut data);
-        write_g1(&CommitmentField::Q_ARITHMETIC, self.q_arithmetic, &mut data);
-        write_g1(&CommitmentField::Q_AUX, self.q_aux, &mut data);
-        write_g1(&CommitmentField::Q_C, self.q_c, &mut data);
-        write_g1(&CommitmentField::Q_ELLIPTIC, self.q_elliptic, &mut data);
-        write_g1(&CommitmentField::Q_M, self.q_m, &mut data);
-        write_g1(&CommitmentField::Q_SORT, self.q_sort, &mut data);
-        write_g1(&CommitmentField::SIGMA_1, self.sigma_1, &mut data);
-        write_g1(&CommitmentField::SIGMA_2, self.sigma_2, &mut data);
-        write_g1(&CommitmentField::SIGMA_3, self.sigma_3, &mut data);
-        write_g1(&CommitmentField::SIGMA_4, self.sigma_4, &mut data);
-        write_g1(&CommitmentField::TABLE_1, self.table_1, &mut data);
-        write_g1(&CommitmentField::TABLE_2, self.table_2, &mut data);
-        write_g1(&CommitmentField::TABLE_3, self.table_3, &mut data);
-        write_g1(&CommitmentField::TABLE_4, self.table_4, &mut data);
-        write_g1(&CommitmentField::TABLE_TYPE, self.table_type, &mut data);
+//         write_g1(&CommitmentField::ID_1, self.id_1, &mut data);
+//         write_g1(&CommitmentField::ID_2, self.id_2, &mut data);
+//         write_g1(&CommitmentField::ID_3, self.id_3, &mut data);
+//         write_g1(&CommitmentField::ID_4, self.id_4, &mut data);
+//         write_g1(&CommitmentField::Q_1, self.q_1, &mut data);
+//         write_g1(&CommitmentField::Q_2, self.q_2, &mut data);
+//         write_g1(&CommitmentField::Q_3, self.q_3, &mut data);
+//         write_g1(&CommitmentField::Q_4, self.q_4, &mut data);
+//         write_g1(&CommitmentField::Q_ARITHMETIC, self.q_arithmetic, &mut data);
+//         write_g1(&CommitmentField::Q_AUX, self.q_aux, &mut data);
+//         write_g1(&CommitmentField::Q_C, self.q_c, &mut data);
+//         write_g1(&CommitmentField::Q_ELLIPTIC, self.q_elliptic, &mut data);
+//         write_g1(&CommitmentField::Q_M, self.q_m, &mut data);
+//         write_g1(&CommitmentField::Q_SORT, self.q_sort, &mut data);
+//         write_g1(&CommitmentField::SIGMA_1, self.sigma_1, &mut data);
+//         write_g1(&CommitmentField::SIGMA_2, self.sigma_2, &mut data);
+//         write_g1(&CommitmentField::SIGMA_3, self.sigma_3, &mut data);
+//         write_g1(&CommitmentField::SIGMA_4, self.sigma_4, &mut data);
+//         write_g1(&CommitmentField::TABLE_1, self.table_1, &mut data);
+//         write_g1(&CommitmentField::TABLE_2, self.table_2, &mut data);
+//         write_g1(&CommitmentField::TABLE_3, self.table_3, &mut data);
+//         write_g1(&CommitmentField::TABLE_4, self.table_4, &mut data);
+//         write_g1(&CommitmentField::TABLE_TYPE, self.table_type, &mut data);
 
-        // Contains recursive proof
-        data.push(if self.contains_recursive_proof { 1 } else { 0 });
-        data.extend_from_slice(&0u32.to_be_bytes());
+//         // Contains recursive proof
+//         data.push(if self.contains_recursive_proof { 1 } else { 0 });
+//         data.extend_from_slice(&0u32.to_be_bytes());
 
-        data
-    }
-}
+//         data
+//     }
+// }
 
 impl<H: CurveHooks> TryFrom<&[u8]> for VerificationKey<H> {
     type Error = VerificationKeyError;
@@ -763,28 +763,28 @@ fn read_g1<H: CurveHooks>(
     })
 }
 
-fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut [u8]) {
-    // Helper to convert a field to bytes
-    let field_to_bytes = |field: &CommitmentField| -> Vec<u8> {
-        let mut bytes = Vec::new();
-        let field_str = field.str();
-        bytes.extend_from_slice(&(field_str.len() as u32).to_be_bytes());
-        bytes.extend_from_slice(field_str.as_bytes());
-        bytes
-    };
+// fn write_g1<H: CurveHooks>(field: &CommitmentField, g1: G1<H>, data: &mut [u8]) {
+//     // Helper to convert a field to bytes
+//     let field_to_bytes = |field: &CommitmentField| -> Vec<u8> {
+//         let mut bytes = Vec::new();
+//         let field_str = field.str();
+//         bytes.extend_from_slice(&(field_str.len() as u32).to_be_bytes());
+//         bytes.extend_from_slice(field_str.as_bytes());
+//         bytes
+//     };
 
-    // Helper to convert a G1 point to bytes
-    let g1_to_bytes = |g1: G1<H>| -> Vec<u8> {
-        let mut bytes = Vec::new();
-        bytes.extend_from_slice(&g1.x.into_bytes());
-        bytes.extend_from_slice(&g1.y.into_bytes());
-        bytes
-    };
+//     // Helper to convert a G1 point to bytes
+//     let g1_to_bytes = |g1: G1<H>| -> Vec<u8> {
+//         let mut bytes = Vec::new();
+//         bytes.extend_from_slice(&g1.x.into_bytes());
+//         bytes.extend_from_slice(&g1.y.into_bytes());
+//         bytes
+//     };
 
-    // Use helpers to write bytes to the output slice
-    let combined = [field_to_bytes(field), g1_to_bytes(g1)].concat();
-    data[..combined.len()].copy_from_slice(&combined);
-}
+//     // Use helpers to write bytes to the output slice
+//     let combined = [field_to_bytes(field), g1_to_bytes(g1)].concat();
+//     data[..combined.len()].copy_from_slice(&combined);
+// }
 
 // Parse point on G2
 pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, ()> {
@@ -1044,7 +1044,7 @@ mod should {
         fn a_vk_with_invalid_circuit_size(valid_vk: [u8; VK_SIZE]) {
             let mut invalid_vk = [0u8; VK_SIZE];
             invalid_vk.copy_from_slice(&valid_vk);
-            invalid_vk[32..64].fill(1); // not a power of 2
+            invalid_vk[62..64].fill(1); // not a power of 2
 
             assert_eq!(
                 VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
@@ -1103,19 +1103,6 @@ mod should {
                 VerificationKeyError::InvalidCommitmentsNumber
             );
         }
-
-        // #[rstest]
-        // fn a_vk_with_a_point_not_on_curve(valid_vk: [u8; VK_SIZE]) {
-        //     let mut invalid_vk = [0u8; VK_SIZE];
-        //     invalid_vk.copy_from_slice(&valid_vk);
-        //     invalid_vk[32 * 4..32 * 5].fill(0);
-
-        //     assert_eq!(
-        //         VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-        //             .unwrap_err(),
-        //         VerificationKeyError::PointNotOnCurve { field: "ID_1" }
-        //     );
-        // }
 
         #[rstest]
         fn a_vk_with_a_point_not_on_curve_for_any_field(valid_vk: [u8; VK_SIZE]) {
