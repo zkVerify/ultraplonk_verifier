@@ -1006,7 +1006,7 @@ mod should {
         }
 
         #[rstest]
-        fn a_vk_from_a_short_raw_buffer() {
+        fn a_raw_vk_from_a_short_buffer() {
             let invalid_vk = [0u8; 10];
 
             assert_eq!(
@@ -1037,6 +1037,45 @@ mod should {
             assert_eq!(
                 VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCircuitType
+            );
+        }
+
+        #[rstest]
+        fn a_vk_with_invalid_circuit_size(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[32..64].fill(1); // not a power of 2
+
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
+                VerificationKeyError::InvalidCircuitSize
+            );
+        }
+
+        #[rstest]
+        fn a_vk_with_invalid_circuit_size_v2(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[32..64].fill(0);
+            invalid_vk[32] = 0x1; // too big
+
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
+                VerificationKeyError::InvalidCircuitSize
+            );
+        }
+
+        #[rstest]
+        fn a_raw_vk_with_invalid_circuit_size(valid_raw_vk: [u8; 1715]) {
+            let mut invalid_vk = [0u8; 1715];
+            invalid_vk.copy_from_slice(&valid_raw_vk);
+            invalid_vk[4..8].fill(0xf);
+
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::InvalidCircuitSize
             );
         }
 
