@@ -1156,6 +1156,19 @@ mod should {
         }
 
         #[rstest]
+        fn a_vk_with_recursive_proof_indices_v2(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[VK_SIZE - 1] = 1;
+
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
+                VerificationKeyError::RecursionNotSupported
+            );
+        }
+
+        #[rstest]
         fn a_raw_vk_containing_a_recursive_proof(valid_raw_vk: [u8; 1715]) {
             let mut invalid_vk = [0u8; 1715];
             invalid_vk.copy_from_slice(&valid_raw_vk);
