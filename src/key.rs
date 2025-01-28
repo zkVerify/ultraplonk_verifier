@@ -706,10 +706,10 @@ fn read_u32(data: &[u8]) -> Result<(u32, &[u8]), ()> {
 }
 
 fn read_bool(data: &[u8]) -> Result<(bool, &[u8]), ()> {
-    let value = data[0] == 1;
-    match value {
-        true => Err(()),
-        false => Ok((value, &data[1..])),
+    match data[0] {
+        1u8 => Ok((true, &data[1..])),
+        0u8 => Ok((false, &data[1..])),
+        _ => Err(()),
     }
 }
 
