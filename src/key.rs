@@ -744,7 +744,7 @@ fn read_commitment<'a, H: CurveHooks>(
     ))
 }
 
-pub fn read_g1<H: CurveHooks>(
+fn read_g1<H: CurveHooks>(
     field: &CommitmentField,
     data: &[u8],
 ) -> Result<G1<H>, VerificationKeyError> {
@@ -1080,6 +1080,19 @@ mod should {
         }
 
         #[rstest]
+        fn a_vk_with_invalid_commitments_number(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[64..96].fill(0xff); // > u32::MAX
+
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
+                VerificationKeyError::InvalidNumberOfPublicInputs
+            );
+        }
+
+        #[rstest]
         fn a_raw_vk_with_invalid_commitments_number(valid_raw_vk: [u8; 1715]) {
             let mut invalid_vk = [0u8; 1715];
             invalid_vk.copy_from_slice(&valid_raw_vk);
@@ -1088,6 +1101,31 @@ mod should {
             assert_eq!(
                 VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCommitmentsNumber
+            );
+        }
+
+        #[rstest]
+        fn a_vk_with_a_point_not_on_curve(valid_vk: [u8; VK_SIZE]) {
+            let mut invalid_vk = [0u8; VK_SIZE];
+            invalid_vk.copy_from_slice(&valid_vk);
+            invalid_vk[32 * 4..32 * 5].fill(0);
+
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
+                    .unwrap_err(),
+                VerificationKeyError::PointNotOnCurve { field: "ID_1" }
+            );
+        }
+
+        #[rstest]
+        fn a_raw_vk_with_a_point_not_on_curve(valid_raw_vk: [u8; 1715]) {
+            let mut invalid_vk = [0u8; 1715];
+            invalid_vk.copy_from_slice(&valid_raw_vk);
+            invalid_vk[24..24 + 64].fill(0);
+
+            assert_eq!(
+                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKeyError::PointNotOnCurve { field: "ID_1" }
             );
         }
 
@@ -1166,31 +1204,6 @@ mod should {
                     key: "ID_2".to_string(),
                     expected: "ID_1".to_string()
                 }
-            );
-        }
-
-        #[rstest]
-        fn a_vk_with_a_point_not_on_curve(valid_vk: [u8; VK_SIZE]) {
-            let mut invalid_vk = [0u8; VK_SIZE];
-            invalid_vk.copy_from_slice(&valid_vk);
-            invalid_vk[32 * 4..32 * 5].fill(0);
-
-            assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                    .unwrap_err(),
-                VerificationKeyError::PointNotOnCurve { field: "ID_1" }
-            );
-        }
-
-        #[rstest]
-        fn a_raw_vk_with_a_point_not_on_curve(valid_raw_vk: [u8; 1715]) {
-            let mut invalid_vk = [0u8; 1715];
-            invalid_vk.copy_from_slice(&valid_raw_vk);
-            invalid_vk[24..24 + 64].fill(0);
-
-            assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
-                VerificationKeyError::PointNotOnCurve { field: "ID_1" }
             );
         }
     }
