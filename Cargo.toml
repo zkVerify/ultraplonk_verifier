@@ -1,5 +1,5 @@
 [package]
-version = "0.2.0"
+version = "0.2.1"
 name = "ultraplonk-no-std"
 authors = ["Horizen Labs <admin@horizenlabs.io>"]
 repository = "https://github.com/zkVerify/ultraplonk_verifier"
@@ -11,9 +11,9 @@ license = "MIT/Apache-2.0"
 edition = "2021"
 
 [dependencies]
-ark-bn254-ext = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false }
-ark-models-ext = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false }
-test-utils = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false }
+ark-bn254-ext = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false, tag = "v0.4.0" }
+ark-models-ext = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false, tag = "v0.4.0" }
+test-utils = { git = "https://github.com/zkVerify/accelerated-bn-cryptography.git", default-features = false, tag = "v0.4.0" }
 ark-bn254 = { version = "0.4.0", default-features = false }
 ark-ec = { version = "0.4.0", default-features = false }
 ark-ff = { version = "0.4.0", default-features = false }
