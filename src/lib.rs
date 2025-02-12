@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![doc = include_str!("../README.md")]
 
 mod constants;
 pub mod curvehooks_impl;

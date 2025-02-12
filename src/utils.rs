@@ -172,10 +172,6 @@ pub(crate) fn read_g1_util<H: CurveHooks>(data: &[u8], reverse: bool) -> Result<
     if !point.is_on_curve() {
         return Err(GroupError::NotOnCurve);
     }
-    // For BN254's G1 curve, this cannot happen.
-    // if !point.is_in_correct_subgroup_assuming_on_curve() {
-    //     return Err(GroupError::NotInSubgroup);
-    // }
 
     Ok(point)
 }

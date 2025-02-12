@@ -222,4 +222,17 @@ mod reject {
             })
         );
     }
+
+    #[rstest]
+    fn invalid_valid_proof(
+        valid_vk: [u8; VK_SIZE],
+        valid_proof: [u8; PROOF_SIZE],
+        mut valid_pub: [PublicInput; 1],
+    ) {
+        valid_pub[0][31] -= 1;
+        assert_eq!(
+            verify::<CurveHooksImpl>(&valid_vk, &valid_proof, &valid_pub),
+            Err(VerifyError::VerificationError)
+        );
+    }
 }
