@@ -289,7 +289,7 @@ impl<H: CurveHooks> TryFrom<&[u8]> for Proof<H> {
 
 #[cfg(test)]
 mod should {
-    use crate::curvehooks_impl::CurveHooksImpl;
+    use crate::base_impl::CurveHooksImpl;
 
     use super::*;
     use rstest::{fixture, rstest};

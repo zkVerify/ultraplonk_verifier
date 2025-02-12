@@ -15,7 +15,7 @@
 // limitations under the License.
 
 use crate::*;
-use curvehooks_impl::CurveHooksImpl;
+use base_impl::CurveHooksImpl;
 use rstest::{fixture, rstest};
 
 #[fixture]

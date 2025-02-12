@@ -736,7 +736,7 @@ pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, ()> {
 
 #[cfg(test)]
 mod should {
-    use crate::curvehooks_impl::CurveHooksImpl;
+    use crate::base_impl::CurveHooksImpl;
 
     use super::*;
     use rstest::{fixture, rstest};
