@@ -5,7 +5,7 @@ The UltraPlonk zk-SNARK verifier is a Rust-based implementation of Noir's UltraP
 ## Usage
 
 ```rust
-use ultraplonk_no_std::{base_impl::CurveHooksImpl, verify};
+use ultraplonk_no_std::verify;
 use hex_literal::hex;
 
 let proof_data = hex!(
@@ -140,7 +140,7 @@ let pubs = [hex!(
         "000000000000000000000000000000000000000000000000000000000000000a"
     )];
 
-verify::<CurveHooksImpl>(&vk_data, &proof_data, &pubs).unwrap();
+verify::<()>(&vk_data, &proof_data, &pubs).unwrap();
 ```
 
 # Noir-CLI

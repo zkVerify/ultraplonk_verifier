@@ -17,7 +17,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![doc = include_str!("../README.md")]
 
-pub mod base_impl;
 mod constants;
 pub mod errors;
 pub mod key;

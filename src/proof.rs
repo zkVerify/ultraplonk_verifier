@@ -289,8 +289,6 @@ impl<H: CurveHooks> TryFrom<&[u8]> for Proof<H> {
 
 #[cfg(test)]
 mod should {
-    use crate::base_impl::CurveHooksImpl;
-
     use super::*;
     use rstest::{fixture, rstest};
 
@@ -371,7 +369,7 @@ mod should {
 
     #[rstest]
     fn successfully_parse_a_well_formed_proof(valid_proof: [u8; PROOF_SIZE]) {
-        assert!(Proof::<CurveHooksImpl>::try_from(&valid_proof[..]).is_ok());
+        assert!(Proof::<()>::try_from(&valid_proof[..]).is_ok());
     }
 
     mod reject {
@@ -381,7 +379,7 @@ mod should {
         fn a_proof_from_a_short_buffer(valid_proof: [u8; PROOF_SIZE]) {
             let invalid_proof = &valid_proof[..10];
             assert_eq!(
-                Proof::<CurveHooksImpl>::try_from(invalid_proof).unwrap_err(),
+                Proof::<()>::try_from(invalid_proof).unwrap_err(),
                 ProofError::IncorrectBufferSize {
                     expected_size: PROOF_SIZE,
                     actual_size: invalid_proof.len()
@@ -396,7 +394,7 @@ mod should {
             invalid_proof[32 * 4..32 * 5].fill(0);
 
             assert_eq!(
-                Proof::<CurveHooksImpl>::try_from(&invalid_proof[..]).unwrap_err(),
+                Proof::<()>::try_from(&invalid_proof[..]).unwrap_err(),
                 ProofError::PointNotOnCurve
             );
         }

@@ -736,8 +736,6 @@ pub(crate) fn read_g2<H: CurveHooks>(data: &[u8]) -> Result<G2<H>, ()> {
 
 #[cfg(test)]
 mod should {
-    use crate::base_impl::CurveHooksImpl;
-
     use super::*;
     use rstest::{fixture, rstest};
 
@@ -908,16 +906,14 @@ mod should {
 
     #[rstest]
     fn deserialize_serialize_solidity_vk(valid_vk: [u8; VK_SIZE]) {
-        let deserialized_vk =
-            VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&valid_vk).unwrap();
+        let deserialized_vk = VerificationKey::<()>::try_from_solidity_bytes(&valid_vk).unwrap();
         let vk = deserialized_vk.as_solidity_bytes();
         pretty_assertions::assert_eq!(valid_vk, vk.as_slice())
     }
 
     #[rstest]
     fn deserialize_serialize_raw_vk(valid_vk: [u8; VK_SIZE], valid_raw_vk: [u8; 1715]) {
-        let deserialized_raw_vk =
-            VerificationKey::<CurveHooksImpl>::try_from(&valid_raw_vk[..]).unwrap();
+        let deserialized_raw_vk = VerificationKey::<()>::try_from(&valid_raw_vk[..]).unwrap();
         let vk = deserialized_raw_vk.as_solidity_bytes();
         pretty_assertions::assert_eq!(valid_vk, vk.as_slice())
     }
@@ -930,8 +926,7 @@ mod should {
             let invalid_vk = [0u8; 10];
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                    .unwrap_err(),
+                VerificationKey::<()>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::BufferTooShort
             );
         }
@@ -941,7 +936,7 @@ mod should {
             let invalid_vk = [0u8; 10];
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<()>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::BufferTooShort
             );
         }
@@ -953,8 +948,7 @@ mod should {
             invalid_vk[3] = 3;
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                    .unwrap_err(),
+                VerificationKey::<()>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCircuitType
             );
         }
@@ -966,7 +960,7 @@ mod should {
             invalid_vk[3] = 3;
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<()>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCircuitType
             );
         }
@@ -978,8 +972,7 @@ mod should {
             invalid_vk[62..64].fill(1); // not a power of 2
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                    .unwrap_err(),
+                VerificationKey::<()>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCircuitSize
             );
         }
@@ -992,8 +985,7 @@ mod should {
             invalid_vk[32] = 0x1; // too big
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                    .unwrap_err(),
+                VerificationKey::<()>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCircuitSize
             );
         }
@@ -1005,7 +997,7 @@ mod should {
             invalid_vk[4..8].fill(0xf);
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<()>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCircuitSize
             );
         }
@@ -1017,8 +1009,7 @@ mod should {
             invalid_vk[64..96].fill(0xff); // > u32::MAX
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                    .unwrap_err(),
+                VerificationKey::<()>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidNumberOfPublicInputs
             );
         }
@@ -1030,7 +1021,7 @@ mod should {
             invalid_vk[15] = 0;
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<()>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCommitmentsNumber
             );
         }
@@ -1068,8 +1059,7 @@ mod should {
                 invalid_vk[32 * (4 + 2 * i)..32 * (5 + 2 * i)].fill(0);
 
                 assert_eq!(
-                    VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                        .unwrap_err(),
+                    VerificationKey::<()>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                     VerificationKeyError::PointNotOnCurve { field: cm.str() }
                 );
             }
@@ -1082,7 +1072,7 @@ mod should {
             invalid_vk[24..24 + 64].fill(0);
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<()>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::PointNotOnCurve { field: "ID_1" }
             );
         }
@@ -1094,8 +1084,7 @@ mod should {
             invalid_vk[VK_SIZE - 33] = 1;
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                    .unwrap_err(),
+                VerificationKey::<()>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::RecursionNotSupported
             );
         }
@@ -1107,8 +1096,7 @@ mod should {
             invalid_vk[VK_SIZE - 32..].fill(1);
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                    .unwrap_err(),
+                VerificationKey::<()>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::RecursionNotSupported
             );
         }
@@ -1120,8 +1108,7 @@ mod should {
             invalid_vk[VK_SIZE - 1] = 1;
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from_solidity_bytes(&invalid_vk[..])
-                    .unwrap_err(),
+                VerificationKey::<()>::try_from_solidity_bytes(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::RecursionNotSupported
             );
         }
@@ -1133,7 +1120,7 @@ mod should {
             invalid_vk[1713] = 1; // VK_SIZE - 33
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<()>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::RecursionNotSupported
             );
         }
@@ -1145,7 +1132,7 @@ mod should {
             invalid_vk[20..=23].fill(0);
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<()>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCommitmentField {
                     value: "\0\0\0\0".to_string()
                 }
@@ -1159,7 +1146,7 @@ mod should {
             invalid_vk[19] = 100;
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<()>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCommitmentKey
             );
         }
@@ -1171,7 +1158,7 @@ mod should {
             invalid_vk[20..=23].fill(255);
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<()>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::InvalidCommitmentKey
             );
         }
@@ -1183,7 +1170,7 @@ mod should {
             invalid_vk[23] = 50;
 
             assert_eq!(
-                VerificationKey::<CurveHooksImpl>::try_from(&invalid_vk[..]).unwrap_err(),
+                VerificationKey::<()>::try_from(&invalid_vk[..]).unwrap_err(),
                 VerificationKeyError::UnexpectedCommitmentKey {
                     key: "ID_2".to_string(),
                     expected: "ID_1".to_string()
