@@ -38,7 +38,7 @@ use ark_ff::{Field, MontConfig, MontFp, One};
 use ark_models_ext::bn::{BnConfig, G1Prepared, G2Prepared};
 use errors::VerifyError;
 use sha3::{Digest, Keccak256};
-use utils::{IntoBytes, IntoFr, IntoU256};
+use utils::{IntoFr, IntoU256};
 
 pub use types::*;
 
