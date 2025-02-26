@@ -23,7 +23,7 @@ pub mod proof;
 mod srs;
 pub mod testhooks;
 mod types;
-mod utils;
+pub mod utils;
 
 use crate::{
     key::{read_g2, PreparedVerificationKey, VerificationKey},
