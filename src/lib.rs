@@ -23,7 +23,9 @@ pub mod proof;
 mod srs;
 pub mod testhooks;
 mod types;
-pub mod utils;
+mod utils;
+
+pub use utils::IntoBytes;
 
 use crate::{
     key::{read_g2, PreparedVerificationKey, VerificationKey},

@@ -117,7 +117,7 @@ impl IntoU256 for [u8; 32] {
     }
 }
 
-pub(crate) trait IntoBytes {
+pub trait IntoBytes {
     fn into_bytes(self) -> [u8; 32];
 }
 
