@@ -44,7 +44,6 @@ pub enum GroupError {
         expected_length: usize,
     },
     NotOnCurve,
-    NotInSubgroup,
 }
 
 #[derive(Debug, PartialEq)]

@@ -16,7 +16,6 @@
 
 use crate::*;
 use rstest::{fixture, rstest};
-use testhooks::TestHooks;
 
 #[fixture]
 fn valid_proof() -> [u8; PROOF_SIZE] {
@@ -165,7 +164,7 @@ fn verify_valid_proof(
     valid_proof: [u8; PROOF_SIZE],
     valid_pub: [PublicInput; 1],
 ) {
-    assert!(verify::<TestHooks>(&valid_vk, &valid_proof, &valid_pub).is_ok());
+    assert!(verify::<()>(&valid_vk, &valid_proof, &valid_pub).is_ok());
 }
 
 mod reject {
@@ -178,7 +177,7 @@ mod reject {
         let invalid_vk = [0u8; VK_SIZE];
 
         assert_eq!(
-            verify::<TestHooks>(&invalid_vk, &valid_proof, &valid_pub),
+            verify::<()>(&invalid_vk, &valid_proof, &valid_pub),
             Err(VerifyError::KeyError)
         );
     }
@@ -188,7 +187,7 @@ mod reject {
         let invalid_proof = [0u8; PROOF_SIZE];
 
         assert_eq!(
-            verify::<TestHooks>(&valid_vk, &invalid_proof, &valid_pub),
+            verify::<()>(&valid_vk, &invalid_proof, &valid_pub),
             Err(VerifyError::InvalidProofError)
         );
     }
@@ -200,7 +199,7 @@ mod reject {
         )];
 
         assert_eq!(
-            verify::<TestHooks>(&valid_vk, &valid_proof, &invalid_pub),
+            verify::<()>(&valid_vk, &valid_proof, &invalid_pub),
             Err(VerifyError::PublicInputError {
                 message: "Found public input greater than scalar field modulus".to_string()
             })
@@ -215,11 +214,24 @@ mod reject {
         ];
 
         assert_eq!(
-            verify::<TestHooks>(&valid_vk, &valid_proof, &invalid_pubs),
+            verify::<()>(&valid_vk, &valid_proof, &invalid_pubs),
             Err(VerifyError::PublicInputError {
                 message: "Provided public inputs length does not match. Expected: 1; Got: 2"
                     .to_string()
             })
+        );
+    }
+
+    #[rstest]
+    fn invalid_valid_proof(
+        valid_vk: [u8; VK_SIZE],
+        valid_proof: [u8; PROOF_SIZE],
+        mut valid_pub: [PublicInput; 1],
+    ) {
+        valid_pub[0][31] -= 1;
+        assert_eq!(
+            verify::<()>(&valid_vk, &valid_proof, &valid_pub),
+            Err(VerifyError::VerificationError)
         );
     }
 }

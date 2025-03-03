@@ -16,7 +16,6 @@
 use anyhow::{anyhow, Context, Result};
 use log::info;
 use std::path::PathBuf;
-use ultraplonk_no_std::testhooks::TestHooks;
 use ultraplonk_no_std::{verify as verify_proof, PublicInput};
 
 pub fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf) -> Result<()> {
@@ -37,7 +36,7 @@ pub fn verify(key: &PathBuf, proof: &PathBuf, pubs: &PathBuf) -> Result<()> {
     let pubs = convert_to_pub_inputs(&pubs)?;
 
     info!("Verifying proof...");
-    match verify_proof::<TestHooks>(vk, &proof, &pubs) {
+    match verify_proof::<()>(vk, &proof, &pubs) {
         Ok(_) => {
             info!("Proof is valid");
             Ok(())
